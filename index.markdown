@@ -3,7 +3,7 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: page
-title: About the course
+title: Data Modeling II, Fall 2021
 permalink: /
 ---
 
