@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Calendar
-permalink: /about/
+permalink: /calendar/
 ---
 
 There will be a calendar here, eventually.
