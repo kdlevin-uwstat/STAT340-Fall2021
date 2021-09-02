@@ -13,3 +13,6 @@ This course will introduce students to the process of collecting, cleaning, mode
 
 <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/STAT340_F21_syllabus.pdf">Syllabus</a>
 
+<a href="https://www.statlearning.com">Textbook</a>
+
+<a href="">Helpful links and documentation</a>
