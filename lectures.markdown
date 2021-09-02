@@ -4,7 +4,7 @@
 
 layout: page
 title: Lectures
-permalink: /
+permalink: /lectures/
 ---
 
 <a href="">Lecture 0 (September 8)</a>
