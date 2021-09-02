@@ -3,7 +3,7 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: page
-title: About
+title: Home
 permalink: /
 ---
 
@@ -12,3 +12,4 @@ Ultimately, the goal of data science is to explain and predict real-world phenom
 This course will introduce students to the process of collecting, cleaning, modeling and analyzing data to answer questions about the world.
 
 <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/STAT340_F21_syllabus.pdf">Syllabus</a>
+
