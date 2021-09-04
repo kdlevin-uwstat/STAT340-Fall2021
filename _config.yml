@@ -19,7 +19,7 @@
 # in the templates via {{ site.myvariable }}.
 
 title: STAT340 Data Modeling II
-email: kdlevin@wisc.edu
+email: kdlevin@wisc.edu; bwu62@wisc.edu
 description: >- # this means to ignore newlines until "baseurl:"
   This is the webpage for University of Wisconsin STAT340 Data Modeling II,
   co-taught in the Fall of 2021 by Bi Cheng Wu and Keith Levin.
