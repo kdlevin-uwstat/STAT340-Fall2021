@@ -7,8 +7,8 @@ title: Lectures
 permalink: /lectures/
 ---
 
-<a href="">Lecture 0 (September 8)</a>
+<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/01/L01_motivation.html">Lecture 1: Motivation</a> (September 8) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/01/lec01_motivation.tgz">Files</a>
 
-<a href="">Lecture 1 (September 10, 13, 15)</a>
+Lecture 2: Random Variables, Probability and Models (Coming soon)
 
 
