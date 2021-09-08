@@ -47,7 +47,7 @@ We have a set of possible *outcomes*, usually denoted $\Omega$.
 * when we flip a coin, it can land either heads ($H$) or tails ($T$), so the outcomes are $\Omega = \{H, T\}$.
 * When we roll a die, there are six possible outcomes, $\Omega = \{1,2,3,4,5,6\}$.
 * In other settings, the outcomes might be an infinite set.
-    - Ex: if we measure the depth of Lake Mendota, the outcome may be any positive real number (at least theoretically, anyway!).\n",
+    - Ex: if we measure the depth of Lake Mendota, the outcome may be any positive real number (at least theoretically, anyway!)
 
 In the vast majority of situations, $\Omega$ will be either discrete (e.g., $\{1,2,\dots\}$) or continuous (e.g., $[0,1]$) and we call the associated random variable discrete or continuous, respectively.
 
@@ -293,7 +293,7 @@ rpois(10, lambda=10.5); # Generate 10 Poisson RVs with the same parameter lambda
 Once again, the Poisson distribution has infinite support, since $\Pr[X=k] > 0$ for all $k=0,1,2,\dots$, but let's plot its first few values.
 
 ```{r}
-k <- seq(0,30); lambda <- 10.5; # On average, we should get back the value 10.5\n",
+k <- seq(0,30); lambda <- 10.5; # On average, we should get back the value 10.5,
 df <- data.frame('k'=k,'Probk'=dpois(k, lambda) );
 pp <- ggplot(df, aes(x=k, y=Probk) ) + geom_col();
 pp
@@ -399,7 +399,7 @@ where $f(t; \mu, \sigma^2)$ is the density function of the normal distribution,
 $$
 f(t ; \mu, \sigma^2) = \frac{1}{\sqrt{ 2\pi \sigma^2 } } \exp\left\{ \frac{ -(t-\mu)^2 }{ 2\sigma^2 } \right \}.
 $$
-The weird semicolon notation is to emphasize that the density is a function of $t$, but its shape depends on $\mu$ and $\sigma^2$.\n",
+The weird semicolon notation is to emphasize that the density is a function of $t$, but its shape depends on $\mu$ and $\sigma^2$.
   
 Think of $\mu$ and $\sigma^2$ as two knobs we can twiddle to change the shape of the curve.
 We'll have plenty more to say about this later in the semester when we talk about fitting models to data.
