@@ -288,7 +288,7 @@ where the sum is over all $k$ such that $\Pr[ X=k ] > 0$.
 
 __Question:__ can you see how this definition is indeed like the "average behavior" of $X$?
 
-__Exercise:__ compute the expectation of a Bernoulli random variable with success probability $p$. What about a $\Binomial(n,p)$ random variable? __Hint:__ the expectation of a sum of RVs is the sum of their expectations. Write the Binomial RV as a sum of Bernoullis.
+__Exercise:__ compute the expectation of a Bernoulli random variable with success probability $p$. What about a $\operatorname{Binomial}(n,p)$ random variable? __Hint:__ the expectation of a sum of RVs is the sum of their expectations. Write the Binomial RV as a sum of Bernoullis.
 
 __Important take-away:__ the law of large numbers says that if we take the average of a bunch of independent RVs, the average will be close to the expected value.
 
