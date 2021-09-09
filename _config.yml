@@ -37,7 +37,7 @@ plugins:
 header_pages:
   - lectures.html
   - homework.html
-  - discussions.html
+  - discussion.html
 
 # Exclude from processing.
 # The following items will not be processed, by default.
