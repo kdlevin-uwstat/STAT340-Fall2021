@@ -428,7 +428,7 @@ pp
 ```
 
 This is the probability density function of the standard normal.
-Of course, the curve extends out to infinity on the right and negative infinitey on the left; we just haven't plotted it.
+Of course, the curve extends out to infinity on the right and negative infinity on the left; we just haven't plotted it.
 
 Hopefully this is a familiar shape to you.
 If not, no worries-- you'll see it plenty as you continue your studies.
