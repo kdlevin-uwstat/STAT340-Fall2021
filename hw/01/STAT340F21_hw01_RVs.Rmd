@@ -6,9 +6,9 @@ date: "September 2021"
 output: html_document
 ---
 
-## Problem 1: Random Variables
+## Problem 1 (10 points): Generating random variables
 
-### 1) Use R to generate a single Binomial, Geometric, and Poisson random variable.
+Let's se R to generate a single Binomial, Geometric, and Poisson random variable.
 
  You can choose the parameter of the distribution to be anything you like.  
 
@@ -23,6 +23,8 @@ Reading the help files is hard at first, but it is an essential skill.  Have a l
 ?rgeom
 ?rpois
 ```
+
+You can type your (short!) answer here:
 
 ### 1b) Generate a single copy of each random variable. Once again, you may set parameters however you like.
 
@@ -49,18 +51,17 @@ rgeom(n=10, p=0.25)
 
 ```
 
-
-### 2) Making histograms
+## Problem 2 (10 points): Making histograms
 
 One way to think about random variables is through their "distribution".
-To see what the distributions of different random variables look like, generate 10,000 copies of the random variables above and put them in a histogram:
+To see what the distributions of different random variables look like, generate 1,000 copies of the random variables above and put them in a histogram:
 
 ```{r}
 # Exponential:
-hist(rexp(n = 10000, lambda=5))
+hist(rexp(n = 1000, lambda=1/5))
 # or 
 library(magrittr)
-rexp(10000, lambda=1) %>% hist
+rexp(10000, lambda=1/5) %>% hist
 
 # Binomial:
 
@@ -75,10 +76,10 @@ Repeat the last step, but change the value of the parameter that you put in.
 ```{r}
 
 # Exponential:
-hist(rexp(n = 10000,size = 1,prob = .3))
+hist(rexp(n = 1000,size = 1,rate = 1))
 # or 
 library(magrittr)
-rexp(10000,1,.3) %>% hist
+rexp(1000,size=1,rate=1) %>% hist
 
 # Binomial: (change p, not the size parameter)
 
@@ -95,47 +96,72 @@ rexp(10000,1,.3) %>% hist
 ```
 
 
-### 3) Changing parameters, changing distributions
-
-What happens to the histogram when the parameter gets bigger?  
+## Problem 3 (5 points): What happens to the histogram in Problem 2 above when the parameter gets bigger or smaller?  
 
 Answer in words:
 
-1) Exponential: the histogram "shrinks toward 0" as lambda increases.
+1) Exponential: the histogram "expands out to the right" as the rate decreases.
+2) Binomial (changing p): ...
+3) Binomial (changing n): ...
+4) Normal (changing mu): ...
+5) Normal (changing sigma): ...
 
-2) Binomial: ...
+## Problem 4 (10 points): Evaluating probability mass/density functions
 
-3) Normal: ...
+Now let's answer the same question, but this time using the built-in R functions for evaluating probability distributions.
+That is, instead of generating random variables to approximate the true distribution, let's evaluate the probability mass or density exactly.
 
-### 4) Defining some simple functions in R.
+```{r}
+# Exponential, for values k=0,1,2,...,20:
+# 
+k <- seq(0,20);
+plot( k, dexp(k,lambda=1) )
+
+# Binomial(n=10,p=0.3), for values k=0,1,2,...,9,10:
+
+#TODO: write code here.
+
+# Normal(mean=0,sd=1), for x in [-3,3] in increments of size 0.1
+x <- seq(-3,3,0.1);
+# Note that this is a density, not a mass function,
+# but for plotting purposes, we can't evaluate the pdf at
+# EVERY point, so we'll just choose a few.
+plot( x, dnorm(x,mean=0,sd=1))
+
+# Normal(mean=1,sd=2), for x in [-5,7] in increments of size 0.1
+
+#TODO: write code here.
+```
+
+
+
+## Problem 5 (15 points): Defining some simple functions in R.
 
 This is not a programming course, but it's important that you become familiar with some basic programming concepts this semester.
 Toward that end, let's close by getting some practice with function definition in R.
 
 ```{r}
-# 4a) Define a function double_x that takes a single argument x and returns twice that argument.
-# You may assume that x is numeric, so that 2*x makes sense.
-double_x <- function( x ){
-  return( 2*x );
+# 5a) Define a function sum_of_normals that takes a single argument n (you may assume that n is a non-negative integer), generates n independent normals with mean 0 and variance 1, and returns their sum.
+# Hint: pay attention to the case n=0. What should be the sum of zero normals?
+sum_of_normals <- function( n ){
+  #TODO: CODE GOES HERE.
 }
 
-# 4b) Define a function triple_x that takes a single argument x and returns three times that argument.
-# You may assume that x is numeric, so that 3*x makes sense.
-triple_x <- function( x ) {
+# 5b) Define a function sum_of_poissons that takes two arguments: a non-negative integer n and a positive real lambda.
+# Your function should generate n independent Poisson random variables with shared parameter lambda, and return their sum.
+# You may assume that n is a non-negative integer and lambda is a positive real (i.e., numeric)
+# n and lambda should both default to 1, so that sum_of_poissons(5) returns the sum of five Pois(1) random variables.
+sum_of_poissons <- function( TODO: arguments! ) {
   # TODO: CODE GOES HERE!
 }
 
-# 4c) Define a function my_multiply that takes two arguments x and y and returns x*y.
-# You may assume that x and y are both numeric so that x*y makes sense.
+# 5c) Define a function max_of_normals that takes three arguments:
+# a non-negative integer n
+# a real number (i.e., numeric) mu
+# a positive real (i.e., positive numeric) sigma
+# Your function should generate n independent normals with mean and sd given by mu and sigma, respectively, and return the maximum of those n normal RVs.
+# mu should default to 0 and sigma should default to 1. There should be no default value for n.
+# Hint: be careful of the case n=0. By convention, the maximum of an empty set (e.g., the maximum of a collection of zero normals) 
 
-#TODO: define a function my_multiply( x,y).
-
-
-
-# 4d) Define a function my_multiply2 that takes two arguments x and y and returns x*y.
-# This function should have a default behavior where x and y both default to 1.
-# That is, my_multiply2(x,y) should return x*y, my_multiply2(x) should return x, and my_multiply2() should return 1.
-
-# TODO: define a function my_multiply2(x,y) w
-
+#TODO: define the function max_of_normals.
 ```
