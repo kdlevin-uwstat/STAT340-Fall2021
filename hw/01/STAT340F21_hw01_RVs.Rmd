@@ -1,0 +1,141 @@
+
+---
+title: "STAT340 HW1: Random Variables and R Review"
+author: "Keith Levin and Bi Cheng Wu"
+date: "September 2021"
+output: html_document
+---
+
+## Problem 1: Random Variables
+
+### 1) Use R to generate a single Binomial, Geometric, and Poisson random variable.
+
+ You can choose the parameter of the distribution to be anything you like.  
+
+Here are the function names: `rbinom, rgeom, rpois`.
+Remember that the "r" stands for "Random".
+
+### 1a) Read the help files for these functions. What are the 8 headings in each of the help files? 
+
+Reading the help files is hard at first, but it is an essential skill.  Have a look at the help files for these functions.  What are the 8 headings?
+```{r}
+?rbinom
+?rgeom
+?rpois
+```
+
+### 1b) Generate a single copy of each random variable. Once again, you may set parameters however you like.
+
+```{r}
+
+# generate a single Binomial random variable:
+rbinom(n = 1, size = 10, prob = .3)
+
+# generate a single Geometric random variable:
+
+# generate a single Poisson random variable:
+```
+
+
+### 1c) Generate ten copies of each random variable.
+
+```{r}
+# generate 10 Binomial random variables:
+
+# generate 10 Geometric random variables:
+rgeom(n=10, p=0.25)
+
+# generate 10 Poisson random variables:
+
+```
+
+
+### 2) Making histograms
+
+One way to think about random variables is through their "distribution".
+To see what the distributions of different random variables look like, generate 10,000 copies of the random variables above and put them in a histogram:
+
+```{r}
+# Exponential:
+hist(rexp(n = 10000, lambda=5))
+# or 
+library(magrittr)
+rexp(10000, lambda=1) %>% hist
+
+# Binomial:
+
+
+# Normal:
+
+
+```
+
+Repeat the last step, but change the value of the parameter that you put in.  
+
+```{r}
+
+# Exponential:
+hist(rexp(n = 10000,size = 1,prob = .3))
+# or 
+library(magrittr)
+rexp(10000,1,.3) %>% hist
+
+# Binomial: (change p, not the size parameter)
+
+
+# Binomial: (change the size parameter, not p)
+
+
+# Normal: (change the mean, not the standard deviation)
+
+
+# Normal: (change the standard deviation, not the mean)
+
+
+```
+
+
+### 3) Changing parameters, changing distributions
+
+What happens to the histogram when the parameter gets bigger?  
+
+Answer in words:
+
+1) Exponential: the histogram "shrinks toward 0" as lambda increases.
+
+2) Binomial: ...
+
+3) Normal: ...
+
+### 4) Defining some simple functions in R.
+
+This is not a programming course, but it's important that you become familiar with some basic programming concepts this semester.
+Toward that end, let's close by getting some practice with function definition in R.
+
+```{r}
+# 4a) Define a function double_x that takes a single argument x and returns twice that argument.
+# You may assume that x is numeric, so that 2*x makes sense.
+double_x <- function( x ){
+  return( 2*x );
+}
+
+# 4b) Define a function triple_x that takes a single argument x and returns three times that argument.
+# You may assume that x is numeric, so that 3*x makes sense.
+triple_x <- function( x ) {
+  # TODO: CODE GOES HERE!
+}
+
+# 4c) Define a function my_multiply that takes two arguments x and y and returns x*y.
+# You may assume that x and y are both numeric so that x*y makes sense.
+
+#TODO: define a function my_multiply( x,y).
+
+
+
+# 4d) Define a function my_multiply2 that takes two arguments x and y and returns x*y.
+# This function should have a default behavior where x and y both default to 1.
+# That is, my_multiply2(x,y) should return x*y, my_multiply2(x) should return x, and my_multiply2() should return 1.
+
+# TODO: define a function my_multiply2(x,y) w
+
+```
