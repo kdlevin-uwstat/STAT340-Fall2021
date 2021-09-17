@@ -1,0 +1,476 @@
+
+---
+title: "Monte Carlo"
+output: html_document
+---
+
+```{r,echo=F}
+knitr::opts_chunk$set(cache=T)
+```
+
+[link to source]{L03_monte-carlo.Rmd}
+
+Monte Carlo is a class of simulation methods that use random number generation to solve a wide range of problems from prediction to estimation to testing. They have been used as early as the 1930s, and are now more powerful than ever due to modern technological advancements.
+
+## Origin of name
+
+Stanisław Ulam was working on top secret nuclear weapons projects in the 1940s at Los Alamos National Laboratory when he invented one of the most modern Monte Carlo methods. John von Neumann, one of the fathers of computing, helped him write the first computer program to run the algorithm.
+
+Due to the secret nature of the research, they needed a codename for it. Their colleague Nicholas Metropolis suggested the name *Monte Carlo* after the Monte Carlo Casino in Monaco, due to the inherent randomness of the method and due to Ulam's uncle frequently borrowing gambling money because he "just had to go to Monte
+Carlo". ^[Metropolis, N. (1987). "The beginning of the Monte Carlo method". Los Alamos Science: 125–130.]
+
+Despite being limited by the computational power available at the time, this method proved very powerful and is widely used today in many fields of research.
+
+## Example 0: estimating $\pi$
+
+As an initial motivating example, suppose we don't know **any** digits of $\pi$, but we do know it's the ratio of the area of a circle to its radius. How can we use random numbers to estimate $\pi$?
+
+One thing we can do is generate uniformly-spaced points in the square below:
+
+<center>
+<img src="http://selkie-macalester.org/csinparallel/modules/CrossPlatformProgramming/build/html/_images/PiBoard.png" style="width:30%;"/>
+</center>
+
+If we then count how many of the points are inside the circle, we can estimate the percentage of the square that is covered by the circle, and use that to estimate $\pi$.
+
+
+```{r}
+# choose N (simulation size)
+N = 1000
+
+# use this to count how many points are in circle
+in.circ = 0
+
+# repeat steps N times
+for(i in 1:N){
+    
+    # for each point, generate 2 coordinates (x,y) randomly between -1 and 1
+    point = runif(n=2, min=-1, max=1)
+    
+    # to be inside circle, must satisfy x^2 + y^2 < 1
+    if(point[1]^2 + point[2]^2 < 1){
+        
+        # if inside, add to count
+        in.circ = in.circ+1
+    }
+}
+
+# to get proportion of square covered, take in.circ/N
+prop = in.circ/N
+
+# to get estimate of pi, take prop * 4
+pi.mc = prop * 4
+```
+
+
+```{r}
+# what are our estimate and percentage error?
+cat(sprintf("estimate: %.4f\n %% error: %.2f%%",pi.mc,abs(pi.mc-pi)/pi*100))
+```
+
+## Some theory
+
+It should make sense intuitively why this works, but it can also be shown mathematically to be correct.
+
+Let $X$ be the RV of whether a uniformly randomly sampled point in the square lies inside the circle. So, $X=1$ with probability $\dfrac\pi4$ and $X=0$ with probability $1-\dfrac\pi4$. Let $X_i$ represent repeated [I.I.D.](https://en.wikipedia.org/wiki/Independent_and_identically_distributed_random_variables) samples of this RV.
+
+Now, let's think carefully about how we got our previous estimate. First, we randomly and uniformly sample $N$ points inside the square. This can be represented by sampling $X_1,X_2,...,X_N$. Then, we counted the proportion of them that lie inside the circle. This can be represented by adding the $X_i$ in our sample and dividing by $N$. This proportion gives us the percentage of the area of the square that is covered by the circle. Thus, to get our final estimate for $\pi$, we just need to multiply by $4$.
+
+Thus, our estimator can be represented as
+$$\hat\pi:=4*\frac1N\sum_{i=1}^NX_i$$
+
+We can easily derive the expectation and variance of this estimator:
+$$\begin{align}
+E(\hat\pi)&=E\left(\frac4N\sum_{i=1}^NX_i\right)\\
+&=\frac4NE\left(\sum_{i=1}^NX_i\right)\\
+&=\frac4N\sum_{i=1}^NE(X_i)\\
+&=\frac4N\sum_{i=1}^N\left[(1)(\tfrac\pi4)+(0)(1-\tfrac\pi4)\right]\\
+&=\frac4N\sum_{i=1}^N\frac\pi4\\
+&=\frac4N\left(N*\frac\pi4\right)\\
+&=\pi
+\end{align}$$
+
+$$\begin{align}
+Var(\hat\pi)&=Var\left(\frac4N\sum_{i=1}^NX_i\right)\\
+&=\left(\frac4N\right)^2Var\left(\sum_{i=1}^NX_i\right)\\
+&=\frac{16}{N^2}\sum_{i=1}^NVar(X_i)\\
+&=\frac{16}{N^2}\sum_{i=1}^N\left[(1-\tfrac\pi4)^2(\tfrac\pi4)+(0-\tfrac\pi4)^2(1-\tfrac\pi4)\right]\\
+&=\frac{16}{N^2}\sum_{i=1}^N\frac\pi4\left(1-\frac\pi4\right)\\
+&=\frac{16}{N^2}\left(N*\frac\pi4\left(1-\frac\pi4\right)\right)\\
+&=\frac{\pi(4-\pi)}N
+\end{align}$$
+
+_**bonus exercise**: derive same equations for $E$ and $Var$ by treating $\sum X_i$ as a binomial variable and applying the binomial RV equations for $E$ and $Var$._
+
+We can easily verify the truth of these formulae by simulating multiple "runs" of this experiment and looking at the distribution of estimates we obtain.
+
+
+```{r}
+# choose M (number of times to repeat MC experiment)
+M = 1000
+
+# create vector to save results in
+mc.est = rep(NA,M)
+
+# for each experiment, do all the steps done before, get an estimate, and save it
+for(j in 1:M){
+    
+    # these lines are copied exactly from above
+    N = 1000
+    in.circ = 0
+    for(i in 1:N){
+        point = runif(n=2, min=-1, max=1)
+        if(point[1]^2 + point[2]^2 < 1){
+            in.circ = in.circ+1
+        }
+    }
+    prop = in.circ/N
+    pi.mc = prop * 4
+    
+    # save result in vector
+    mc.est[j] = pi.mc
+}
+```
+
+
+```{r}
+# what do the estimates look like?
+options(max.print=500)
+mc.est
+```
+
+
+```{r}
+mean(mc.est)
+```
+
+
+```{r}
+var(mc.est)
+```
+
+
+```{r}
+var.theory = pi*(4-pi)/N
+var.theory
+```
+
+
+```{r}
+# deviation of our mean and variance from theory:
+cat(sprintf("%% deviation from E  : %.3f%% \n%% deviation from Var: %.3f%%",
+            abs(mean(mc.est)-pi)/pi*100,abs(var(mc.est)-var.theory)/var.theory*100))
+```
+
+## Important notes:
+
+- the estimator is **unbiased**, since $E(\hat\pi)-\pi=0$, which means there's no systematic error
+- the estimator variance $\propto1/N$, so we can increase our precision by simulating more points
+  - note the standard deviation $\propto1/\sqrt N$, so if you want to lower error by factor of $\frac12$ you need to increase simulation size by factor of $4$
+
+## Generalization
+
+We can generalize this a little so you can see a bigger picture of what we're doing (without going into too much detail).
+
+Suppose we want to find the following integral
+$$I=\int_Df(x)\,dx$$
+where the integral is taken over some arbitrary region $D$. If we can write
+$$f(x)=g(x)\cdot p(x)$$
+for some $g$ and $p$, then we have
+$$I=\int_Dg(x)p(x)\,dx=E(g(x))$$
+Then, we just need to take a large sample of $g(x_i)$ and find its expectation to estimate the integral. This is all analogous to what we did before in Example 0
+
+## Random v. pseudorandom
+
+For MC, it's important to have a good source of random numbers whose distribution is precisely known. This is a **surprisingly difficult** problem. There are ways of generating (as far as we can tell), almost perfectly uniformly random numbers, such as measuring [atmospheric noise](https://www.random.org/randomness/), measuring [radioactive decay](https://www.techrepublic.com/article/computer-scientists-derive-truly-random-numbers-using-two-source-extractors/), or even [lava lamps](https://en.wikipedia.org/wiki/Lavarand) ([used by Cloudflare](https://www.cloudflare.com/learning/ssl/lava-lamp-encryption/)). These sources are generally considered capable of producing the most **truly random** numbers.
+
+Your computer (unless it's attached to a Geiger counter or a wall of lava lamps) is only capable of producing **pseudorandom** numbers. These are made by running a [pseudorandom number generator algorithm](https://en.wikipedia.org/wiki/Pseudorandom_number_generator) which is deterministic (i.e. same output for same input) such as the Mersenne-Twister (which is used by default in R). Even though these are deterministic, they pass the test of **statistical randomness** which means as far as we can tell, there are no discernable patterns in the output, and are usually close enough to random for computational purposes.
+
+Some resources if you want to learn more:
+
+<iframe width="432" height="240" src="https://www.youtube.com/embed/9rIy0xY99a0" frameborder="0" allowfullscreen></iframe><iframe width="432" height="240" src="https://www.youtube.com/embed/89EX1NF7eHQ" frameborder="0" allowfullscreen></iframe><br/><br/>
+
+
+## Example 1: sampling from arbitrary CDF
+
+Onto more examples! Here's a much more interesting one: given an arbitrary CDF (or PDF, which you can obviously just integrate to get the associated CDF), how can you draw samples from it?
+
+It can be easily shown that the CDF of a random variable follows the uniform distribution. What this means is that for **any** arbitrary distribution, if you draw many samples from it, and then plot a histogram of the *percentile* of each observation (i.e. what proportion of samples in the population are less than your observation), it would always appear uniform.
+
+Examples:
+
+
+```{r}
+N = 100000
+options(repr.plot.width=16)
+par(mfrow=c(2,4))
+hist(rnorm(N))        ; hist(rchisq(N,10))            ; hist(rexp(N,1))         ; hist(rbeta(N,.5,.5))
+hist(pnorm(rnorm(N))) ; hist(pchisq(rchisq(N,10),10)) ; hist(pexp(rexp(N,1),1)) ; hist(pbeta(rbeta(N,.5,.5),.5,.5))
+```
+
+
+We can use this fact to generate observations from any arbitrary distribution.
+
+Let $F_X(x)$ be the CDF of some arbitrary variable $X$, and let $Y_i$ be uniformly distributed on $[0,1]$. Then, we have that $F_X^{-1}(Y_i)\simeq X$ where $F_X^{-1}$ is the inverse of the CDF (which is always [nondecreasing and right-continuous](https://en.wikipedia.org/wiki/Cumulative_distribution_function#Properties)), and $\simeq$ means having the same distribution.
+
+In other words, randomly sampling from the uniform distribution and then applying the inverse of the given CDF function gives the desired target distribution.
+
+We can first demonstrate this by sampling from a chi-square distribution with 12 degrees of freedom:
+
+
+```{r}
+# reset print width
+options(repr.plot.width=7)
+
+# generate N uniform observations between 0,1
+x.unif = runif(10000)
+
+# apply built in inverse CDF function for chi-square
+x.chi.mc = qchisq(x.unif,12)
+
+# plot results
+hist(x.chi.mc)
+```
+
+
+```{r}
+# compare with build in R method for random generation
+hist(rchisq(10000,12))
+```
+
+
+
+```{r}
+# plot our sample quantiles against theoretical quantiles for comparison
+plot(sort(x.chi.mc),qchisq(ppoints(10000,1),12))
+```
+ 
+
+As you can see, the above method produces the exact same output as the built in `rchisq( )` generator.
+
+## Example 2: hot hands
+
+For the next example, let's do something slightly more complicated.
+
+A certain professional basketball player believes he has "[hot hands](https://en.wikipedia.org/wiki/Hot_hand)" when shooting 3-point shots (i.e. if he makes a shot, he’s more likely to also make the next shot). His friend doesn’t believe him, so they make a wager and hire you, a statistician, to settle the bet.
+
+As a sample, you observe the next morning as the player takes the same 3-point shot 200 times in a row (assume he is well rested, in good physical shape, and doesn’t feel significantly more tired after the experiment), so his level of mental focus doesn’t change during the experiment). You obtain the following results, where Y denotes a success and N denotes a miss:
+
+```
+YNNNNYYNNNYNNNYYYNNNNNYNNNNNNNNNYNNNNNYYNYYNNNYNNNNYNNYYYYNNYYNNNNNNNNNNNNNNNYYYNNNYYYYNNNNNYNYYNNNNYNNNNNNYNNNYNNYNNNNNYNYYYNNYYYNYNNNNYNNNNNNNYYNNYYNNNNNNYNNNYNNNNNNNNYNNNYNNNNNYYNNNNNNYYYYYYNYYNNYN
+```
+
+Note that the existence of a "hot hands" effect means the shots are not indepedent. Also note that there's a third possibility: that the player is more likely to "[choke](https://en.wikipedia.org/wiki/Choke_(sports))" and miss the next shot if he scored the previous one (e.g. maybe scoring a shot makes him feel more nervous because he feels like he's under pressure).
+
+### Attempt 1: run length
+
+Since the existence of a hot hands effect tends to increase the run lengths of `Y`s compared to if the shots were independent, we can use the longest run length as a way of comparing independence vs hot hands (note if the player is a choker, they will tend to have shorter runs of `Y`s than if they were independent, so you can simply ignore this case for now and compare hot hands v. independence for simplicity).
+
+Now, how exactly do you compare these two situations and determine which is a better fit for the data?
+
+One thing that's worth noting is that ***if a sequence of repeated experiments is independent, then it shouldn't matter what order the results are in***. This should be fairly easy to understand and agree with.
+
+Let's ***assume that the throws are totally independent***. Recall we also assume he doesn't get tired so his baseline shot-making ability doesn't change over the course of the experiment. Therefore, we should be able to (under these assumptions) ***arbitrarily reorder his shots without affecting any statistical properties of his shot sequence***. So let's do that!
+
+We begin by parsing the throws into a vector of `Y` and `N`.
+
+
+```{r}
+# the sequence of throws is broken up into 4 chunks for readbility, then
+# paste0 is used to merge them into a single sequence, then
+# strplit("YN...N",split="") is used to split the string at every "", so
+# we get a vector of each character, and finally
+# [[1]] is used to get the vector itself (strsplit actually outputs a list
+# with the vector as the first element; [[1]] removes the list wrapper)
+# 
+# for more info about the strsplit function, see
+# https://www.journaldev.com/43001/strsplit-function-in-r
+
+throws = strsplit(
+   paste0("YNNNNYYNNNYNNNYYYNNNNNYNNNNNNNNNYNNNNNYYNYYNNNYNNN",
+          "NYNNYYYYNNYYNNNNNNNNNNNNNNNYYYNNNYYYYNNNNNYNYYNNNN",
+          "YNNNNNNYNNNYNNYNNNNNYNYYYNNYYYNYNNNNYNNNNNNNYYNNYY",
+          "NNNNNNYNNNYNNNNNNNNYNNNYNNNNNYYNNNNNNYYYYYYNYYNNYN"), split="")[[1]]
+
+throws
+```
+
+
+Next, we write a function to get the longest run of `Y`s in the throw sequence. Here we use a convenient function called `rle( )` which is short for [run length encoding](https://en.wikipedia.org/wiki/Run-length_encoding), which turns our sequence of throws into sequences of runs (e.g. YNNNNYYNNNY becomes something like "1 `Y`, 4 `N`s, 2 `Y`s, 3 `N`s, and 1 `Y`"). We can then simply take the longest of the `Y` runs.
+
+
+```{r}
+longestRun = function(x,target = 'Y'){
+    max(0,with(rle(x), lengths[values==target]))
+}
+
+longestRun(throws)
+```
+
+
+Now, we randomly shuffle the sequence of throws many times and see what the longest `Y` runs look like for these shuffled sequences.
+
+
+```{r}
+# set number of reps to use
+N = 10000
+
+# create vector to save results in
+mc.runs = rep(NA,N)
+
+# for each rep, randomize sequence and find longest run of Y
+for(i in 1:N){
+    mc.runs[i] = longestRun(sample(throws))
+}
+```
+
+
+```{r}
+options(max.print=500)
+mc.runs
+```
+
+
+```{r}
+hist(mc.runs)
+```
+
+
+compared to other shuffled sequences, our run length doesn't seem that unlikely. Therefore, this method seems inconclusive.
+
+Can we find an even better "statistic" to use?
+
+### Attempt 2: running odds ratio
+
+Consider **every pair of consecutive throws** and make a table of the outcomes. For example, the first 8 throws in the sequence are YNNNNYYN. Breaking this into consecutive pairs, we have YN, NN, NN, NN, NY, YY, YN. This gives the table:
+
+<center>
+<div style="width:100px;">
+
+| NN | NY | YN | YY |
+|:--:|:--:|:--:|:--:|
+| 3  | 1  | 2  | 1  |
+
+</div>
+</center>
+
+Suppose we do this for the entire sequence of 200 throws (note this gives you 199 pairs). If we **divide the number of NY by the number of NN**, we get an estimate for **how much _more_ likely he is to make the next shot _assuming he missed his last shot_**.
+
+Similarly, we can **divide the number of YY by the number of YN** to get an estimate for **how much _more_ likely he is to make the next shot _assuming he scored his last shot_**.
+
+Now, note that **if the "hot hands" effect really exists** in the data, then **YY/YN should be larger than NY/NN** in a large enough sample. We use this fact to define the following quantity:
+
+$$R=\frac{(\text{# of YY})/(\text{# of YN})}{(\text{# of NY})/(\text{# of NN})}$$
+
+The ratio $R$ represents, in some sense, **how much more likely** the player is to **make the next shot** if he **made the previous shot _vs_ if he didn't make the previous shot** (note the **_vs_**). This is exactly what we're trying to investigate!
+
+If there is a "hot hands" effect, the numerator should be greater than the denominator and we should have $R>1$. If the throws are independent and do not affect each other then in theory we should have $R=1$. If the player is actually a choker (i.e. he is more likely to miss after a successful shot), then we should have $R<1$. (Side note: this is basically an [odds ratio](https://journalfeed.org/article-a-day/2018/idiots-guide-to-odds-ratios)).
+
+Now, we can use the same general method as the first attempt. If we assume his throws are independent and his shot probability doesn't change significantly during the experiment, then we can randomly shuffle his throws and no properties should change. So let's do that!
+
+First, I wrote a function to split the sequence of throws into consecutive pairs and then tabulates them.
+
+
+```{r}
+# install the runner package if necessary
+if(!"runner" %in% rownames(installed.packages())) install.packages("runner")
+
+# define function for tabulating consecutive pairs
+tableOfPairs = function(vec){
+  return(table(runner::runner(vec,k=2,f=paste,collapse="")[-1]))
+}
+
+# test function for correct output
+tableOfPairs(strsplit("YNNNNYYN",split="")[[1]])
+```
+
+
+
+```{r}
+# run function on original sequence of throws
+tableOfPairs(throws)
+```
+
+Next, I wrote a function that takes the above table as an input and returns the ratio R as defined above.
+
+
+```{r}
+ratioFromTable = function(tb){
+  return(setNames((tb["YY"]/tb["YN"])/(tb["NY"]/tb["NN"]),"R"))
+}
+
+# run on our data
+ratioFromTable(tableOfPairs(throws))
+```
+
+
+```{r}
+# we can check this is correct by manually computing it
+(28/35)/(34/102)
+```
+
+
+Now we just need to shuffle the sequence and see what this ratio looks like for other sequences.
+
+
+```{r}
+# set number of reps to use
+N = 10000
+
+# create another vector to save results in
+mc.runs2 = rep(NA,N)
+
+# for each rep, randomize sequence and find ratio R
+for(i in 1:N){
+    mc.runs2[i] = ratioFromTable(tableOfPairs(sample(throws)))
+}
+```
+
+
+```{r}
+options(max.print=500)
+round(mc.runs2,2)
+```
+
+
+```{r}
+hist(mc.runs2)
+```
+
+Now we can see our original ratio of $R=2.4$ seems extremely unlikely! In particular, most of the shuffled statistics are centered around 1 (which is what we expect, since we established $R=1$ for independent sequences).
+
+This method (which is a little more refined than the simpler run length method) appears to show that our original sequence isn't well explained by the throws being independent. Since $R=2.4\gg1$ and this result appears unlikely to happen under independence, we may conclude **the player does actually have hot hands**.
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+---
+
+#### _Appendix: Comment about how the throws were generated_
+
+As you may have guessed, the throws were intentionally generated to have a "hot hands" effect. The first throw was randomly chosen with a $35\%$ chance of success (chosen based on a quick Google search of average 3-point shot rates). After that, the probability of success of the next shot was dependent on the success of the previous shot. If the previous attempt was a success, this was raised to $45\%$; if it missed, this was lowered to $25\%$.
+
+```{r}
+n = 200
+
+throws = rep(NA,n)
+
+for(i in 1:n){
+  if(i==1){
+    throws[i] = sample(c("Y","N"),1,prob=c(0.35,0.65))
+  } else {
+    if(throws[i-1]=="Y"){
+      throws[i] = sample(c("Y","N"),1,prob=c(0.45,0.55))
+    } else{
+      throws[i] = sample(c("Y","N"),1,prob=c(0.25,0.75))
+    }
+  }
+}
+```
+
+The numbers were chosen this way so that the average number of 3-point shots made is still close-ish to $35\%$ (it's $31.25\%$ to be exact) and so that the effect is large enough to be detectable, but not so much so that the run-length statistic will also be able to detect an effect (which might happen if the strength of the effect was raised by raising/lowering the numbers even more).
+
+200 was used as the number of throws in the experiment as a balance between lowering the variance of the ratio $R$ of the generated sequence while still being somewhat plausible for a professional basketball player to achieve.
