@@ -188,8 +188,9 @@ Your computer (unless it's attached to a Geiger counter or a wall of lava lamps)
 
 Some resources if you want to learn more:
 
-<iframe width="432" height="240" src="https://www.youtube.com/embed/9rIy0xY99a0" frameborder="0" allowfullscreen></iframe><iframe width="432" height="240" src="https://www.youtube.com/embed/89EX1NF7eHQ" frameborder="0" allowfullscreen></iframe><br/><br/>
-
+<iframe width="432" height="240" src="https://www.youtube.com/embed/9rIy0xY99a0" frameborder="0" allowfullscreen data-external="1"></iframe>
+<iframe width="432" height="240" src="https://www.youtube.com/embed/89EX1NF7eHQ" frameborder="0" allowfullscreen data-external="1"></iframe>
+<br/><br/>
 
 ## Example 1: sampling from arbitrary CDF
 
