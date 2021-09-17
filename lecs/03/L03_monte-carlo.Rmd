@@ -8,7 +8,7 @@ output: html_document
 knitr::opts_chunk$set(cache=T)
 ```
 
-[link to source]{L03_monte-carlo.Rmd}
+[link to source](L03_monte-carlo.Rmd)
 
 Monte Carlo is a class of simulation methods that use random number generation to solve a wide range of problems from prediction to estimation to testing. They have been used as early as the 1930s, and are now more powerful than ever due to modern technological advancements.
 
