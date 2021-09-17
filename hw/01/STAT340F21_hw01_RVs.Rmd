@@ -58,10 +58,10 @@ To see what the distributions of different random variables look like, generate 
 
 ```{r}
 # Exponential:
-hist(rexp(n = 1000, lambda=1/5))
+hist(rexp(n = 1000, rate=1/5))
 # or 
 library(magrittr)
-rexp(10000, lambda=1/5) %>% hist
+rexp(10000, rate=1/5) %>% hist
 
 # Binomial:
 
@@ -76,10 +76,10 @@ Repeat the last step, but change the value of the parameter that you put in.
 ```{r}
 
 # Exponential:
-hist(rexp(n = 1000,size = 1,rate = 1))
+hist(rexp(n = 1000, rate = 1))
 # or 
 library(magrittr)
-rexp(1000,size=1,rate=1) %>% hist
+rexp(1000, rate=1) %>% hist
 
 # Binomial: (change p, not the size parameter)
 
@@ -115,7 +115,7 @@ That is, instead of generating random variables to approximate the true distribu
 # Exponential, for values k=0,1,2,...,20:
 # 
 k <- seq(0,20);
-plot( k, dexp(k,lambda=1) )
+plot( k, dexp(k,rate=1) )
 
 # Binomial(n=10,p=0.3), for values k=0,1,2,...,9,10:
 
