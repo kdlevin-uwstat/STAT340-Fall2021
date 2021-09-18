@@ -4,4 +4,4 @@ title: Homeworks
 permalink: /homework/
 ---
 
-Links to homework assignments and other files will go here.
+<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/hw/01/STAT340F21_hw01_RVs.Rmd">Homework 1</a> (due Wednesday, September 29, 11:59pm)

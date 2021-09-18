@@ -3,7 +3,7 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: page
-title: Home
+title: Course Information
 permalink: /
 ---
 
@@ -15,4 +15,4 @@ This course will introduce students to the process of collecting, cleaning, mode
 
 <a href="https://www.statlearning.com">Textbook</a>
 
-<a href="">Helpful links and documentation</a>
+<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lectures">Lecture Notes</a>
