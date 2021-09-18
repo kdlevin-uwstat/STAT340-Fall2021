@@ -1,0 +1,108 @@
+
+---
+title: "STAT 340: Discussion 01: R review"
+documentclass: article
+classoption: letterpaper
+output:
+  html_document:
+    highlight: tango
+    fig_caption: false
+---
+
+```{r setup, include=FALSE}
+# check packages installed
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(knitr,tidyverse)
+
+knitr::opts_chunk$set(tidy=FALSE,strip.white=FALSE,fig.align="center",comment=" #")
+options(width=120)
+```
+
+---
+
+<style>
+a:link {text-decoration: underline;}
+h2{margin-top:40px;}
+h3{margin-top:30px;}
+h4{margin-top:30px;font-style: italic;}
+</style>
+
+
+[link to source](ds01.Rmd)
+
+
+## XKCD comic
+
+<center><a href="https://xkcd.com/833/"><img id="comic" src="https://imgs.xkcd.com/comics/convincing.png" title="And if you labeled your axes, I could tell you exactly how MUCH better." style="width:555px;"></a></center>
+
+
+## Exercises
+
+
+Today's exercises are intended as a review of basic R features and operations. Remember that discussion attendance is completely optional but highly recommended. Also, if you finish the material early, don't be afraid to leave early.
+
+
+### 1) Vector operations
+
+Remember that in R, if an operation works on a single number, it will usually also work across a vector. For example, if you multiply a number by a vector, each number in the vector will be multiplied. If you multiply two vectors of the same length, the first number of both vectors will be multiplied, and the second number of both vectors will be multiplied, etc. This will also work for functions like `exp()` or `pnorm()`.
+
+   a. Create a vector of the numbers 1 to 25 (try to do this without writing out each individual number). Multiply the vector by 2 to get a vector of all the even numbers less than or equal to 50. Then, square this vector.
+   c. Find the mean of this vector and subtract it from each number.
+   d. Using `>=`, compare this vector with 0 to show if each number is greater than or equal to 0. Use `sum()` on this resultant vector to count how many numbers satisfy this criterion (or alternatively, use `mean()` to get the proportion (think about why this works!)).
+   d. Divide the interval $(0,1)$ into 15 evenly spaced numbers (**not including** 0 and 1). (Hint: use the [ppoints](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/ppoints.html) function). Then, use `qnorm()` to get a vector of 15 points evenly spaced out along the quantiles of the normal distribution. Note: this is how you obtain the theoreticals for a QQ-plot.
+
+
+### 2) Functions
+
+Functions are a useful way of creating a tool that can be used over and over again. Good functions ***usually*** (but not necessarily always have to) satisfy the following:
+
+1. The function has a good name that makes sense to the user.
+2. They have a single purpose (e.g. don't write a function that can do two very different things).
+3. Extra features or special use cases can be accessed using arguments.
+4. Additional optional arguments should have sensible default values.
+5. At the end, it should return an object (in R, this is often a [list](https://www.r-bloggers.com/2010/11/programming-with-r-%E2%80%93-returning-information-as-a-list/) object, but you can return anything).
+
+Write a function for each of the following parts:
+
+1. Given an `n` and `k`, computes the binomial coefficient. You can use the factorial function for simplicity.
+2. Simulates rolling `n` 6-sided dice and gives the average of the outcomes. `n` should have a default value of 2.
+3. Manually (i.e. without using `sd()`) compute the sample standard deviation of a vector.
+
+Note: functions in R have different scope than the global environment. Read [this](https://www.geeksforgeeks.org/scope-of-variable-in-r/) for a helpful guide about this. Also note that declaring/updating a global variable from inside a function is considered bad practice since it can easily introduce bugs that are very difficult to detect and fix. Avoid this if you can!
+
+
+### 3) Conditional executions
+
+It's important to be able to write clear and effective conditionals (if, else, etc...) in R. It's often very useful to check if a condition is satisfied and then do different things depending on the outcome.
+
+For this exercise, simply briefly review sections 7.3-7.5 of [this page](https://discdown.org/rprogramming/conditional-execution.html#conditional-execution-if-else-statement) here.
+
+
+### 4) For loop
+
+For loops are a useful way of repeating a step a set number of times.
+
+1. Write a function that repeats the following experiment `n` times, with a default `n=1000`:
+   - draw 5 cards from a standard deck of playing cards (hint: for this problem, you can represent a deck as the vector 1,2,...,13 repeated 4 times)
+   - drop the lowest and highest card (if there are ties, just drop one).
+   - take the mean of the 5 numbers and stores them in a vector
+   - return the vector of means
+
+### 5) Random variables and LLN
+
+1. For each of the following, identify one or more random variables that can be used to model the outcome.
+   - The number of cars that pass your house in an hour.
+   - The number of times you need to try before you make a 3-point shot.
+   - The number of people in a clinical trial who recover after going through an experimental treatment.
+   - The number you get when rolling a 20-sided die.
+2. Choose a type of random variable that has finite mean (e.g. normal, binomial, poisson, geometric, exponential, uniform, etc...) and choose some parameters. Write down what the theoretical mean of this particular distribution is (you can use Wikipedia to get the expected value for your random variable).    
+   
+   Randomly generate at least 1000 observations of the variable you chose (if your computer can generate more, go ahead!). Then, use the `running.mean()` function defined below to compute a running mean (i.e. each number in the output is the mean of all the previous numbers in the input). Plot this running mean using the `plot()` function, and use `abline()` to add a horizontal red line at your previously computed theoretical mean.
+   
+   Explain what is happening here. (Hint: is this consistent with the Law of Large Numbers? Why or why not?).
+
+```{r}
+# define running average function
+# can be specified as cumulative sum / index of element
+running.mean = function(vec) cumsum(vec)/seq(along=vec)
+```

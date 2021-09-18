@@ -7,7 +7,8 @@ title: Discussions
 permalink: /discussion/
 ---
 
-<a href="">Discussion section 1 (Week of September 15, coming soon)</a>
+ - [Discussion 01](discussion/01/ds01.html)
+ - [Discussion 02](discussion/02/ds02.html)
 
 
 
