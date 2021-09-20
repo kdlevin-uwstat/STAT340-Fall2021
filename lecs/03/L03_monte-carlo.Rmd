@@ -168,6 +168,18 @@ cat(sprintf("%% deviation from E  : %.3f%% \n%% deviation from Var: %.3f%%",
 - the estimator variance $\propto1/N$, so we can increase our precision by simulating more points
   - note the standard deviation $\propto1/\sqrt N$, so if you want to lower error by factor of $\frac12$ you need to increase simulation size by factor of $4$
 
+## Generalization
+
+We can generalize this a little so you can see a bigger picture of what we're doing (without going into too much detail).
+
+Suppose we want to find the following integral
+$$I=\int_Df(x)\,dx$$
+where the integral is taken over some arbitrary region $D$. If we can write
+$$f(x)=g(x)\cdot p(x)$$
+for some $g$ and $p$, then we have
+$$I=\int_Dg(x)p(x)\,dx=E(g(x))$$
+Then, we just need to take a large sample of $g(x_i)$ and find its expectation to estimate the integral. This is all analogous to what we did before in Example 0
+
 ## Example 1: Buffon's needle
 
 Asked by Georges-Louis Leclerc, Comte de Buffon in 1700s:
@@ -265,17 +277,7 @@ cat(sprintf(" true value: %.5f \n  our value: %.5f \n%% deviation: %.3f%%",
             true.cross,mc.cross/N,abs(true.cross-mc.cross/N)/true.cross*100))
 ```
 
-## Generalization
-
-We can generalize this a little so you can see a bigger picture of what we're doing (without going into too much detail).
-
-Suppose we want to find the following integral
-$$I=\int_Df(x)\,dx$$
-where the integral is taken over some arbitrary region $D$. If we can write
-$$f(x)=g(x)\cdot p(x)$$
-for some $g$ and $p$, then we have
-$$I=\int_Dg(x)p(x)\,dx=E(g(x))$$
-Then, we just need to take a large sample of $g(x_i)$ and find its expectation to estimate the integral. This is all analogous to what we did before in Example 0
+_**exercise**: Write a function that takes 3 arguments: `L` for length of needle, `T` for width of floor, and `N` for number of replicates; performs the above process; and returns the probability of a crossing.
 
 ## Random v. pseudorandom
 

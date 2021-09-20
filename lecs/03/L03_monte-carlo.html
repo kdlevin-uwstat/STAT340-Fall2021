@@ -333,6 +333,11 @@ cat(sprintf(&quot;%% deviation from E  : %.3f%% \n%% deviation from Var: %.3f%%&
 </ul></li>
 </ul>
 </div>
+<div id="generalization" class="section level2">
+<h2>Generalization</h2>
+<p>We can generalize this a little so you can see a bigger picture of what we’re doing (without going into too much detail).</p>
+<p>Suppose we want to find the following integral <span class="math display">\[I=\int_Df(x)\,dx\]</span> where the integral is taken over some arbitrary region <span class="math inline">\(D\)</span>. If we can write <span class="math display">\[f(x)=g(x)\cdot p(x)\]</span> for some <span class="math inline">\(g\)</span> and <span class="math inline">\(p\)</span>, then we have <span class="math display">\[I=\int_Dg(x)p(x)\,dx=E(g(x))\]</span> Then, we just need to take a large sample of <span class="math inline">\(g(x_i)\)</span> and find its expectation to estimate the integral. This is all analogous to what we did before in Example 0</p>
+</div>
 <div id="example-1-buffons-needle" class="section level2">
 <h2>Example 1: Buffon’s needle</h2>
 <p>Asked by Georges-Louis Leclerc, Comte de Buffon in 1700s:</p>
@@ -414,11 +419,7 @@ cat(sprintf(&quot; true value: %.5f \n  our value: %.5f \n%% deviation: %.3f%%&q
 <pre><code>##  true value: 0.63662 
 ##   our value: 0.63721 
 ## % deviation: 0.093%</code></pre>
-</div>
-<div id="generalization" class="section level2">
-<h2>Generalization</h2>
-<p>We can generalize this a little so you can see a bigger picture of what we’re doing (without going into too much detail).</p>
-<p>Suppose we want to find the following integral <span class="math display">\[I=\int_Df(x)\,dx\]</span> where the integral is taken over some arbitrary region <span class="math inline">\(D\)</span>. If we can write <span class="math display">\[f(x)=g(x)\cdot p(x)\]</span> for some <span class="math inline">\(g\)</span> and <span class="math inline">\(p\)</span>, then we have <span class="math display">\[I=\int_Dg(x)p(x)\,dx=E(g(x))\]</span> Then, we just need to take a large sample of <span class="math inline">\(g(x_i)\)</span> and find its expectation to estimate the integral. This is all analogous to what we did before in Example 0</p>
+<p>_<strong>exercise</strong>: Write a function that takes 3 arguments: <code>L</code> for length of needle, <code>T</code> for width of floor, and <code>N</code> for number of replicates; performs the above process; and returns the probability of a crossing.</p>
 </div>
 <div id="random-v.-pseudorandom" class="section level2">
 <h2>Random v. pseudorandom</h2>
