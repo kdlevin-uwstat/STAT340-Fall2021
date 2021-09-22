@@ -54,7 +54,7 @@ rgeom(n=10, p=0.25)
 ## Problem 2 (10 points): Making histograms
 
 One way to think about random variables is through their "distribution".
-To see what the distributions of different random variables look like, generate 1,000 copies of the random variables above and put them in a histogram:
+To see what the distributions of different random variables look like, generate 1,000 copies of some random variables (indicated in the code below) and put them in a histogram:
 
 ```{r}
 # Exponential:
