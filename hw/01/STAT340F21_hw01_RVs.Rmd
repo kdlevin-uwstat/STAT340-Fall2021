@@ -162,6 +162,7 @@ sum_of_poissons <- function( TODO: arguments! ) {
 # Your function should generate n independent normals with mean and sd given by mu and sigma, respectively, and return the maximum of those n normal RVs.
 # mu should default to 0 and sigma should default to 1. There should be no default value for n.
 # Hint: be careful of the case n=0. By convention, the maximum of an empty set (e.g., the maximum of a collection of zero normals) 
+# By convention, the maximum of an empty set is negative infinity.
 
 #TODO: define the function max_of_normals.
 ```
