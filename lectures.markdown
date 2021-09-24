@@ -11,5 +11,6 @@ permalink: /lectures/
 
 <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/02/L02_randomvariables.html">Lecture 2: Random Variables, Probability and Models</a> (September 10, 13) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/02/L02_randomvariables.Rmd">Rmd file</a>
 
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/03/L03_monte-carlo.html">Lecture 3: Monte Carlo methods</a> (September 17)
+<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/03/L03_monte-carlo.html">Lecture 3: Monte Carlo methods</a> (September 17, 20, 22)
 
+<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/04/L04_testing.html">Lecture 4: Testing (Part 1)</a> (September 22, 24)

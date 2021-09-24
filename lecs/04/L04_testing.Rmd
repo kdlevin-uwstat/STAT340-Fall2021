@@ -1,0 +1,299 @@
+
+---
+title: "Testing"
+output: html_document
+---
+
+```{r,echo=F}
+knitr::opts_chunk$set(cache=T,message=F,warning=F)
+```
+
+[link to source](L04_testing.Rmd)
+
+Recall the "hot hands" example from the Monte Carlo section. How did we meaningfully determine if the player did or did not have hot hands in that example?
+
+First, we **assumed throws were identical and independent**. Then we noted that under this assumption, we can make certain predictions about the data. In particular, we noted that this assumption implied that the sequence of throws was unimportant. Thus, the **throws can be arbitrarily shuffled without changing any statistical properties** of the data. Then, it was fairly easy to generate new, randomly shuffled versions (i.e. ***permutations***) of the data and compare a particular property of the original data v. the permuted data.
+
+What we did may seem fairly ad-hoc, however this actually closely follows the standard procedure used in testing called the **Neyman-Pearson framework**
+
+## Neyman-Pearson framework (logic of statistical testing)
+
+_(below notes taken from Karl Rohe)_
+
+The above example is a hypothesis testing problem.  Here is the outline for how we do these problems:   
+
+1. Specify a "null" model where "nothing is going on" in the experiment and the results of the experiment should be ignored.  In particular, you will need a way to simulate the process under this null model.
+2. Come up with a test statistic that can be computed from your simulated data as $S$.  Identify the types of values of $S$ that are (i) surprising under the null and (ii) expected in your observed data. Usually, this is values of $S$ that are large, or small,  or both (i.e. a "two-sided test").
+3. Collect data from the real world.  Use this data to compute $s$.  State the event that is surprising, e.g. $S\ge s$, $S\le s$, or $S \in \text{Surprising Set}$, where the surprising set is defined with $s$ (e.g. in two-sided tests).
+4. Use Monte Carlo simulation to compute $P(S \ge s)$, $P(S \le s)$, or $P(S \in \text{Surprising Set})$.
+
+In this process, we combine our understanding of the world, our data, and our model.  With all three, we make statistical inference.   
+
+The above logic performs a Monte Carlo simulation under a hypothesized reality.  Suppose that you observe a statistic $s$.  Using a simulation of hypothesized reality, we can simulate a random variable $S$ that we *imagine* as mimicking $s$ under the null. Using Monte Carlo, we can compute (approximate) $P(S \ge s)$ or $P(S\le s)$ (i.e. one-sided tests) or any other comparison that seems reasonable given the circumstances (e.g. two-sided tests, etc).  If the null model is unlikely to generate a value equal to $s$, or more extreme, then we reject the null hypothesis.
+
+If you have learned a little bit about hypothesis testing before this class, then the above logic might look very strange.  However, if scientists had "electronic computers" when they first started doing statistics, then this is exactly what they would have done and it is exactly what you would have been taught.  However, when us humans started doing statistics, it was very hard to simulate lots of $S$ values.  So, we came up with mathematical formulas to approximate the above logic.  Those formulas are the things you might have previously learned.  Once you understand the logic above, I hope that you can return to those formulas and find a deeper understanding for them.  
+
+##  Example: Coin flips  
+
+A friend wants to gamble with you and proposes a coin flip game.  Before playing the game with her, you want to ensure whether the coin is fair.  
+
+
+#### Suppose you have the patience to flip it 1000 times and it comes up heads 54\% of the time.  Do you think the coin is fair?  
+
+Let's follow the logic above...
+
+1) If we are going to use null hypothesis testing to address this problem, then the null model for the coin is that it is a fair coin.  
+\[\mbox{H_0: Each coin flip comes up heads independently, with probability 1/2.}\]
+2) Let $X$ denote the proportion of flips that are heads. The types of values that would be surprising are values away from 1/2.  So, to make our life easier we could define $S = X - 1/2$.
+
+```{r}
+library(purrr)
+simulate_S = function(){
+  
+  lots_of_random_variables = rbernoulli(n = 1000, p = 1/2)
+  X = mean(lots_of_random_variables)
+  
+  ## or, you could write:
+  # X = rbinom(n = 1, size = 1000, prob = 1/2) / 1000
+  
+  S = X - 1/2
+  return(S)
+}
+```
+
+Then, we would find large values of $S$ to be surprising; large and positive **or** large and negative.  This is a 
+"two-sided test". 
+
+3) The problem gives us that $x = .54$ and $s= .54 - .5 = .04$; notice that this is lower case $x$ and $s$ because it is the data we've observed.  So, the "surprising event" is 
+\[\{\mbox{Either } S \ge .04 \ \mbox{ or }  \ S \le -.04\}= \{|S| > .04\}\]
+
+```{r}
+check_if_S_in_surprising_set = function(S){
+  return(abs(S) >= .04)
+}
+```
+
+4) Use Monte Carlo simulation to compute 
+$$P(S \ge .04 \ \mbox{ or }  \ S \le -.04) = P(|S| \ge .04)...$$ 
+
+```{r cache = T}
+library(dplyr)
+r = 10000
+monte_carlo = data.frame(replicate = 1:r, 
+                         S = rep(NA,r), 
+                         S_in_suprising_set = rep(NA, r)) 
+for(i in 1:r){
+  monte_carlo$S[i] = simulate_S()
+  monte_carlo$S_in_suprising_set[i] = check_if_S_in_surprising_set(monte_carlo$S[i])
+ }
+monte_carlo = as_tibble(monte_carlo)
+monte_carlo %>% summarise(mean(S_in_suprising_set))
+```
+
+So, if the coin were fair, this would happen only about 1\% of the time. So, I would say that what we've observed (54\% heads) is pretty surprising!  
+
+#### What if the coin came up heads 52\% of the time out of 1000 flips?  
+
+What has changed in the logic above?  
+
+Here is the simulation...
+
+```{r cache = T}
+check_if_S_in_surprising_set = function(S){
+  return(abs(S) >= .02)  # why .02????
+}
+library(dplyr)
+r = 10000
+monte_carlo = data.frame(replicate = 1:r, 
+                         S = rep(NA,r), 
+                         S_in_suprising_set = rep(NA, r)) 
+for(i in 1:r){
+  monte_carlo$S[i] = simulate_S()
+  monte_carlo$S_in_suprising_set[i] = check_if_S_in_surprising_set(monte_carlo$S[i])
+ }
+monte_carlo = as_tibble(monte_carlo)
+monte_carlo %>% summarise(mean(S_in_suprising_set))
+```
+
+So, if the coin were fair, then roughly 20\% of experiments would create something at least as surprising as 52\% heads.  I don't think this is that surprising.  Does this mean that the coin is fair?  No.  It means that we don't have enough evidence to suggest it is unfair.  That is, we don't "accept the null hypothsis (fair coin)". We never "accept" the null hypothesis.  
+
+#### What if the coin came up heads 52\% of the time out of 10000 flips (instead of 1000)?
+
+
+What has changed in the logic above?  
+
+Compared to the previous question, we have the same proportion (52\%), but 10 times as may samples. 
+
+Here is the simulation...
+
+```{r cache = T}
+simulate_S = function(){
+  
+  lots_of_random_variables = rbernoulli(n = 10000, p = 1/2)
+  X = mean(lots_of_random_variables)
+  
+  ## or, you could write:
+  # X = rbinom(n = 1, size = 10000, prob = 1/2) / 10000
+  
+  S = X - 1/2
+  return(S)
+}
+r = 10000
+monte_carlo = data.frame(replicate = 1:r, 
+                         S = rep(NA,r), 
+                         S_in_suprising_set = rep(NA, r)) 
+for(i in 1:r){
+  monte_carlo$S[i] = simulate_S()
+  monte_carlo$S_in_suprising_set[i] = check_if_S_in_surprising_set(monte_carlo$S[i])
+ }
+monte_carlo = as_tibble(monte_carlo)
+monte_carlo %>% summarise(mean(S_in_suprising_set))
+```
+
+Ten times more samples makes 52\%, 1000 times less likely!  Whoa.  
+
+#### How many times would you need to flip the coin to be certain that it is fair?
+
+Discuss...  What is a more productive variation on this question?
+
+
+## Example: Car deaths
+
+In 2018,  39,404 people in the US died in car accidents.  In 2019, it was 38,800.  So, it went down by roughly 1.8%. Is this a difference that could have happened by chance?  Or, is this difference "statistically significant"?
+
+Follow the logic of statistical testing above.
+
+1) What is a statistical model for $D_{2018}, D_{2019}$, the number of people that die in the US in car accidents in 2018 and 2019, such that they have the same distribution? These are counts of things.  So, I would propose Poisson.  To embed the notion of "no statistical difference between 2018 and 2019", they should have the same rate parameter $\lambda$.  We will set $\lambda$ to be the average of the two observed values (this is our best guess)... $39,102 = (38,800+39,404)/2$.  Then,
+
+$H_0: D_{2018}, D_{2019}$ are independent and identically distributed Poisson($\lambda = 39,102$)
+
+2) As a test statistic, I propose that we use "the percent difference"
+
+$S = \frac{D_{2018} - D_{2019}}{D_{2018}}.$
+
+Notice that under the null hypothesis, $S$ is going to take values around zero.
+I think we should use a "two-sided test", meaning that we will reject if the absolute value of $S$ (i.e. $|S|$) is big. (Why two-sided? Well, if the number was going up, people would also have a strong reaction.  So, whether $S$ is large and positive or large and negative, we would take either as providing evidence against the null hypothesis.)  So, we will want to evaluate
+
+$P(|S| > |s|)$
+
+3) We have our data, $d_{2018} = 39,404$ and $d_{2019} = 38,800$.  So, 
+
+$s = \frac{d_{2019} - d_{2018}}{d_{2018}}\approx -1.5\%$
+
+```{r}
+s = (38800-39404)/(39404)
+s
+```
+
+4) 
+
+```{r}
+library(tidyverse)
+
+# First, write a function to simulate S
+simulate_S = function(){
+  D2018 = rpois(1,39102)
+  D2019 = rpois(1,39102)
+  S = (D2019-D2018)/(D2018)
+  return(S)
+}
+# Second, write a function to evaluate whether S \in A.
+check_if_S_in_A = function(S){
+  return(abs(S) > abs(s))
+}
+# Now, we are going to do it lots of times.  
+# Let's arrange the simulations in a data.frame with three columns
+r = 10000
+monte_carlo = data.frame(replicate = 1:r, 
+                         S = rep(NA,r), 
+                         S_in_A = rep(NA, r)) 
+for(i in 1:r){
+  # monte_carlo$S[i] = simulate_S()
+  # monte_carlo$S_in_A[i] = check_if_S_in_A(monte_carlo$X[i])
+ 
+# I'm going to use the alterative way...
+ monte_carlo[i,2] = simulate_S()
+ monte_carlo[i,3] = check_if_S_in_A(monte_carlo[i,2])
+}
+monte_carlo = as_tibble(monte_carlo)
+monte_carlo %>% summarise(mean(S_in_A))
+```
+
+
+```{r}
+monte_carlo %>% ggplot(aes(x = S)) + geom_histogram()
+```
+
+<!-- ## Example: Odd Birthdays  -->
+
+<!-- In the logic above, it looks very clear... steps 1, 2, 3, 4.  This is an ideal.  Often times, it is more iterative, back-and-forth.  For example, it might look like this... -->
+
+<!-- January 1 is an odd date, because 1 is odd.  What percentage of students are born on odd dates?  Given that half of the counting numbers are odd, let's test the null hypothesis -->
+<!-- $H_0: \mbox{half of students have odd birthdays}$ -->
+<!-- by collecting some data. For example, the data that I imagine observing could look like this: -->
+
+<!-- ```{r} -->
+<!-- # enter the data: -->
+<!-- odd = 20 -->
+<!-- even = 15 -->
+<!-- proportionOdd = odd/(odd+even) -->
+<!-- proportionOdd -->
+<!-- ``` -->
+
+<!-- The proportion have odd birthdays will be our test statistic $S$. -->
+
+<!-- In class, we will collect some real data. It might look like we are ready to do that now.  However, the fundamental thing from steps 1 and 2 is that we are able to simulate $S$ under the null hypothesis.   -->
+
+<!-- How would we do that? The null hypothesis does not really create a statistical model for data we observe. We will need to clarify it...   -->
+
+<!-- Perhaps we think the code below can clarify our statistical model (step 2 before step 1?).  Well, it certainly expresses the null/imagined model **exactly**. -->
+
+<!-- ```{r} -->
+<!-- library(purrr) -->
+<!-- simulate_S = function(){ -->
+<!--   which_birthdays_are_odd = rbernoulli(n = 35, p = .5)   # why 35?  why .5? -->
+<!--   oddBirthdays = sum(which_birthdays_are_odd) -->
+<!--   proportionOdd = oddBirthdays/35 -->
+<!--   S = proportionOdd -->
+<!--   # # rbernoulli comes from purrr.  -->
+<!--   # # if you prefer very concise code -->
+<!--   # # you could write: -->
+<!--   # X = rbinom(n = 1,size = 35,prob = .5)/35 -->
+<!--   #  note that this concise code doesn't depend on purrr  -->
+<!--   return(S) -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- This simulation model actually makes another modeling assumption that we haven't discussed! It is one of the most important assumptions in all of statistics *and it is always hidden*. It's an assumption that we always need to talk about in the context of statistical testing and p-values. In the long tradition of hiding the discussion of this assumption, you will need to find it in this chapter.   -->
+
+
+<!-- In our model (i.e. in our imagination), we can generate lots of simulated/imagined data sets that have the same sample size as our observed data.  Then, we are going to Monte Carlo (yes, it is now a verb) with $S$ = `proportionOdd` and $A =$ ? to compute $P(S ?)$. -->
+
+
+<!-- In the end, we will have data.  We want to know something about the world that generated that data. This is inference ("going up").  To do *statistical inference* we need a statistical model and we are going to do what Jordan calls *reductio ad unlikely* (be sure to read the excerpt from Jordan's book).  In this example, the steps of the logic are all jumbled up.  Sometimes, when you are still finding your way, this is what it looks like.  -->
+
+
+<!-- **Statistical Independence** -->
+<!-- In order to generate more than one birthday, the code above "simply generates 35 birthdays".  The assumption is inside of that. -->
+
+<!-- This implicitly models the birthdays as "independent".  This means that if you know some set of the birthdays, you are not able to predict predict anything about the other birthdays. For this example, in the real world, I would call this a "reasonable assumption that is definitely wrong".  Why is the assumption wrong?  Why is it still reasonable? -->
+
+## Finally: some more terminology
+
+See below table:
+
+||Reject H0|Not Reject H0|
+|---|---|---|
+|H0 True|Type I Error ($\alpha$)|Correct|
+|H0 False| Correct | Type II Error ($\beta$)|
+
+If the null is true and we do not reject it, or if the null is false and we reject it, we have done the right thing. If the null is true and we reject it, we have made the wrong conclusion. We say we have made a Type I error, or an $\alpha$ error. We also call $\alpha$ the probability of a Type I error, which can be expressed as follows:
+$$\alpha= P(\text{Reject}~H_0|H_0~\text{true})$$
+
+If the null is false and we do not reject it, we have also made the wrong conclusion. We say we have made
+a Type II error, or a $\beta$ error. We also call $\beta$ the probability of a Type II error, which can be expressed as
+follows:
+$$\beta = P(\text{Not reject}~H_0|H_0~\text{false})$$
+
+Very closely related to $\beta$ is power:
+$$Power = 1-\beta= P(\text{Reject}~H_0|H_0~\text{false})$$
