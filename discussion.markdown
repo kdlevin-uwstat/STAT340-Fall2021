@@ -9,6 +9,5 @@ permalink: /discussion/
 
  - [Discussion 01](01/ds01.html)
  - [Discussion 02](02/ds02.html)
-
-
+ - [Discussion 03](03/ds03.html)
 
