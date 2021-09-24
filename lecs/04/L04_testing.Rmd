@@ -278,8 +278,22 @@ In order to generate more than one birthday, the code above "simply generates 35
 
 This implicitly models the birthdays as "independent".  This means that if you know some set of the birthdays, you are not able to predict predict anything about the other birthdays. For this example, in the real world, I would call this a "reasonable assumption that is definitely wrong".  Why is the assumption wrong?  Why is it still reasonable?
 
+## Finally: some more terminology
 
-## Power: the probability that you reject the null hypothesis
+See below table:
 
-If you think the percentage of odd birthdays is greater than 50%, roughly what would that number be?  How many samples would you need to see this difference?  Note that "seeing a difference" is random!  Even if there is a difference, sometimes you won't see it due to random chance. The probability that we detect the difference is called the [power](https://en.wikipedia.org/wiki/Power_(statistics)) of the test. These ideas are important when you are designing an experiment; you want to make sure that your experiment succeeds!   How many samples would we need, in order to make the power in the Odd Birthdays experiment at least 80%?  Do some simulations!
+||Reject H0|Not Reject H0|
+|---|---|---|
+|H0 True|Type I Error ($\alpha$)|Correct|
+|H0 False| Correct | Type II Error ($\beta$)|
 
+If the null is true and we do not reject it, or if the null is false and we reject it, we have done the right thing. If the null is true and we reject it, we have made the wrong conclusion. We say we have made a Type I error, or an $\alpha$ error. We also call $\alpha$ the probability of a Type I error, which can be expressed as follows:
+$$\alpha= P(\text{Reject}~H_0|H_0~\text{true})$$
+
+If the null is false and we do not reject it, we have also made the wrong conclusion. We say we have made
+a Type II error, or a $\beta$ error. We also call $\beta$ the probability of a Type II error, which can be expressed as
+follows:
+$$\beta = P(\text{Not reject}~H_0|H_0~\text{false})$$
+
+Very closely related to $\beta$ is power:
+$$Power = 1-\beta= P(\text{Reject}~H_0|H_0~\text{false})$$

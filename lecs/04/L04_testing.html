@@ -390,9 +390,33 @@ simulate_S = function(){
 <p><strong>Statistical Independence</strong> In order to generate more than one birthday, the code above “simply generates 35 birthdays”. The assumption is inside of that.</p>
 <p>This implicitly models the birthdays as “independent”. This means that if you know some set of the birthdays, you are not able to predict predict anything about the other birthdays. For this example, in the real world, I would call this a “reasonable assumption that is definitely wrong”. Why is the assumption wrong? Why is it still reasonable?</p>
 </div>
-<div id="power-the-probability-that-you-reject-the-null-hypothesis" class="section level2">
-<h2>Power: the probability that you reject the null hypothesis</h2>
-<p>If you think the percentage of odd birthdays is greater than 50%, roughly what would that number be? How many samples would you need to see this difference? Note that “seeing a difference” is random! Even if there is a difference, sometimes you won’t see it due to random chance. The probability that we detect the difference is called the <a href="https://en.wikipedia.org/wiki/Power_(statistics)">power</a> of the test. These ideas are important when you are designing an experiment; you want to make sure that your experiment succeeds! How many samples would we need, in order to make the power in the Odd Birthdays experiment at least 80%? Do some simulations!</p>
+<div id="finally-some-more-terminology" class="section level2">
+<h2>Finally: some more terminology</h2>
+<p>See below table:</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Reject H0</th>
+<th>Not Reject H0</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>H0 True</td>
+<td>Type I Error (<span class="math inline">\(\alpha\)</span>)</td>
+<td>Correct</td>
+</tr>
+<tr class="even">
+<td>H0 False</td>
+<td>Correct</td>
+<td>Type II Error (<span class="math inline">\(\beta\)</span>)</td>
+</tr>
+</tbody>
+</table>
+<p>If the null is true and we do not reject it, or if the null is false and we reject it, we have done the right thing. If the null is true and we reject it, we have made the wrong conclusion. We say we have made a Type I error, or an <span class="math inline">\(\alpha\)</span> error. We also call <span class="math inline">\(\alpha\)</span> the probability of a Type I error, which can be expressed as follows: <span class="math display">\[\alpha= P(\text{Reject}~H_0|H_0~\text{true})\]</span></p>
+<p>If the null is false and we do not reject it, we have also made the wrong conclusion. We say we have made a Type II error, or a <span class="math inline">\(\beta\)</span> error. We also call <span class="math inline">\(\beta\)</span> the probability of a Type II error, which can be expressed as follows: <span class="math display">\[\beta = P(\text{Not reject}~H_0|H_0~\text{false})\]</span></p>
+<p>Very closely related to <span class="math inline">\(\beta\)</span> is power: <span class="math display">\[Power = 1-\beta= P(\text{Reject}~H_0|H_0~\text{false})\]</span></p>
 </div>
 
 
