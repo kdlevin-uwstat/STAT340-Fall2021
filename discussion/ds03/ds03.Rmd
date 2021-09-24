@@ -1,0 +1,208 @@
+
+---
+title:  "STAT340: Discussion 3: Hypothesis Testing"
+documentclass: article
+classoption: letterpaper
+output:
+  html_document:
+    highlight: tango
+    fig_caption: false
+---
+
+<style>
+table{width:50%!important;margin-left:auto!important;margin-right:auto!important;}
+ol[style*="decimal"]>li{margin-top:40px!important;}
+</style>
+
+```{r setup, include=FALSE}
+# check packages installed
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(knitr,tidyverse)
+
+knitr::opts_chunk$set(tidy=FALSE,strip.white=FALSE,fig.align="center",comment=" #")
+options(width=120)
+```
+
+<br/>
+
+[link to source](ds03.Rmd)
+
+## XKCD comic
+
+<center><a href="https://xkcd.com/539/"><img id="comic" src="https://imgs.xkcd.com/comics/boyfriend.png" title="... okay, but because you said that, we're breaking up."></a></center>
+
+---
+
+## Exercises
+
+You can do these exercises individually, but we recommend you work on them in a small group. Complete all exercises.
+
+---
+
+### 1. Gender gap in chess
+
+Due to myriad complex biological factors (e.g. [higher average height](https://doi.org/10.1002/ajpa.1330530314), [higher skeletal muscle mass](https://doi.org/10.1152/jappl.2000.89.1.81), [larger lung sizes](https://dx.doi.org/10.1016%2Fj.tem.2007.08.003), etc.. just to name a few), there continues to be a [_significant gender gap_](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3761733) in performance in most sports at the top competitive level.
+
+The same gender gap also exists in [games like chess](https://theconversation.com/whats-behind-the-gender-imbalance-in-top-level-chess-150637) where it is less clear why this difference exists. Does the discrepancy mean that men are actually better at chess than women?
+
+Dr. Wei Ji Ma refuted this idea in a [**recent article**](https://en.chessbase.com/post/what-gender-gap-in-chess), arguing that _**participation level largely accounts for the observed differences**_ in ratings of top chess players. Since women are so underrepresented in chess (between $5\%$ and $15\%$ depending on inclusion criteria (location, rating, age, etc.)), there is just simply a much lower chance of having female players who are as good as the top male players (similar to how in a longer sequence of coin flips, there are just more chances of having longer runs than in a shorter sequence).
+
+Using official [ELO rating](https://en.wikipedia.org/wiki/Elo_rating_system) data for Indian players obtained from [FIDE](https://en.wikipedia.org/wiki/FIDE) (the international governing body for chess), he performed a **permutation test** that showed participation level _**can indeed largely account for the observed gender gap**_. For this exercise, you will reproduce his results.
+
+
+a. _**Download**_ a (slightly preprocessed) [data frame of the current FIDE standard (tournament) format ELO ratings](chess.csv.gz). Import it normally using `read_csv` (`.csv.gz` just means it's a [csv that was compressed](https://www.rdocumentation.org/packages/R.utils/versions/1.9.6/topics/gzip) to save space; _you can ignore this_ since most functions in _R will automagically decompress and read them_, so no extra work needed), and check it was correctly read by inspecting the first few rows with `head()`.
+
+```{r}
+# DO THIS: uncomment the lines below and complete them
+# 
+# ratings.standard = read_csv(...)
+# head(...)
+```
+
+
+b. Ma points out junior players (**born on or after 2000**) may have unreliable ratings. _**Remove these players**_ from the data frame. Also _**remove non-Indian**_ players, since we are trying to replicate his results.
+  
+   Then, _**make a density plot**_ of players' ratings, showing the **male and female players as separate curves** in the same plot window. Do they look very different?
+
+```{r}
+# DO THIS: uncomment lines below and complete them
+# note & can be used to filter 2 criteria (bday and country)
+# 
+# ratings.standard.in = ratings.standard %>% 
+#   filter(... & ...)
+# 
+# ggplot(ratings.standard.in, aes(x=... , color=...)) + geom_density()
+
+# don't forget to add appropriate title/axes!!
+```
+
+
+c. _**Make a table**_ showing the number of players, mean rating, and highest rating for each sex. (**Hint:** this can be easily done in one `dplyr` step; use `group_by` followed by a `summarise` with 3 values).
+  
+   What percent of these non-junior Indian players are women? How many points lower is the rating of the top female Indian player than the top male?
+
+```{r}
+# DO THIS: uncomment the lines below and complete them
+# 
+# ratings.standard.in %>% 
+#   group_by(...) %>% 
+#   summarise(num  = ... ,  # for help, see dplyr.tidyverse.org/reference/n.html
+#             mean = ... ,
+#             max  = ... )
+```
+
+
+d. Let the **null hypothesis** be that there is no actual gender gap in performance, i.e. that _**sex does not influence ratings**_. Assuming this is true, then we should be able to **permute** the sex column without affecting any observables.
+  
+   _**Write a function**_ `permutedMaxSexDiff(df,n)` that, given a data frame `df` and a number of iterations `n`, will for each iteration permute the players' sexes, recompute the difference in rating between the top male and top female players, and save the result to be returned.
+  
+   For efficiency (important in for loops), we implement this as **shuffling the ratings**, then computing $$- \max(\text{first $n_F$ elements of permuted ratings}) + \max(\text{rest of ratings vector})$$ where $n_F$ is the number of female players in the original data frame. Note **this strategy is equivalent** to permuting the player sexes and then computing the difference in each group (in both cases, we're just randomly choosing $n_F$ values as a group and comparing the maxes of both groups).
+
+```{r}
+# DO THIS: uncomment function below and complete
+# 
+# 
+# permutedMaxSexDiff = function(df,n){
+#   
+#   # preallocate vector of results
+#   diffs = rep(NA,n)
+#   
+#   # find number of players to draw in each iteration
+#   n.F = sum(df$Sex == "F")
+#   
+#   # start loop
+#   for(i in 1:n){
+#     
+#     # permute ratings
+#     permuted = sample(df$Rating)
+#     
+#     # find max of first n.F elements of vector
+#     max.F = ...?
+#     
+#     # find max of rest of vector
+#     max.M = ...?
+#     
+#     # find difference in max ratings and save in results vector
+#     diffs[i] = ...?
+#   }
+#   
+#   # return results vector
+#   return(diffs)
+# }
+```
+
+
+e. Now, _**run the function**_ with at least $N=1000$ iterations (can you do $10,000$?) and visualize the results by _**making a density plot**_. Add a vertical line to denote the gender gap in the actual population of non-junior Indian chess players (top male rating - top female rating).
+  
+   Compute a $p$-value for your test (**hint:** if you do enough iterations, this should be roughly between 0.6 and 0.7). Is this result what you expect to observe under the null hypothesis? Are your results consistent with Ma's results?
+
+```{r}
+# DO THIS: uncomment the following lines and complete them
+# 
+# # run the function
+# diffs = permutedMaxSexDiff(ratings.standard.in, ...?)
+# 
+# # use enframe to turn vector into data frame for plotting
+# diffs %>% enframe(name=NULL,value="diff") %>%
+#   ggplot(aes(...?)) + geom_density(adjust=2) + geom_vline(...?)
+# 
+# # compute p-value using mean(), this works since
+# # TRUE is numerically treated as 1 and FALSE as 0, and
+# # mean is just sum of elements divided by length
+# pval = mean(diffs >= ...?)
+```
+
+> _**REPLACE THIS TEXT WITH YOUR RESPONSE**_
+
+---
+
+### 2. Linear regression coefficient testing
+
+To demonstrate the incredible versatility of Monte Carlo methods, we have a second example using the topic of linear regression. (In the future you will see more examples than just permutation tests, but they are extremely well suited to hypothesis testing so we will continue using them for now).
+
+This exercise is written to be simpler than the last one, and should take you less time.
+
+
+a. Inspect the built-in example data frame `mtcars` that's loaded with every R session. **Briefly read the help page** by running `?mtcars` if you are unfamiliar with the dataset.
+   
+   There are many variables but today we will just focus on **`mpg` (the response variable) and `drat` (a predictor variable)**. Make sure you know what these two variables refer to in real life (see help page!). Create a new data frame called `mtcars.small` with just these two columns and print this new data frame.
+
+```{r}
+### do 2.a here
+
+```
+
+
+b. Below, I've performed a simple linear regression, showing the coefficients. **Take note of the coefficient estimate for the slope $\beta_1$**, which represents the strength of the linear relationship between the two variables (**note** this is NOT the same as _significance_; [see this](https://en.wikipedia.org/wiki/Statistical_significance#Effect_size)).
+   
+   One way you can estimate the _significance_ of $\beta_1$ (that is usually taught) is to use the linear regression model formulation to derive a [$t$-statistic test](https://www.real-statistics.com/regression/hypothesis-testing-significance-regression-line-slope/) for the coefficients and then compare the estimates to the null hypothesis that $\beta_1=0$, i.e. there is NO linear relationship between the variables. This method has the advantage of possibly higher power at the cost of being more susceptible to heteroscedasticity (among other things).
+   
+   You can see from the output below the slope has an estimate of $7.678$ and a standard error of $1.507$. The $t$-statistic is then calculated as $(7.678-0)/1.507=5.096$ which has $n-2=30$ degrees of freedom where $n$ is the number of observations. We can then compute the $p$-value using `2*(1-pt(5.096,30))` and confirm **it matches the table**. (Don't worry if you don't fully understand this; however, note the process is almost identical to how you would perform an ordinary $t$-test!)
+
+```{r}
+# DO THIS: uncomment code below and take note of slope estimate
+# fist we run lm with mpg regressed on drat,
+# data=mtcars.small means use columns from this data frame,
+# then run coef() function to extract coefficients from model
+# 
+# summary(lm(mpg ~ drat, data=mtcars.small))$coefficients
+# 2*(1-pt(5.096042,30))
+```
+
+
+c. Another way you can estimate the significance of $\beta_1$ under the null hypothesis of $\beta_1=0$ is by (you guessed it!) permuting the coordinates! If indeed $\beta_1=0$, then permuting the $x$ coordinates (so they get assigned randomly to the $y$ coordinates) should have no effect (since $\beta_1=0$ implies the relationship is actually a flat line).
+   
+   Write a function that performs $n$ iterations of the following:
+   
+   i. Randomly permute the $x$ coordinates (`drat` values).
+   ii. Run linear regression using `lm`.
+   iii. Save the estimate for the slope of each iteration to be returned.
+   
+   Run your function with at least $N=1000$ (can you get it to $10,000$ or even higher?). What is the $p$-value you get from this method?
+   
+   - **Note:** If the method in part b. is accurate and the $p$-value is on the order of $10^{-5}$, you may need $10^5=100,000$ iterations to see a single case where the permuted slope is equal to or greater than in absolute value to the actual slope, so if you run a lower $N$ and don't see a single case, that's ok, it just means the $p$-value is so small that your simulation size cannot detect it.
+
+```{r}
+### do 2.c here
+
+```
