@@ -1,6 +1,6 @@
 
 ---
-title: "Testing (part 1)"
+title: "Testing"
 output: html_document
 ---
 
@@ -32,6 +32,129 @@ In this process, we combine our understanding of the world, our data, and our mo
 The above logic performs a Monte Carlo simulation under a hypothesized reality.  Suppose that you observe a statistic $s$.  Using a simulation of hypothesized reality, we can simulate a random variable $S$ that we *imagine* as mimicking $s$ under the null. Using Monte Carlo, we can compute (approximate) $P(S \ge s)$ or $P(S\le s)$ (i.e. one-sided tests) or any other comparison that seems reasonable given the circumstances (e.g. two-sided tests, etc).  If the null model is unlikely to generate a value equal to $s$, or more extreme, then we reject the null hypothesis.
 
 If you have learned a little bit about hypothesis testing before this class, then the above logic might look very strange.  However, if scientists had "electronic computers" when they first started doing statistics, then this is exactly what they would have done and it is exactly what you would have been taught.  However, when us humans started doing statistics, it was very hard to simulate lots of $S$ values.  So, we came up with mathematical formulas to approximate the above logic.  Those formulas are the things you might have previously learned.  Once you understand the logic above, I hope that you can return to those formulas and find a deeper understanding for them.  
+
+##  Example: Coin flips  
+
+A friend wants to gamble with you and proposes a coin flip game.  Before playing the game with her, you want to ensure whether the coin is fair.  
+
+
+#### Suppose you have the patience to flip it 1000 times and it comes up heads 54\% of the time.  Do you think the coin is fair?  
+
+Let's follow the logic above...
+
+1) If we are going to use null hypothesis testing to address this problem, then the null model for the coin is that it is a fair coin.  
+\[\mbox{H_0: Each coin flip comes up heads independently, with probability 1/2.}\]
+2) Let $X$ denote the proportion of flips that are heads. The types of values that would be surprising are values away from 1/2.  So, to make our life easier we could define $S = X - 1/2$.
+
+```{r}
+library(purrr)
+simulate_S = function(){
+  
+  lots_of_random_variables = rbernoulli(n = 1000, p = 1/2)
+  X = mean(lots_of_random_variables)
+  
+  ## or, you could write:
+  # X = rbinom(n = 1, size = 1000, prob = 1/2) / 1000
+  
+  S = X - 1/2
+  return(S)
+}
+```
+
+Then, we would find large values of $S$ to be surprising; large and positive **or** large and negative.  This is a 
+"two-sided test". 
+
+3) The problem gives us that $x = .54$ and $s= .54 - .5 = .04$; notice that this is lower case $x$ and $s$ because it is the data we've observed.  So, the "surprising event" is 
+\[\{\mbox{Either } S \ge .04 \ \mbox{ or }  \ S \le -.04\}= \{|S| > .04\}\]
+
+```{r}
+check_if_S_in_surprising_set = function(S){
+  return(abs(S) >= .04)
+}
+```
+
+4) Use Monte Carlo simulation to compute 
+$$P(S \ge .04 \ \mbox{ or }  \ S \le -.04) = P(|S| \ge .04)...$$ 
+
+```{r cache = T}
+library(dplyr)
+r = 10000
+monte_carlo = data.frame(replicate = 1:r, 
+                         S = rep(NA,r), 
+                         S_in_suprising_set = rep(NA, r)) 
+for(i in 1:r){
+  monte_carlo$S[i] = simulate_S()
+  monte_carlo$S_in_suprising_set[i] = check_if_S_in_surprising_set(monte_carlo$S[i])
+ }
+monte_carlo = as_tibble(monte_carlo)
+monte_carlo %>% summarise(mean(S_in_suprising_set))
+```
+
+So, if the coin were fair, this would happen only about 1\% of the time. So, I would say that what we've observed (54\% heads) is pretty surprising!  
+
+#### What if the coin came up heads 52\% of the time out of 1000 flips?  
+
+What has changed in the logic above?  
+
+Here is the simulation...
+
+```{r cache = T}
+check_if_S_in_surprising_set = function(S){
+  return(abs(S) >= .02)  # why .02????
+}
+library(dplyr)
+r = 10000
+monte_carlo = data.frame(replicate = 1:r, 
+                         S = rep(NA,r), 
+                         S_in_suprising_set = rep(NA, r)) 
+for(i in 1:r){
+  monte_carlo$S[i] = simulate_S()
+  monte_carlo$S_in_suprising_set[i] = check_if_S_in_surprising_set(monte_carlo$S[i])
+ }
+monte_carlo = as_tibble(monte_carlo)
+monte_carlo %>% summarise(mean(S_in_suprising_set))
+```
+
+So, if the coin were fair, then roughly 20\% of experiments would create something at least as surprising as 52\% heads.  I don't think this is that surprising.  Does this mean that the coin is fair?  No.  It means that we don't have enough evidence to suggest it is unfair.  That is, we don't "accept the null hypothsis (fair coin)". We never "accept" the null hypothesis.  
+
+#### What if the coin came up heads 52\% of the time out of 10000 flips (instead of 1000)?
+
+
+What has changed in the logic above?  
+
+Compared to the previous question, we have the same proportion (52\%), but 10 times as may samples. 
+
+Here is the simulation...
+
+```{r cache = T}
+simulate_S = function(){
+  
+  lots_of_random_variables = rbernoulli(n = 10000, p = 1/2)
+  X = mean(lots_of_random_variables)
+  
+  ## or, you could write:
+  # X = rbinom(n = 1, size = 10000, prob = 1/2) / 10000
+  
+  S = X - 1/2
+  return(S)
+}
+r = 10000
+monte_carlo = data.frame(replicate = 1:r, 
+                         S = rep(NA,r), 
+                         S_in_suprising_set = rep(NA, r)) 
+for(i in 1:r){
+  monte_carlo$S[i] = simulate_S()
+  monte_carlo$S_in_suprising_set[i] = check_if_S_in_surprising_set(monte_carlo$S[i])
+ }
+monte_carlo = as_tibble(monte_carlo)
+monte_carlo %>% summarise(mean(S_in_suprising_set))
+```
+
+Ten times more samples makes 52\%, 1000 times less likely!  Whoa.  
+
+#### How many times would you need to flip the coin to be certain that it is fair?
+
+Discuss...  What is a more productive variation on this question?
 
 
 ## Example: Car deaths
