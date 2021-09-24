@@ -224,59 +224,59 @@ monte_carlo %>% summarise(mean(S_in_A))
 monte_carlo %>% ggplot(aes(x = S)) + geom_histogram()
 ```
 
-## Example: Odd Birthdays 
+<!-- ## Example: Odd Birthdays  -->
 
-In the logic above, it looks very clear... steps 1, 2, 3, 4.  This is an ideal.  Often times, it is more iterative, back-and-forth.  For example, it might look like this...
+<!-- In the logic above, it looks very clear... steps 1, 2, 3, 4.  This is an ideal.  Often times, it is more iterative, back-and-forth.  For example, it might look like this... -->
 
-January 1 is an odd date, because 1 is odd.  What percentage of students are born on odd dates?  Given that half of the counting numbers are odd, let's test the null hypothesis
-$H_0: \mbox{half of students have odd birthdays}$
-by collecting some data. For example, the data that I imagine observing could look like this:
+<!-- January 1 is an odd date, because 1 is odd.  What percentage of students are born on odd dates?  Given that half of the counting numbers are odd, let's test the null hypothesis -->
+<!-- $H_0: \mbox{half of students have odd birthdays}$ -->
+<!-- by collecting some data. For example, the data that I imagine observing could look like this: -->
 
-```{r}
-# enter the data:
-odd = 20
-even = 15
-proportionOdd = odd/(odd+even)
-proportionOdd
-```
+<!-- ```{r} -->
+<!-- # enter the data: -->
+<!-- odd = 20 -->
+<!-- even = 15 -->
+<!-- proportionOdd = odd/(odd+even) -->
+<!-- proportionOdd -->
+<!-- ``` -->
 
-The proportion have odd birthdays will be our test statistic $S$.
+<!-- The proportion have odd birthdays will be our test statistic $S$. -->
 
-In class, we will collect some real data. It might look like we are ready to do that now.  However, the fundamental thing from steps 1 and 2 is that we are able to simulate $S$ under the null hypothesis.  
+<!-- In class, we will collect some real data. It might look like we are ready to do that now.  However, the fundamental thing from steps 1 and 2 is that we are able to simulate $S$ under the null hypothesis.   -->
 
-How would we do that? The null hypothesis does not really create a statistical model for data we observe. We will need to clarify it...  
+<!-- How would we do that? The null hypothesis does not really create a statistical model for data we observe. We will need to clarify it...   -->
 
-Perhaps we think the code below can clarify our statistical model (step 2 before step 1?).  Well, it certainly expresses the null/imagined model **exactly**.
+<!-- Perhaps we think the code below can clarify our statistical model (step 2 before step 1?).  Well, it certainly expresses the null/imagined model **exactly**. -->
 
-```{r}
-library(purrr)
-simulate_S = function(){
-  which_birthdays_are_odd = rbernoulli(n = 35, p = .5)   # why 35?  why .5?
-  oddBirthdays = sum(which_birthdays_are_odd)
-  proportionOdd = oddBirthdays/35
-  S = proportionOdd
-  # # rbernoulli comes from purrr. 
-  # # if you prefer very concise code
-  # # you could write:
-  # X = rbinom(n = 1,size = 35,prob = .5)/35
-  #  note that this concise code doesn't depend on purrr 
-  return(S)
-}
-```
+<!-- ```{r} -->
+<!-- library(purrr) -->
+<!-- simulate_S = function(){ -->
+<!--   which_birthdays_are_odd = rbernoulli(n = 35, p = .5)   # why 35?  why .5? -->
+<!--   oddBirthdays = sum(which_birthdays_are_odd) -->
+<!--   proportionOdd = oddBirthdays/35 -->
+<!--   S = proportionOdd -->
+<!--   # # rbernoulli comes from purrr.  -->
+<!--   # # if you prefer very concise code -->
+<!--   # # you could write: -->
+<!--   # X = rbinom(n = 1,size = 35,prob = .5)/35 -->
+<!--   #  note that this concise code doesn't depend on purrr  -->
+<!--   return(S) -->
+<!-- } -->
+<!-- ``` -->
 
-This simulation model actually makes another modeling assumption that we haven't discussed! It is one of the most important assumptions in all of statistics *and it is always hidden*. It's an assumption that we always need to talk about in the context of statistical testing and p-values. In the long tradition of hiding the discussion of this assumption, you will need to find it in this chapter.  
-
-
-In our model (i.e. in our imagination), we can generate lots of simulated/imagined data sets that have the same sample size as our observed data.  Then, we are going to Monte Carlo (yes, it is now a verb) with $S$ = `proportionOdd` and $A =$ ? to compute $P(S ?)$.
+<!-- This simulation model actually makes another modeling assumption that we haven't discussed! It is one of the most important assumptions in all of statistics *and it is always hidden*. It's an assumption that we always need to talk about in the context of statistical testing and p-values. In the long tradition of hiding the discussion of this assumption, you will need to find it in this chapter.   -->
 
 
-In the end, we will have data.  We want to know something about the world that generated that data. This is inference ("going up").  To do *statistical inference* we need a statistical model and we are going to do what Jordan calls *reductio ad unlikely* (be sure to read the excerpt from Jordan's book).  In this example, the steps of the logic are all jumbled up.  Sometimes, when you are still finding your way, this is what it looks like. 
+<!-- In our model (i.e. in our imagination), we can generate lots of simulated/imagined data sets that have the same sample size as our observed data.  Then, we are going to Monte Carlo (yes, it is now a verb) with $S$ = `proportionOdd` and $A =$ ? to compute $P(S ?)$. -->
 
 
-**Statistical Independence**
-In order to generate more than one birthday, the code above "simply generates 35 birthdays".  The assumption is inside of that.
+<!-- In the end, we will have data.  We want to know something about the world that generated that data. This is inference ("going up").  To do *statistical inference* we need a statistical model and we are going to do what Jordan calls *reductio ad unlikely* (be sure to read the excerpt from Jordan's book).  In this example, the steps of the logic are all jumbled up.  Sometimes, when you are still finding your way, this is what it looks like.  -->
 
-This implicitly models the birthdays as "independent".  This means that if you know some set of the birthdays, you are not able to predict predict anything about the other birthdays. For this example, in the real world, I would call this a "reasonable assumption that is definitely wrong".  Why is the assumption wrong?  Why is it still reasonable?
+
+<!-- **Statistical Independence** -->
+<!-- In order to generate more than one birthday, the code above "simply generates 35 birthdays".  The assumption is inside of that. -->
+
+<!-- This implicitly models the birthdays as "independent".  This means that if you know some set of the birthdays, you are not able to predict predict anything about the other birthdays. For this example, in the real world, I would call this a "reasonable assumption that is definitely wrong".  Why is the assumption wrong?  Why is it still reasonable? -->
 
 ## Finally: some more terminology
 
