@@ -6,6 +6,8 @@ date: "September 2021"
 output: html_document
 ---
 
+[link to source](hw01.Rmd)
+
 ## Problem 1 (10 points): Generating random variables
 
 Let's se R to generate a single Binomial, Geometric, and Poisson random variable.
