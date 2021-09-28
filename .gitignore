@@ -1,3 +1,5 @@
 **/*.aux
 **/*.log
 **/*.out
+**/*_cache
+hw/**/*solution*
