@@ -1,5 +1,9 @@
 **/*.aux
 **/*.log
 **/*.out
+<<<<<<< HEAD
 **/*_cache
 hw/**/*solution*
+=======
+**/*_solutions\.*
+>>>>>>> c47220cf0d1ca833571a199802493807c2c87a5e

@@ -180,6 +180,105 @@ for some $g$ and $p$, then we have
 $$I=\int_Dg(x)p(x)\,dx=E(g(x))$$
 Then, we just need to take a large sample of $g(x_i)$ and find its expectation to estimate the integral. This is all analogous to what we did before in Example 0
 
+## Example 1: Buffon's needle
+
+Asked by Georges-Louis Leclerc, Comte de Buffon in 1700s:
+
+> Suppose we have a floor made of parallel strips of wood, each the same width, and we drop a needle onto the floor. What is the probability that the needle will lie across a line between two strips? ^[https://en.wikipedia.org/wiki/Buffon%27s_needle_problem]
+
+This question is actually not that hard to derive, but we can very easily solve it using MC!
+
+Suppose we again take the same square from the previous example with endpoints at $(\pm1,\pm1)$ and divide it into 2 halves: the top half is one strip of wood, and the bottom half is another strip of wood.
+
+```{r,fig.height=4,fig.width=4}
+library(ggplot2)
+ggplot() + geom_rect(aes(xmin=-1,xmax=1,ymin=0,ymax=1),fill="grey30",color=NA) + 
+  geom_rect(aes(xmin=-1,xmax=1,ymin=-1,ymax=0),fill="grey80",color=NA) +
+  scale_x_continuous(expand=c(0,0)) + scale_y_continuous(expand=c(0,0))
+```
+
+We start by randomly sampling a point somewhere in this square, then we randomly pick an angle and extend the ends of the needle each 0.5 units of length. Finally, we check if the needle crosses any of the lines $y=0,\pm1$.
+
+Let's start by plotting our function to make sure it's doing what we want.
+
+```{r}
+# define needle dropping function
+needle = function(){
+  
+  # randomly pick center of needle
+  xy = runif(2,-1,1)
+  
+  # randomly pick angle
+  angle = runif(1,0,pi)
+  
+  # calculate delta x and delta y of ends from center
+  # we are defining the angle using the standard definition
+  # (going counterclockwise from positive x axis)
+  dx = cos(angle)*0.5
+  dy = sin(angle)*0.5
+  
+  # calculate coordinates of end points
+  # note in this way, our dy is always positive, so p1 is always higher than p2
+  # this will be useful later for checking crossing
+  p1 = setNames(xy + c(dx,dy), c("p1x","p1y"))
+  p2 = setNames(xy - c(dx,dy), c("p2x","p2y"))
+  
+  # return endpoints
+  return(c(p1,p2))
+}
+
+# plot a few needle drops
+
+# create dummy variable for ldply
+library(plyr)
+ndl = function(i) needle()
+needles = ldply(1:10,ndl)
+
+ggplot() + geom_rect(aes(xmin=-1,xmax=1,ymin=0,ymax=1),fill="grey30",color=NA) + 
+  geom_rect(aes(xmin=-1,xmax=1,ymin=-1,ymax=0),fill="grey80",color=NA) + 
+  geom_segment(data=needles,mapping=aes(x=p1x,y=p1y,xend=p2x,yend=p2y), color="red",size=1.5)
+```
+
+Now, we run our function a large number of times and check how many cross the lines.
+
+```{r, cache=T}
+# set size
+N = 1000000
+
+# create vector to count crossings
+mc.cross = 0
+
+# run function
+for(i in 1:N){
+  
+  # drop a needle
+  points = needle()
+  p1y = points['p1y']
+  p2y = points['p2y']
+  
+  # check if p1 and p2 are on opposite sides of a line
+  if( (p1y > -1 & p2y < -1) || (p1y > 0 & p2y < 0) || (p1y > 1 & p2y < 1) ){
+    mc.cross = mc.cross+1
+  }
+}
+```
+
+Now, we have the solution to our problem.
+
+```{r}
+mc.cross/N
+```
+
+We can compare with the correct answer and see how close we are.
+
+```{r}
+true.cross = 2/pi
+cat(sprintf(" true value: %.5f \n  our value: %.5f \n%% deviation: %.3f%%",
+            true.cross,mc.cross/N,abs(true.cross-mc.cross/N)/true.cross*100))
+```
+
+_**exercise**: Write a function that takes 3 arguments: `L` for length of needle, `T` for width of floor, and `N` for number of replicates; performs the above process; and returns the probability of a crossing.
+
 ## Random v. pseudorandom
 
 For MC, it's important to have a good source of random numbers whose distribution is precisely known. This is a **surprisingly difficult** problem. There are ways of generating (as far as we can tell), almost perfectly uniformly random numbers, such as measuring [atmospheric noise](https://www.random.org/randomness/), measuring [radioactive decay](https://www.techrepublic.com/article/computer-scientists-derive-truly-random-numbers-using-two-source-extractors/), or even [lava lamps](https://en.wikipedia.org/wiki/Lavarand) ([used by Cloudflare](https://www.cloudflare.com/learning/ssl/lava-lamp-encryption/)). These sources are generally considered capable of producing the most **truly random** numbers.
@@ -192,7 +291,7 @@ Some resources if you want to learn more:
 <iframe width="432" height="240" src="https://www.youtube.com/embed/89EX1NF7eHQ" frameborder="0" allowfullscreen data-external="1"></iframe>
 <br/><br/>
 
-## Example 1: sampling from arbitrary CDF
+## Example 2: sampling from arbitrary CDF
 
 Onto more examples! Here's a much more interesting one: given an arbitrary CDF (or PDF, which you can obviously just integrate to get the associated CDF), how can you draw samples from it?
 
@@ -249,7 +348,7 @@ plot(sort(x.chi.mc),qchisq(ppoints(10000,1),12))
 
 As you can see, the above method produces the exact same output as the built in `rchisq( )` generator.
 
-## Example 2: hot hands
+## Example 3: hot hands
 
 For the next example, let's do something slightly more complicated.
 

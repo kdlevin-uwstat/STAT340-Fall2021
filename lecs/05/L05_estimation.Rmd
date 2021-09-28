@@ -1,0 +1,793 @@
+
+---
+title: "STAT340 Lecture 05: Estimation"
+author: "Keith Levin and Bi Cheng Wu"
+date: "September 2021"
+output: html_document
+---
+
+These notes will discuss the problem of *estimation*. They are based in part on notes by [Karl Rohe](http://pages.stat.wisc.edu/~karlrohe/index.html).
+
+Estimation refers to the task of giving a value or range of values that are a "good guess" about some quantity out there in the world.
+
+Often this quantity is the parameter of a model, for example, the mean of a distribution.
+
+__Example:__ Human heights
+
+Let's think back to our human height example.
+Recall that our goal was to determine the average human height, $\mu$.
+
+We said that it was infeasible to measure the height of every human, but we could measure the heights $X_1,X_2,\dots,X_n$ of a few thousand humans and report the mean of that sample (the "sample mean"), $\hat{\mu} = n^{-1} \sum_{i=1}^n X_i$, where $n$ is the number of humans in our sample.
+
+Thus, we might report the value of $\hat{\mu}$ (say, 172.1 cm) and state that "We estimate the average human height to be $172.1$ cm."
+
+Facts from probability theory (specifically, the law of large numbers, which we'll talk about soon) state that this sample mean $\hat{\mu}$ is close to the true population mean $\mu$.
+
+But how close is close?
+
+In addition to our estimate $\hat{\mu}$, we would like to have some kind of notion of how certain we are in our estimate.
+
+In another direction, if we say that "we estimate the average human height to be 172.1 cm", we might also be willing to say that $172.3$ cm or $171.8$ cm are also reasonable estimates.
+
+If you have seen *confidence intervals* (CIs) before, both of these ideas should sound somewhat familiar.
+    
+## Learning objectives
+
+After this lesson, you will be able to
+
+* Explain the statistical task of estimation and give examples of real-world estimation problems.
+* Define the concept of a *statistic* and explain how/why we view a statistic as a random quantity.
+* Explain the difference between an estimate and an estimator.
+* Explain the concept of confidence intervals and apply one or more methods to build a confidence interval for a given estimation problem.
+
+## Statistical Estimation
+
+__Example:__ Universal Widgets of Madison
+
+The Universal Widgets of Madison (UW-Madison) company manufactures [widgets](https://en.wiktionary.org/wiki/widget\">widgets)
+Their widget machine produces widgets all day.
+
+Unfortunately, making widgets is hard, and not all widgets produced by the machine are functional.
+
+Due to randomness in the manufacturing process, a widget is functional with probability $p$, and dysfunctional with probability $1-p$.
+
+UW ships widgets in batches, and they want to ensure that every batch ships with at least 5 functional widgets in it.
+
+Thus, we have two (related) questions to answer:
+
+1. What is a good estimate for $p$?
+2. How many widgets should be in a batch to ensure that (with high probability) a batch ships with at least $5$ functional widgets in it?
+
+We will focus on the first of these two questions, but in the course of these lectures you will see how to address the second question quite easily.
+
+__Step 1: Specify a model__
+
+All statistics starts with choosing a model for the world, so let's start there.
+
+What would be a good model for this setting?
+
+Since the outcome of interest here is binary (i.e., it is a yes/no or success/failure outcome), it is natural to model whether a widget is functional or dysfunctional as a Bernoulli random variable with success probability $p$.
+
+That is, we model each widget as being functional with probability $p$ and dysfunctional with probability $1-p$.
+
+Let us assume for now that widgets are __independent__, so that the fact that one widget is functional or not has no bearing on whether or not another widget is functional.
+
+So, we will make the following assumption: *widgets are functional independently with probability $p$*.
+
+Let's implement this model in R.
+
+```{r}
+n <- 200; # We will examine n=200 widgets
+p <- 0.8; # Suppose that 80% of widgets are functional
+functional_widgets <- rbinom(1, size=n, p); # Draw one sample of widgets.
+cat(functional_widgets); # How many of the n widgets are functional?
+```
+
+__Question:__ why is the binomial distribution the right thing to do, here?
+
+__Step 2: Estimating $p$__
+
+Suppose that we can collect data by observing widgets $1,2,\dots,n$.
+
+Let's denote our data by $X_1,X_2,\dots,X_n$, where $X_i=1$ if the $i$-th widget is functional and $X_i=0$ if it is dysfunctional.
+
+If we examine enough widgets, we know that we can estimate $p$ very well (again, we'll see that more formally soon).
+
+More specifically, the more widgets we examine, the more accurate our estimate will be.
+
+Unfortunately, widgets aren't free.
+So, here are two questions:
+
+1. If we are willing to tolerate an error of, say, 2%, how many widgets do we need to examine?
+2. Suppose we examine 1000 widgets and observe that 882 of them are functional, so we estimate $p$ to be $882/1000 = 0.882$. How close is this to the true value of $p$?
+
+Question 1 is a question about *experiment design*.
+Specifically, it is a question about *sample size*.
+
+How many observations (i.e., how much data) do we need to collect in order to get a certain level of estimation accuracy?
+
+Question 2 is a question about the accuracy of a specific estimate, namely the sample mean.
+
+We will see below that these two questions are, in a certain sense, two sides of the same coin.
+    
+So, to start, what do we mean when we say that our estimate will be close to $p$?
+
+Let's see this in action with a simulation.
+
+```{r}
+n <- 200; p <- 0.8; # Still n=200 widgets, 80% of which are functional.
+functional_widgets <- rbinom(1000, size=n, p); # Same experiment as above, but repeat it 1000 times.
+hist( functional_widgets/n ); # Plot estimates of p, #functional/#observations
+abline( v=p, col='red', lwd=4 ); # Vertical line at the true value of p
+```
+
+Let's pause and make sure we understand the experiment we just ran.
+
+Each data point in the above plot corresponds to a single instance of our experiment, in which we generate $n=200$ widgets, each of which is functional with probability $p=0.8$ (indicated in red in the plot).
+
+To estimate $p$, we count up what fraction of the $200$ widgets in our are functional.
+
+Since the data are random, our estimate of $p$ is also random.
+The histogram above illustrates that randomness.
+
+Sometimes our estimate is a bit higher than the true value of $p$, sometimes it is lower.
+But as we can see, most of the time our estimate is close to $p$.
+
+## Aside: Estimators, Estimates and Statistics
+
+Before continuing our investigation of widgets, let's take a moment to discuss things in more generality.
+
+Suppose we have our data $X_1,X_2,\dots,X_n$.
+If we performed another experiment, we would presumably see a different set of values for our data.
+
+That is reflected in the fact that we model the $X_1,X_2,\dots,X_n$ to be random variables.
+
+So, in our example above, $X_i$ is a Bernoulli random variable representing whether or not widget $i$ is functional.
+
+We might observe that six our of ten widgets are functional, but that could be entirely due to chance-- on another day we might observe that seven out of ten are functional, or four out of ten.
+
+We typically summarize our data with a *statistic*, say $S(X_1,X_2,\dots,X_n)$.
+
+In our example above, we summarized the data with the sample mean $S(X_1,X_2,\dots,X_n) = n^{-1} \sum_{i=1}^n X_i$, but this statistic $S$ can be any function of your data.
+You'll explore some in your homework.
+
+We usually choose the function $S$ to be so that $S(X_1,X_2,\dots,X_n)$ will tend to be close to a quantity of interest.
+
+We call this function $S$ an *estimator* for that quantity of interest.
+    
+In our widgets example, we are interested in estimating the probability $p$, and we chose our statistic to be the sample mean of the data (i.e., the fraction of functional widgets).
+That is, we used the sample mean as our estimator for $p$.
+
+We call a particular value of this estimator (i.e., $S$ applied to a particular choice of data) an *estimate*.
+
+So, if we observe 162 functional widgets in our sample of $n=200$ widgets, our estimate of $p$ is $162/200 = 0.81$.
+
+Now, since the data $X_1,X_2,\dots,X_n$ are random, and $S = S(X_1,X_2,\dots,X_n)$ is a function of the data, that means that our statistic $S$ is also random.
+
+So, in just the same way that $X_i$ has a distribution (e.g., $X_i \sim \operatorname{Bernoulli}(p)$ above), $S$ also has a distribution.
+
+We usually call this distribution the *sampling distribution*, because it describes the behavior of our statistic, which is a function of the sample.
+
+## More data, better accuracy
+
+So, let's turn back to the first of our two questions: If we are willing to tolerate an error of, say, 2%, how many widgets do we need to examine?
+
+Well, let's start by looking again at the histogram of estimates from 1000 different runs with $n=200$ and $p=0.8$.
+
+```{r}
+n <- 200; p <- 0.8; # Still n=200 widgets, 80% of which are functional.
+functional_widgets <- rbinom(1000, size=n, p); # Same experiment as above, but repeat it 1000 times.
+hist( functional_widgets/n ); # Plot the estimates of p, #functional/#observations
+abline( v=p, col='red', lwd=4 ); # Vertical line at the true value of p
+```
+
+Most of the estimates are between $0.72$ and $0.88$.
+
+Let's try increasing $n$ from $n=200$ to $n=400$. That is, let's try gathering more data.
+
+```{r}
+n <- 400; p <- 0.8; # n=400 widgets instead of 200, but still 80% are functional.
+functional_widgets <- rbinom(1000, size=n, p); # Repeat the experiment 1000 times.
+hist( functional_widgets/n ); # Plot the estimates of p, #functional/#observations
+abline( v=p, col='red', lwd=4 ); # Vertical line at the true value of p
+```
+
+If you compare this plot to the one above, you'll see that the values are more tightly concentrated about $p=0.8$.
+That's because we have more data.
+
+In fact, all right. Let's just display them both in one plot.
+
+```{r}
+p <- 0.8; # Still n=200 widgets, 80% of which are functional.
+functional_widgets_200 <- rbinom(1000, size=200, p);
+functional_widgets_400 <- rbinom(1000, size=400, p);
+# Put the data into a data frame to pass to ggplot2.
+phat <- c(functional_widgets_200/200, functional_widgets_400/400 ); # "p hat", i.e., estimate of p.
+n <- c( rep(200, 1000), rep(400, 1000) );
+df <- data.frame( 'n'=as.factor(n), 'phat'=phat);
+
+library(ggplot2)
+pp <- ggplot( df, aes(x=phat, color=n, fill=n));
+pp <- pp + geom_histogram( aes(), position='identity', alpha=0.5, binwidth=0.01);
+pp <- pp + geom_vline( xintercept=p, color='red');
+pp
+```
+
+Looking at the plot, we see that the $n=400$ estimates tend to cluster more tightly around the true value of $p$ ($p=0.8$, indicated in red) compared with the $n=200$ estimates.
+
+Gathering more data (i.e., observing more widgets) gives us a more accurate (on average!) estimate of $p$.
+
+Just to drive this home, let's increase $n$ even more.
+
+```{r}
+p <- 0.8; # Still using 80% functional rate.
+
+widgets_100 <- rbinom(1000, size=100, p); # Note: there are "cleaner" ways to build this data frame,
+widgets_200 <- rbinom(1000, size=200, p); # but those ways are harder to understand on a first glance.
+widgets_400 <- rbinom(1000, size=400, p); # At this stage of your career, "clusmy but easy to read"
+widgets_800 <- rbinom(1000, size=800, p); # is better than "short but cryptic"
+
+# Put the data into a data frame to pass to ggplot2.
+phat <- c(widgets_100/100, widgets_200/200, widgets_400/400, widgets_800/800 ); # "p hat", i.e., estimate of p.
+n <- c( rep(100, 1000), rep(200, 1000), rep(400, 1000), rep(800, 1000) );
+df <- data.frame( 'n'=as.factor(n), 'phat'=phat);
+pp <- ggplot( df, aes(x=phat, color=n ));
+pp <- pp + geom_density( size=2 ); # Using a smoothed density instead of histogram for easy comparison
+pp <- pp + geom_vline( xintercept=p, color='red', size=2);
+pp
+```
+
+So more data (increasing $n$) gives us a more accurate estimate (i.e., makes our estimate concentrate closer to the true $p$).
+
+But we started out asking about how to *guarantee* that our estimate is close to $p$.
+
+There is a problem with this, though.
+Our data is random, and sometimes we get unlucky.
+So we can never guarantee that our estimate is close.
+
+Let's take a short aside to make this more precise.
+
+## Aside: probability of "bad" events
+
+We saw in our simulation above that our estimate $\hat{p}$ of $p$ was usually close to $p$, and making $n$ bigger (i.e., collecting more data) meant that $\hat{p}$ was closer to $p$, on average.
+
+Can we guarantee that, if $n$ is big enough, then $\hat{p}$ will be arbitrarily close to $p$?
+
+Unfortunately, the answer is no.
+
+To see what this is the case, let's consider a very specific event: the event that all $n$ of our widgets are functional.
+
+When this happens, our estimate of $p$ is
+$$
+\hat{p} = n^{-1} \sum_{i=1}^n X_i = n^{-1} n = 1.
+$$
+
+This event has probability
+$$
+\Pr[ X_1=1, X_2=1, \dots, X_n = 1 ]
+= \prod_{i=1}^n \Pr[ X_i = 1 ] = p^n.
+$$
+Now, unless $p=0$, this means that with some positive probability, the event $X_1=X_2=\cdots=X_n=1$ occurs.
+
+That is, no matter how large $n$ is, there is still some small but positive probability that our estimate is simply $\hat{p} =1$.
+
+What that means is that we can never give a 100% guarantee that our estimate is arbitrarily close to the true value of $p$.
+
+Now, with that said, notice that as $n$ gets larger, the probability of this bad "all widgets are functional" event gets smaller and smaller.
+
+Roughly speaking, this is what we mean when we say that more data gives us a more accurate estimate
+
+The probability that our estimate is far from the true value of $p$ gets smaller and smaller as we increase $n$.
+
+The law of large numbers, which we will discuss soon, will let us say something both stronger and more precise than this, but the above example is a good illustration of the core idea.
+
+## More data, better accuracy part II
+
+Instead of trying to do more math, let's try and code up an experiment to get a handle on this.
+
+Let's simplify things a bit by writing a function that will generate a random copy of $S(X_1,X_2,\dots,X_n)$ given a choice of $n$ and the true value of $p$.
+    
+```{r}
+simulate_S <- function( n, p ) {
+    functional_widgets <- rbinom(1, size=n, prob=p);
+    return(functional_widgets/n); # Our statistic is the fraction of the n widgets that are functional.
+    }
+
+simulate_S(200, 0.8) # Simulate n=200 widgets with functional probability p=0.8
+```
+
+Now, we want to use this function to estimate the probability that our estimate is within $0.02$ of $p$.
+
+That is, we want to estimate
+$$
+\Pr\left[ S \in (p-0.02, p+0.02) \right]
+=
+\Pr\left[ | S(X_1,X_2,\dots,X_n) - p | < 0.02 \right]
+$$
+We *could* explicitly compute this number.
+After all, we know how to compute the probability distribution of the Bernoulli and/or Binomial distributions.
+
+But instead, let's just use Monte Carlo estimation.
+    
+```{r}
+# Here's a function that will take our estimate S (= phat) and check if it is within 0.02 of p or not.
+check_if_S_is_good <- function( S, p ) {
+    return( abs(S-p) < 0.02)
+}
+
+# Now, let's simulate a lot of instances of our experiment
+# and count up what fraction of the time our estimate is "good"
+N_MC <- 2000; # Repeat the experiment 2000 times. N_MC = "number of Monte Carlo (MC) replicates"
+n <- 200; p <- 0.8; # Still using n=200, p=0.8
+
+library(tidyverse) # We're going to use some tidyverse tools to make things easier to read
+
+# Create a data frame to store the outcome of our experiment.
+# We are initially filling entries with NAs, which we will fill in as we run.
+monte_carlo <- data.frame(replicate = 1:N_MC, S = rep(NA, N_MC), S_good = rep(NA, N_MC));
+
+# Let's just check what the data frame looks like before we populate it.
+head( monte_carlo )
+```
+
+```{r}
+# For each replicate, run the experiment and record results.
+# We want to keep track of the value of S and whether or not S was good.
+for(i in 1:N_MC){
+    monte_carlo$S[i] <- simulate_S( n, p );
+    monte_carlo$S_good[i] <- check_if_S_is_good(monte_carlo$S[i], p)
+}
+
+monte_carlo <- as_tibble(monte_carlo);
+monte_carlo %>% summarise(`P(|S - p| < .02)` <- mean(S_good) )
+```
+
+So about half of our estimates were within 0.02 of $p$.
+
+Our experiments above suggested that we could improve this by increasing $n$, so let's try that.
+
+```{r}
+# This is the exact same setup except we're changing n from 200 to 400.
+N_MC <- 2000; n <- 400; p <- 0.8; # Still using p=0.8 and 2000 Monte Carlo trials.
+
+# Note that we don't really have to create the data frame again.
+# We could, if we wanted, just overwrite it, but this is a good habit to be in
+# to make sure we don't accidentally "reuse" old data.
+monte_carlo <- data.frame(replicate = 1:N_MC, S = rep(NA, N_MC), S_good = rep(NA, N_MC));
+
+for(i in 1:N_MC){
+  monte_carlo$S[i] <- simulate_S( n, p );
+  monte_carlo$S_good[i] <- check_if_S_is_good(monte_carlo$S[i], p)
+}
+
+monte_carlo <- as_tibble(monte_carlo);
+monte_carlo %>% summarise(`P(|S - p| < .02)` <- mean(S_good));
+```
+
+That's an improvement! But still about 30% of the time we're going to be more than 0.02 away from $p$...
+
+```{r}
+# Just as a check, let's plot a histogram again.
+monte_carlo %>% ggplot(aes(x = S)) + geom_histogram(bins = 30) + geom_vline( xintercept=p, col='red' )
+```
+
+__Exercise:__ play around with $n$ in the above code to find how large our sample size has to be so that $\Pr[ |S-p| \le 0.02 ] \approx 0.95$.
+
+So we can never have a perfect guarantee that our estimate is within, say, $0.02$ of the truth.
+
+Instead, we have to settle for guarantees like "with probability 0.95, our estimate is within $0.02$ of the truth."
+
+This is the idea behind confidence intervals.
+
+## What are we trying to estimate?
+
+A lot of this discussion may feel a bit like hypothesis testing.
+
+But this is different. We are interested in
+
+1. Estimating $p$ and
+2. Knowing how good our estimate is (i.e., "how likely is it that we are within 0.02 of the truth?").
+
+Generally, once we compute the statistic $S$, we could just report it and be done with it.
+"We estimate $p$ to be $0.785$", and leave it at that.
+
+But this leaves open the question of how close our estimate is to the truth.
+
+If we knew $p$, like in the examples above, we could say how close we are, but we don't know $p$.
+
+So, how can we say how close we are without knowing the true value of the thing we are estimating?
+    
+Above, $p$ was defined as a parameter in a model. However, often times, “parameters” can be imagined as something different. Here are two other ways:
+
+* Imagine getting an infinite amount of data. What would be the value of $S$ with an infinite amount of data?
+* Imagine repeating the whole experiment lots of different times and on experiment $i$ you created statistic $S_i$. What is the average of those statistics $S_1,S_2,\dots$?
+
+For most functions of the data $S$, these two values are the same thing (though the first one might be a bit easier to think about). 
+However, if they are different (and sometimes they are), it is the second one that we are actually going to use.
+That second value is in fact the expected value of the statistic, $\mathbb{E} S(X_1,X_2,\dots,X_n)$, which we will often shorten to just $\mathbb{E} S$, with it being understood that $S$ depends on the data $X_1,X_2,\dots,X_n$.
+
+__Example:__ The maximum of the $X_i$ is one statistic for which those two notions are not the same. So is the minimum. Why?
+
+So, to recap, here is the problem:
+
+* $S$ is a random variable.
+* We only observe one example of it, but we want to estimate $\mathbb{E} S$.
+
+## Point estimation: a good place to begin
+
+So, we want an estimate of $\mathbb{E} S$. Well, what better estimate than $S$ itself?
+
+This isn't an arbitrary decision-- there are good mathematical reasons behind this.
+
+We've mentioned the law of large numbers (LLN) a couple of times already this semester. Let's look at it a bit closer.
+
+The *weak law of large numbers* states that if $X_1,X_2,\dots$ are i.i.d. with mean $\mu$,
+then for any $\epsilon > 0$,
+$$
+\lim_{n \rightarrow \infty} \Pr\left[ \left| \frac{1}{n} \sum_{i=1}^n X_i - \mu \right| > \epsilon \right] = 0.
+$$
+Restating that in language from calculus class, for every $\epsilon > 0$ and every $\delta > 0$, there exists an $n_0$ such that if $n \ge n_0$, then
+
+$$
+\Pr\left[ \left| \frac{1}{n} \sum_{i=1}^n X_i - \mu \right| > \epsilon \right] \le \delta.
+$$
+
+Stated more simply, for any fixed $\epsilon > 0$, we can guarantee that the sample mean $\bar{X}$ is within $\epsilon$ of $\mu$ with arbitrarily high probability, so long as our sample size $n$ is large enough.
+
+It turns out that this can be extended to include more complicated functions than the sample mean.
+
+In later courses you'll see that so long as $S$ is a "nice" function of the data, then $S - \mathbb{E}S$ is small with high probability.
+
+__Note:__ the *strong* law of large numbers says something... stronger than this. But that's a matter for your theoretical statistics classes (or come to office hours and ask!).
+
+So we appeal to the law of large numbers to support our assumption that $S$ is close to $\mathbb{E} S$.
+
+But we said above that we also want to communicate how certain we are about this estimate.
+
+There's a problem there-- the law of large numbers doesn't tell us anything about how close $S$ is to $\mathbb{E} S$ for finite sample size $n$. It just says that if $n$ is suitably large, then the probability that $S$ is "far" from $\mathbb{E} S$ is arbitrarily small.
+
+This is the... limitation? of limit results (I'm so sorry).
+
+So, $S$ is close to $\mathbb{E} S$, but we don't know how close.
+
+The best we can do is to create an interval of values that is "usually right", in that it "usually" contains the true value of $\mathbb{E} S$.
+
+### Confidence intervals
+
+So what does it mean for an interval to be "usually right"?
+
+Suppose we observe a particular value for our statistic $S$.
+Remember, $S$ estimates $\mathbb{E} S$, its expected value.
+
+We would like to be able to give an interval of values about $S$ such that $\mathbb{E} S$ is (with some level of certainty, anyway), in that interval.
+
+$S = S(X_1,X_2,\dots,X_n)$ is a random variable, thus it has a distribution.
+
+* If we knew that distribution, we could compute $\mathbb{E} S$ exactly
+* Of course, in practice, we don't know that distribution
+
+But let's imagine for now that we knew the true distribution of $S$.
+
+For the sake of example (and easy math), let's say that $S$ is the sample mean of $n=25$ independent draws from $\operatorname{Normal}(\mu=1, \sigma=1)$.
+
+The true value of $\mathbb{E} S$ in this case is
+$$
+\newcommand{\E}{\mathbb{E}}
+\E S = \E \frac{1}{n} \sum_{i=1}^n X_i
+= \frac{1}{n} \sum_{i=1}^n \E X_i
+= \frac{1}{n} \sum_{i=1}^n \mu
+= \mu = 1,
+$$
+
+Where we have used the facts that
+
+1. $S$ is the sample mean
+2. The expectation operator is linear: $\mathbb{E} aX = a \mathbb{E} X$ and expectation of a sum is sum of expectations)
+3. $\mathbb{E} X_i = \mu$ (because $X_i \sim \operatorname{Normal}(1,1)$ for all $i$)
+
+In fact, in this case, we know the exact distribution of $S$.
+
+* $S$ is the mean of $n=25$ independent $\operatorname{Normal}(1,1)$ RVs
+* $S \sim \operatorname{Normal}(\mu=1,\sigma=1/\sqrt{n})$ (you'll prove this for yourself in a theory class in the future)
+* Plugging in $n=25$, $S \sim \operatorname{Normal}(\mu=1,\sigma=1/5)$
+
+Let's use R to compute the exact quantiles of this distribution.
+
+We do that with the function `qnorm`. Analogously to `rnorm` and `dnorm`, think "`q` for quantiles"
+```{r}
+# The first argument to qnorm is a vector of the quantiles we want (given as probabilities).
+# Asking for the 2.5% and 97.5% quantiles.
+qnorm( c(0.025, 0.975), mean=1, sd=1/5)
+```
+
+What this says is that if $Z \sim \operatorname{Normal}(\mu=1\sigma=1/5)$, then 2.5% of the time $Z$ will be less than $\approx 0.608$, and 97.5% of the time $Z$ will be less than $\approx 1.392$.
+
+Putting those facts together, we conclude that
+$$
+\Pr\left[ 0.608 \le S \le 1.392 \right] = 0.95.
+$$
+
+## Aside: wait, that wasn't a confidence interval!
+
+Now, if you've seen confidence intervals before, you might see a small problem with this.
+
+The definition of a $(1-\alpha)$-confidence interval for the parameter $\theta$ (for simplicity, just think of $\theta$ as the mean, $\mu$, here, or the probability $p$ from our widgets example, but it could be any quantity of interest) is
+
+* a data-dependent interval $C(X_1,X_2,\dots,X_n) = (L,U)$ 
+($L,U$ for "lower" and "upper"; they are functions of the data!),
+* with the property that when the data are drawn under the distribution with parameter $\theta$
+ (note: we write $\Pr[ \dots ; \theta]$ to drive home the fact that this is the probability under the model where $\theta$ is the true parameter),
+
+$$
+\Pr\left[ \theta \in C(X_1,X_2,\dots,X_n) ; \theta \right] = 1-\alpha.
+$$
+
+Do you see the issue?
+In our statements about $S$ above, all the randomness was in $S$, whereas here, all the randomness is in the interval $C$.
+
+__Why this discrepancy?__
+
+Well, the short answer is that when classical statistics (think Z-scores, confidence intervals, t-tests, etc) was invented, we didn't have fast, cheap computers.
+
+What we are aiming to teach you in this course is what (we think) people like Fisher, Pearson and Gossett (a.k.a. Student) would have done if they had laptops and access to cloud computing.
+
+Our goal here is to compute an interval that captures our level of uncertainty about our estimate.
+
+Roughly speaking, wider intervals will correspond to higher levels of uncertainty.
+
+There are many different ways to construct such intervals, each with its own interpretation.
+
+We'll see several examples this semester (in addition to the simulation-based approach we're taking today).
+If you're impatient to read more, [this Wikipedia article](https://en.wikipedia.org/wiki/Interval_estimation) is a good place to start.
+Any introductory statistics textbook will also have a good treatment of confidence intervals in particular, though I (Keith) especially like John Rice's book, *Mathematical Statistics and Data Analysis*.
+
+If you are already familiar with confidence intervals, you should be able to convince yourself (after meditating on this and the next few sections) that this "simulation-based" approach and the classical confidence interval are, in a sense, two sides of the same coin.
+
+Unfortunately, the details of that are beyond the scope of our course, but if you're taking a theoretical statistics course now or in the near future, keep it in mind!
+
+## Capturing uncertainty in our estimate
+
+So let's return to our computational example.
+Recall that
+
+* $S$ is the sample mean of $n=25$ independent draws from $\operatorname{Normal}(\mu=1, \sigma=1)$.
+* $\mathbb{E} S = \mu = 1$.
+* $S \sim \operatorname{Normal}(\mu=1,\sigma=1/5)$
+
+In our experiment above, we computed an exact interval, $C = (0.6080072, 1.3919928)$, such that with probability $0.95$, $S \in C$.
+
+How does that help us to express (un)certainty?
+
+Well, the standard deviation of $S$ is $\sigma/\sqrt{n}$.
+If we increase $n$, the standard deviation of $S$ decreases, and our resulting confidence interval gets narrower.
+
+For example, if $n=100$, then $S \sim \operatorname{Normal}(\mu=1,\sigma=1/10)$, and our quantiles become
+```{r}
+qnorm( c(0.025, 0.975), mean=1, sd=1/10)
+```
+
+Compare that with our interval $(0.6080072, 1.3919928)$ when $n=25$.
+
+This is in keeping with the fact that as we collect more data (i.e., observe more samples), we get more confident about our predictions.
+
+## Okay, but we don't know $\mathbb{E} S$
+
+We have been assuming above that we know the expectation of $S$, which is... well, never true in practice.
+
+Indeed, we are assuming that we know the full distribution of $S$, which is true even less often.
+
+*If we knew the true parameter* (i.e., $\theta = \mathbb{E} S$), we could generate data from the "true" distribution like above.
+
+In particular, we could see what data and/or what values of $S$ are "typical" for that value of the parameter $\theta$.
+
+Said another way, we pretend to believe that our estimated model is the truth and generate data from it.
+
+In essence, what we are doing is saying
+
+* Pretend for now that our estimated parameter is the truth
+* Generate data from our model with that parameter
+* Compute the statistic $S$ on that data.
+
+This gives us multiple replicates of our data under the setting where our observed value of $S$ is the truth.
+
+In a sense, these samples are values of our statistic that would be "reasonable" if the true parameter were equal to $s= S(x_1,x_2,\dots,x_n)$, where $x_1,x_2,\dots,x_n$ are our observed data.
+
+__Aside:__ this is a convention in statistics that upper-case letters denote random variables, while their lower-case equivalents denote the *observed value* of that random variable. So in this case, $X_1,X_2,\dots,X_n$ are the random variables observed in our sample, while $x_1,x_2,\dots,x_n$ would denote the specific values that they take on some particular draw of those variables.
+
+This is a tricky distinction at first, so don't worry if it takes some time to get used to!
+
+### Example: Intervals for the Poisson rate parameter
+
+Suppose that we have data $X_1,X_2,\dots,X_n$ drawn iid from a Poisson with unknown rate parameter $\lambda$, and our goal is to estimate $\lambda$.
+
+Since $\mathbb{E} X_i = \lambda$ for all $i=1,2,\dots,n$, a reasonable choice of estimator is the sample mean $\bar{X} = n^{-1} \sum_i X_i$.
+
+Indeed, the law of large numbers guarantees that $\bar{X}$ is close to $\lambda = \mathbb{E} X_1$ with high probability.
+
+Now, let's generate data from this model, this time imagining that we don't know the parameter $\lambda$.
+
+Instead, we'll estimate $\lambda$ from our data, and to get a "confidence interval" for $\lambda$, we will pretend that our estimate $\bar{X}$ is the truth and generate new copies of the data using $\lambda = \bar{X}$.
+
+```{r}
+n <- 80; # Sample size of our data
+lambda_true <- 2.718; # True (but unknown!) Poisson parameter
+
+data <- rpois(n=n, lambda=lambda_true);
+
+hist(data); # Always good to look at your data!
+```
+
+Now, let's get our estimate (just the sample mean!), pretend it's the true value of $\lambda$, and generate data.
+
+```{r}
+# Reminder: we say lambdahat to remind ourselves this is
+# an estimate of lambda.
+lambda_hat <- mean(data); # Sample mean is our estimate of lambda.
+
+# Generate data under the distribution where lambda_hat is the rate parameter.
+# To reiterate, we're pretending that our estimate is the truth and seeing what our data would look like.
+fake_data <- rpois(n=n, lambda=lambda_hat);
+
+hist(fake_data)
+```
+
+In our previous example, we worked out exactly what the distribution of our statistic was, because the math was easy.
+
+The math is a bit less easy now.
+We could, if we wanted to, work out the exact sampling distribution of the sample mean under the Poisson.
+
+Instead of doing all that annoying math, though, let's just use the computer.
+
+Again, here's the recipe:
+
+* Estimate our distribution from the data (we've done that with our sample mean `lambda_hat`)
+* Generate data from the distribution with parameter equal to our estimate (we just did that above)
+* Repeat the previous step many times, computing a new estimate on each new data sample. Each repetition gives us a replicate of our statistic, under the distribution where $\lambda = \texttt{lambda_hat}$.
+* We can use that to construct a confidence interval for $\lambda$, by looking at the quantiles of our sample.
+
+Let's implement that:
+```{r}
+# Reminder: sample size and true parameter
+n<- 80; lambda_true <- 2.718;
+data <- rpois( n=n, lambda=lambda_true);
+lambda_hat <- mean(data); # Just estimating this again to remind you
+
+Nrep <- 1000; # Number of repetitions (i.e., replicates)
+replicates <- rep(NA,Nrep); # We will store replicates of lambdahat here.
+for ( i in 1:Nrep) {
+  fake_data <- rpois(n=n, lambda=lambda_hat);
+  replicates[i] <- mean( fake_data );
+}
+
+# Now construct the confidence interval
+CI <- quantile( replicates, probs=c(0.025, 0.975) );
+cat(CI)
+```
+
+Most of the time, when we run the code above, we should find that $\lambda=2.718$ is inside of that interval.
+
+Sometimes, though, due to randomness in our data, the interval will not contain the true value of $\lambda$.
+
+Now, how often does that happen?
+Well, let's try creating lots of intervals like the one above and count how often our interval contains the true value of $\lambda$.
+
+First, we'll implement a function to run one instance of the experiment we just ran above.
+
+```{r}
+run_trial <- function(lambdatrue, n, Nrep) {
+  # Run one instance of our experiment above, wherein we
+  # 1) Generate data from Pois(lambda_true)
+  # 2) Estimate lambdahat from that data.
+  # 3) Repeatedly generate data from Pois(lambdahat)
+  # 4) Use those repetitions to get an interval.
+  # lambdatrue : the true lambda parameter for Poisson
+  # n : sample size for the data
+  # Nrep : repetitions to use when computing the interval
+  data <- rpois(n=n, lambda=lambdatrue);
+  lambdahat <- mean(data);
+  replicates <- rep(NA,Nrep); # We will store replicates of lambdahat here.
+  for ( i in 1:Nrep) {
+    fake_data <- rpois(n=n, lambda=lambdahat);
+    replicates[i] <- mean( fake_data );
+  }
+
+  # Now construct the confidence interval
+  # the names=FALSE tells R to return the quantiles, no header
+  CI <- quantile( replicates, probs=c(0.025, 0.975), names=FALSE );
+  return (CI[1] < lambdatrue) & (lambdatrue < CI[2])
+}
+
+```
+
+Now, let's try running the experiment lots of times by calling `run_trial(lambdatrue=2.718, n=80, Nrep=1000 )` lots of times.
+
+__Important note:__ This section of code might take a minute or two to run.
+Each time we call `run_trial`, we are generating `n` Poisson variables `Nrep` times.
+And here we are about to call `run_trial` many times (the variable is `Nexpt` below).
+So, in total, we're generating `n*Nrep*Nexpt` random variables, and random variables aren't cheap (think back to our discussion of randomness in our Monte Carlo lectures)!
+
+```{r}
+# NOTE: This section of code might take a minute or two to run!
+Nexpt <- 500; # Number of times to run the experiment
+expt_results <- rep(NA,Nexpt); # Vector to store results
+for (i in 1:Nexpt) {
+  expt_results[i] <- run_trial(lambdatrue=2.718, n=80, Nrep=1000)
+}
+# Count what fraction of the time we were correct.
+sum(expt_results)/length(expt_results)
+```
+
+The result *should* be about .95 (actually, it will usually be a bit higher than that, for reasons that we will hopefully have time to talk about later this semester, but will more likely have to wait for a later course).
+
+This is not a coincidence-- remember we chose the quantiles (0.025, 0.975) to mimic a 95% confidence interval.
+Our experiment shows that the intervals that we constructed above based on simulations are (approximately) 95% confidence intervals!
+
+In your discussion section, you'll get some practice with this framework, applying it to the widgets example from earlier in the lecture.
+
+The important takeaway is this: our goal in producing lots of replicates is to get a sense of what "reasonable" other values of our statistic might have been.
+
+## Confidence intervals another way: the CLT
+
+Now, how do we relate the above framework to the version of confidence intervals that you learned in your intro courses?
+
+(if you haven't seen confidence intervals before, then just nod along here!)
+
+The central limit theorem states that if $X_1,X_2,\dots$ are iid random variables with shared mean $\mu = \mathbb{E} X_1$ and variance $\sigma^2 = \operatorname{Var} X_1$, then as $n \rightarrow \infty$, the recentered, rescaled random variable
+$$
+\frac{ \frac{1}{n} \sum_{i=1}^n X_i - \mu }{ \sqrt{ \sigma^2 / n } }
+$$
+is well approximated by a standard normal.
+
+In your discussion section and your homework, you'll run some experiments to explore this phenomenon further.
+
+Specifically, what we mean by "well approximated" is that, letting $Z \sim \operatorname{Normal}(0,1)$, for all $t \in \mathbb{R}$,
+
+$$
+\lim_{n \rightarrow \infty} \Pr\left[ \frac{ \frac{1}{n} \sum_{i=1}^n X_i - \mu }{ \sqrt{\sigma^2/n} } \le t \right]
+= \Pr[ Z \le t ].
+$$
+
+__Aside:__ if you've seen *convergence in distribution* before, this should look familiar-- this says that the sample mean (after centering and scaling) converges in distribution to a standard normal.
+If you haven't seen convergence in distribution before, not to worry.
+It's just the technical name for the limit property in the equation above, and it won't be on an exam this semester.
+
+### Using the CLT to build a CI
+
+So the CLT says that the (recentered, rescaled) sample mean "looks like" a standard normal once $n$ is large enough.
+
+__Note:__ like the LLN, the CLT *doesn't* tell us how large is "large enough", but let's assume we're good and press on.
+
+Well, looking like the standard normal is good-- we know how to compute quantiles for the standard normal (cue flashback to Z-scores from your intro class...)!
+
+And that means we can compute (approximate!) quantiles for the (recentered, rescaled) sample mean,
+$$
+\frac{ \bar{X} - \mu }{ \sqrt{ \sigma^2 / n } },
+$$
+
+The basic idea is that we know our quantiles for the standard normal.
+
+For example, if $Z \sim \operatorname{Normal}(0,1)$, then
+$$
+0.95 = \Pr[ -1.96 \le Z \le 1.96 ]
+\approx \Pr\left[ -1.96 \le \frac{ \bar{X} - \mu }{ \sqrt{ \sigma^2 / n } } \le 1.96 \right].
+$$
+
+Rearranging terms inside that second probability,
+$$
+0.95
+\approx \Pr\left[ \bar{X} - 1.96 \sqrt{\sigma^2/n} \le \mu \le \bar{X} + 1.96 \sqrt{\sigma^2/n} \right]
+$$
+so $\bar{X} \pm 1.96 \sqrt{ \sigma^2/n}$ would be an (approximate) 95% CI for $\mu$ if only we knew $\sigma^2$.
+
+That's a pesky issue that we will ignore here, but you'll get to play around with estimating $\sigma^2$ in your homework.
+
+This confidence interval is only approximate, because it relies on the CLT, in much the same way as our simulation-based procedure above was only approximate!
+
+Now you know two completely different ways to construct confidence intervals!
+
+Unfortunately, which one is the "right one" is a tricky question. 
+
+Sometimes it's a question of which one is easier (i.e., requires less computer time and/or thinking time).
+
+Sometimes there are obvious reasons why one or the other will be more accurate than the other (e.g., because you know that the CLT is a good approximation even for small $n$ for the data distribution).
+
