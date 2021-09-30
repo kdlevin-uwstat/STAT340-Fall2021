@@ -1,4 +1,6 @@
 **/*.aux
 **/*.log
 **/*.out
-**/*_solutions\.*
+**/*_cache/
+**/*_files/
+hw/**/*solution*
