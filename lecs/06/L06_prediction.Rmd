@@ -96,13 +96,51 @@ You can also access key properties of the model using certain built in functions
 fitted(atlanta_lead_lm)
 
 # gets residuals (difference between actual y and fitted y)
-residuals(atlanta_lead_lm)
+residuals(atlanta_lead_lm)             # can also use resid()
 
 # gets coefficients of model
-coefficients(atlanta_lead_lm)
+coefs = coefficients(atlanta_lead_lm)  # can also use coef()
+coefs
 ```
 
+We can plot our model just to make sure it looks correct and appropriate.
 
+```{r}
+ggplot(atlanta_lead,aes(x=air.pb.metric.tons,y=aggr.assault.per.million)) + 
+  geom_point() + 
+  geom_abline(slope=coefs[2], intercept=coefs[1], color="red") + 
+  labs(x="Lead in air (metric tons)",
+       y="Aggravated assault rate (per million)",
+       title="Violent crime v. atmospheric lead (22 year lag)")
+```
+
+Note the summary tells us that our slope estimate is significant. This basically conducts a $t$-test to see if it's significantly different from 0. In this case it is. Note that this is strictly speaking **correlation, NOT causation**. However, it's a **very suspicious correlation** and warrants further studies and analysis. We can also get confidence intervals for our coefficients.    
+
+```{r}
+confint(atlanta_lead_lm, level=0.95)
+```
+
+At the very least, lead in air is **a useful predictor** for levels of violent crime 22 years later. For example, suppose tomorrow, a chemical company near Atlanta has an explosion, and some more lead is released into the atmosphere. New measurements of lead are found to be 1300 metric tons. What would you predict the approximate aggravated assault rate in 2043 to be?
+
+```{r}
+predict(atlanta_lead_lm, newdata=data.frame(air.pb.metric.tons=1300))
+```
+
+Suppose the lead factory continues to release more lead into the atmosphere, and next year, the levels are measured to be 2000 metric tons. Can we use our model to predict what aggravated assault rates in 2044 might look like?
+
+```{r}
+predict(atlanta_lead_lm, newdata=data.frame(air.pb.metric.tons=2000))
+```
+
+These predictions have to be treated more carefully, since they are out of the range of our data. They may be reliable, but they also may not. The reliability of a prediction usually decreases the further away it is from your data.
+
+<center><a href="https://xkcd.com/1007/"><img id="comic" src="https://imgs.xkcd.com/comics/sustainable.png" title="Though 100 years is longer than a lot of our resources."></a></center>
+
+
+## Classification example
+
+Example: logistic regression. Very similar to simple linear regression, but applied to predicting categories.    
+[ISLR chapter 4](http://pages.stat.wisc.edu/~karlrohe/ht/04-classification.pdf)
 
 
 
