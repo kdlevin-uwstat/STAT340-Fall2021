@@ -96,7 +96,8 @@ You can also access key properties of the model using certain built in functions
 fitted(atlanta_lead_lm)
 
 # gets residuals (difference between actual y and fitted y)
-residuals(atlanta_lead_lm)             # can also use resid()
+resids = residuals(atlanta_lead_lm)    # can also use resid()
+resids
 
 # gets coefficients of model
 coefs = coefficients(atlanta_lead_lm)  # can also use coef()
@@ -112,6 +113,14 @@ ggplot(atlanta_lead,aes(x=air.pb.metric.tons,y=aggr.assault.per.million)) +
   labs(x="Lead in air (metric tons)",
        y="Aggravated assault rate (per million)",
        title="Violent crime v. atmospheric lead (22 year lag)")
+```
+
+A good way of seeing if our model looks appropriate is by examining the residuals. Remember, we want to check if the residuals look normal, have mean 0, and have constant variance. Most of these looks pretty good; there's some change in the variance across the dataset, but it's not too large.
+
+```{r}
+par(mfrow=c(1,3))
+plot(atlanta_lead_lm,which=1:2,ask=F)
+hist(resids)
 ```
 
 Note the summary tells us that our slope estimate is significant. This basically conducts a $t$-test to see if it's significantly different from 0. In this case it is. Note that this is strictly speaking **correlation, NOT causation**. However, it's a **very suspicious correlation** and warrants further studies and analysis. We can also get confidence intervals for our coefficients.    
