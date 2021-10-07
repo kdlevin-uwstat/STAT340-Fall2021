@@ -1,0 +1,722 @@
+---
+title: 'STAT340 Lecture 07: Unsupervised Learning and Exploratory Data Analysis'
+author: "Keith Levin and Bi Cheng Wu"
+date: "October 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(ggplot2);
+```
+
+__Readings:__ ISLR Sections 12.1, 12.2 and 12.4
+
+So far in this course (and in most of your courses, probably), you have been given a data set along with a particular estimation or testing problem.
+
+__Example:__ someone hands you the results of an experiment and asks you to perform a t-test.
+
+In this lecture, we will consider the broader (and arguably more challenging) task of *exploratory data analysis* (EDA) and the related task of *unsupervised learning*.
+
+__Example:__ You collect the tweets from a group of twitter users affiliated with the R and Python communities.
+At this stage, we don't even quite know what is the "right" statistical question to ask.
+We are at the more primitive stage of "exploring" the data, just to see what it is like.
+__How should we go about this?__
+
+__Example:__ We gather a large collection of unlabeled images from a database (the machine learning literature has many of these).
+The images are of different kinds of animals (cats, dogs, birds, goats...), but we do not have labels that tell us which images have which animals.
+That is, our data set is *unlabeled*.
+__What can we do without "supervisory information"?__
+
+## Learning objectives
+
+After this lesson, you will be able to
+
+* Discuss the basic ideas behind EDA and its importance and apply some basic EDA techniques related to exploratory plotting
+* Explain the concept of unsupervised learning and explain how it differs from supervised learning (i.e., from prediction problems)
+* Explain the concept of dimensionality reduction and why it can be useful
+* Use R to apply PCA to data
+* Explain the concept of clustering and why it can be useful
+* Use R to cluster data using k-means or hierarchical clustering
+
+## Why do exploratory data analysis?
+
+When we get a data set, it is often very tempting to jump right away to doing statistical testing or estimation.
+
+For example, here is a data set that shows how BMI relates to the number of steps taken per day for a group of subjects, split by biological sex.
+
+```{r}
+# bmi_data.csv is in the zip file of additional files
+# associated with this lecture, available on the course webpage
+# https://kdlevin-uwstat.github.io/STAT340-Fall2021/lectures/
+bmi_data <- read.csv('bmi_data.csv', header=TRUE);
+head(bmi_data);
+```
+
+Well, why not, we could throw a linear model at this, or fit two different models for male and female or...
+
+It's tempting to dive right in, I know.
+
+But wait. Let's just plot the data, first.
+
+After all, at the risk of repeating myself, __Always plot your data.__
+
+```{r}
+pp <- ggplot(bmi_data, aes(x=steps, y=bmi));
+pp <- pp + geom_point(aes(color=Sex), size=0.5);
+pp
+```
+
+Huh. Well, that's interesting.
+
+This was actually part of a (somewhat cruel?) experiment to see how beginner data scientists approached analysis when given a specific hypothesis to test versus when they were simply given a data set and encouraged to explore.
+See [here.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-020-02133-w)
+
+Students who were given a particular hypothesis to test were far less likely to see the gorilla!
+
+We promise that we will not play such a prank on you in a homework or exam.
+
+But this illustrates an important lesson: __always look at your data.__
+
+More generally, EDA is often the first step toward identifying interesting structure in your data.
+
+## "Day science" vs "Night science"
+
+EDA is less a set of tools than it is a state of mind.
+
+To illustrate this, consider the concepts of "day science" and "night science" (coined by Francois Jacob; see [here](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1800-6) for background).
+
+__Day science__ is the kind of research you are probably most familiar with. It proceeds step-wise:
+
+1. State a hypothesis
+2. Develop an experiment
+3. Conduct the experiment
+4. Analyze the results
+
+This is contrasted with the more free-wheeling and exploratory __night science__, in which we explore the space of possible hypotheses and conduct experiments that do not necessarily test a specific hypothesis.
+
+These two different modes of science map very nicely onto the statistics that you have mostly been taught in your classes so far (day science; we specify a null hypothesis, set up a test, etc) and the basic idea of exploratory data analysis (night science; poke around and see what we find).
+
+## Data Visualization
+
+Undeniably the most fundamental tool in the EDA toolkit is data visualization.
+The easiest way to find interesting patterns in your data is to just look at it!
+
+Importantly, there are often things that are easy to see using visualization that are not easily captured by summary statistics.
+
+The best example of this (albeit an extreme one), is [Anscombe's quartet](https://en.wikipedia.org/wiki/Anscombe's_quartet).
+
+This is a set of four data sets constructed by Francis Anscombe, and it's fundamental enough that it's included in R.
+
+```{r}
+data(anscombe); # Load the data set
+head(anscombe); # Let's just see what our variables are, to start with.
+```
+
+Okay, this needs a bit of explanation.
+
+Anscombe's quartet is technically a collection of four data sets (hence the "quartet" part).
+These are given by the pairs `(x1,y1)`, `(x2,y2)`, etc.
+
+Now, let's try computing some basic statistics. Why not start with the mean?
+
+```{r}
+colMeans(anscombe)
+```
+
+So, all four data sets have the same mean in both `x` and `y` (at least to several decimal places).
+
+How about standard deviations?
+
+```{r}
+sapply(anscombe, sd)
+```
+
+Again, all pretty much the same...
+
+How about correlations between `x` and `y`?
+
+```{r}
+c( cor( anscombe$x1, anscombe$y1 ),
+   cor( anscombe$x2, anscombe$y2 ),
+   cor( anscombe$x3, anscombe$y3 ),
+   cor( anscombe$x4, anscombe$y4 ) )
+```
+
+Wow... what if we regress `y` against `x`?
+
+```{r}
+lm( x1 ~ 1+ y1, anscombe );
+lm( x2 ~ 1+ y2, anscombe );
+lm( x3 ~ 1+ y3, anscombe );
+lm( x4 ~ 1+ y4, anscombe );
+```
+
+Yet again, remarkably similar intercepts and coefficients!
+
+At this point, it seems reasonable to conclude that these data sets must be remarkably similar to one another.
+
+But let's plot the data, just to be sure.
+
+```{r}
+# We need to do a bit of rearranging first, so we can use ggplot2 easily
+# As usual, there are nicer and/or more clever  ways to do this,
+# but we're doing it this way because it's easy to read/understand
+xx <- c( anscombe$x1, anscombe$x2, anscombe$x3, anscombe$x4 );
+yy <- c( anscombe$y1, anscombe$y2, anscombe$y3, anscombe$y4 );
+sets <- rep( c(1,2,3,4), each=nrow(anscombe));
+df_anscombe <- data.frame('X'=xx, 'Y'=yy, 'Set'=sets);
+
+pp <- ggplot(df_anscombe, aes(x=X, y=Y));
+pp <- pp + geom_point();
+pp <- pp + facet_wrap(~Set);
+
+pp
+```
+
+Wow, those are... quite different!
+
+Lesson learned! Visualization can identify patterns that you may not find by just fitting models and looking at summary statistics!
+
+Your previous courses (especially STAT240) should have given you a broad exposure to `ggplot2` and related visualization tools in R, so we won't rehash those now.
+
+If you need a refresher, or if you want to learn more about `ggplot2`, Hadley Wickham's book is the gold standard: [https://ggplot2-book.org/](https://ggplot2-book.org/)
+
+If you want to learn more about data visualization, the classic textbook is *The Visual Display of Quantitative Information* by Edward Tufte.
+Better yet, take Kris Sankaran's visualization course!
+
+## Dimensionality reduction
+
+We saw above the importance of visualizing our data for the purposes of exploration.
+
+This is all well and good when our data has only a few variables. That is, when our data is *low-dimensional*.
+
+What if our data is more complicated?
+
+#### Example: text data
+
+In natural language processing, we are often interested in analyzing collections of text.
+
+For example, our data might take the form of a large collection of books, and we might be interested in examining how different authors or different genres differ in their word usage.
+
+Data of this sort are commonly represented by their word counts.
+A document (e.g., a book) is represented by a vector, whose entries correspond to words.
+
+So there is an entry in this vector for the word "dog", an entry for the word "cat", an entry for the word "watermelon", etc.
+One entry for every word in our collection of documents.
+
+The result is that each document gets represented by a really long vector of word counts.
+
+The problem arises when we try to visualize this data.
+
+There are something like 600,000 words in the English language.
+So each document in our collection is represented by a vector with thousands of entries!
+
+### Solution: reduce the number of dimensions
+
+I myself have a hard enough time imagining 4-dimensional space. How on earth are we going to visualize 1000-dimensional space?!
+
+What we would like is a way to map our data down to fewer dimensions, but do so in such a way that preserves the structure of our data.
+
+This task is called *dimensionality reduction*.
+
+There are lots of different dimensionality reduction methods out there. Let's just discuss one today to give you the basic idea.
+
+Principal components analysis (PCA) is undoutbedly the most popular dimensionality reduction method out there, so let's discuss that.
+
+Let's start with an easy case: suppose that we want to reduce two dimensions down to one dimension.
+Here's some two-dimensional data.
+
+```{r}
+require(ggplot2)
+source('dimred_demo.R'); # Contains a data frame demo_df_1, which we'll plot
+
+pp <- ggplot( demo_df_1, aes(x=X1, y=X2) ) + geom_point();
+pp <- pp + xlim(-5,5) + ylim(-5,5);
+pp
+```
+
+__Note:__ For our sanity, let's assume that the data has been centered at zero. In practice, centering the data (i.e., subtracting out the mean) is a required preprocessing step to prepare data for PCA anyway, so this isn't a big leap to make.
+
+Now, suppose that we can only afford to work with one dimension, not two. Of course this is silly, but in the really high-dimensional case, this is essentially why we do dimensionality reduction!
+
+How do we represent this data in one dimension instead of two, while minimizing the amount of information that we throw away?
+
+We want to reduce our data down to one dimension. What that really means is choosing a line (i.e., a direction), and projecting our data onto that line.
+
+In linear regression, we choose a line through the data that minimizes the sum of the squared residuals (i.e., minimizes the squared errors).
+
+Something like this:
+
+```{r}
+source('dimred_demo.R'); # Contains a data frame demo_df_1, which we'll plot
+
+# Plot the data again
+pp <- ggplot( demo_df_1, aes(x=X1, y=X2) ) + geom_point();
+pp <- pp + xlim(-5,5) + ylim(-6,6);
+
+# Pick a line. How about y= 1.1 x.
+slope <- 1.1;
+# Plot that line
+pp <- pp + geom_abline(intercept=0, slope=slope, color='blue', size=1) 
+pp
+```
+
+So if we're regressing `X2` against `X1`, the linear regression residuals are just the vertical distances to this line.
+Let's plot them.
+
+```{r}
+# Same plotting, but now use geom_segment to draw residuals.
+# call geom_point and abline again to put points on top of resid lines.
+pp <- ggplot( demo_df_1, aes(x=X1, y=X2) )
+pp <- pp + geom_segment(aes(x=X1,xend=X1, y=slope*X1, yend=X2 ), color='red') + geom_abline(intercept=0, slope=slope, color='blue', size=1) + geom_point() ;
+pp <- pp + xlim(-6,6) + ylim(-6,6);
+pp
+
+```
+
+In regression, we play around with the slope of that line to minimize the sum of the squared lengths of the vertical residuals.
+
+We look at the vertical residuals because in regression, `Y` and `X` are fundamentally different. `Y` is a function of `X`.
+
+In PCA, all of our data dimensions are, in a sense, the same. So vertical residuals don't make much sense.
+
+Instead, we are going to try and minimize the squared *reconstruction error* of the data, as measured by the distance from each data point to its projection onto the line. That's easiest to see in a plot.
+
+```{r}
+# Pick a line. How about y= 1.1 x.
+slope <- 1.1;
+
+# Project the points onto that line.
+# If you've taken linear algebra, you know that there is a more clever way
+# to do this, but since linear algebra isn't a prereq,
+# we'll use the high school algebra way.
+# Remember that the projection of a point (x,y) onto a 2-D line y = m*x + b
+# is given by
+# 
+pp <- ggplot( demo_df_1, aes(x=X1, y=X2) );
+pp <- pp + geom_segment(aes(x=X1,xend=(X1+slope*X2)/(1+slope^2),
+                            y=X2, yend=slope*(X1+slope*X2)/(1+slope^2) ), color='red') + geom_abline(intercept=0, slope=slope, color='blue', size=1) + geom_point() ;
+pp <- pp + xlim(-5,5) + ylim(-5,5);
+# Make sure aspect ratio is 1 so we can see the projections correctly!
+pp <- pp + theme(aspect.ratio=1);
+pp
+```
+
+So we are still trying to choose a line that minimizes a sum of squared errors, but we are no longer letting the `Y` dimension be "special".
+
+More importantly, just like in linear regression, there is a (relatively) easy solution to this problem.
+Unfortunately, that solution involves linear algebra, so it's outside the scope of our course.
+
+__Aside:__ If you *have* taken a linear algebra course, the line that solves this projection problem is given by the first eigenvector of the Gram matrix of the data. If that sentence was gibberish to you, don't worry about it (but take a linear algebra course ASAP-- it's the most useful machine learning course you'll ever take!)
+
+### PCA: more dimensions
+
+So we just saw that PCA projects two-dimensional data down to one dimension by choosing the line that minimizes the squared reconstruction error between the data and the projection of the data onto the line.
+
+What if our data is bigger than two-dimensional (which, let's face it, it usually is)?
+
+Well, not much changes! To project $d$-dimensional data down to one dimension, we are going to choose the line (i.e., a direction; a vector) that minimizes the reconstruction error between the data and the projections onto that vector.
+
+The basic linear algebraic trick for finding that "best reconstruction error" direction is also the same (but still outside the scope of the course because not everyone in our class has taken linear algebra).
+
+Now, here's the kicker. What if instead of just condensing our data down to one dimension, we want two dimensions, or three or four or?...
+
+After all, we do dimensionality reduction to save space and/or processing time, but it's not like our computers are so slow that we can only process one-dimensional data.
+
+So, let's say we want to best summarize our data with $k$ dimensions.
+
+In this case, "choose the line that gives the best reconstruction error" becomes "choose the $k$-dimensional hyperplane that gives the best reconstruction error",
+and lucky for us, the same basic linear algebraic tricks *still* give us a solution!
+
+__Aside:__ once again, if you've taken linear algebra, the solution is to project the data onto the subspace spanned by the top $k$ eigenvectors of the Gram matrix of the data.
+
+### PCA another way: maximizing variance
+
+As mentioned above, there are actually several different interpretations of PCA.
+
+In our notes above, we saw the "minimize the squared error" interpretation, but let's see another.
+
+Let's go back to our nice simple two-dimensional data case.
+
+Intuitively, we want to project our data from two dimensions down to one in such a way that we preserve as much information as possible about our data.
+
+How do we do that?
+
+Well, roughly speaking, "more information" means "higher variance".
+So we can try to find the direction such that projecting our data onto that direction has the highest variance.
+Section 12.2.1 of ISLR describes this in a bit more detail.
+
+### PCA in R: `prcomp`
+
+PCA is implemented in R by the `prcomp` function.
+
+You pass it a data matrix (or a data frame), and it outputs some information about the principal components that it finds.
+
+`prcomp` just computes all of the principal components-- it's our job to choose how many to keep. This problem of choosing the number of dimensions $k$ is a bit of a black art, but we'll revisit it later in the semester.
+
+Let's quickly look at applying PCA to the famous US arrests data (this is also the data set used as a demo in ISLR).
+This data set captures violent crime rates in each of the fifty US states.
+```{r}
+data(USArrests);
+head(USArrests);
+```
+
+Okay, so we have four dimensions, measured for each of the 50 states.
+
+```{r}
+prcomp(USArrests, scale=TRUE); # See below for discussion of importance of scaling
+```
+
+The entries in each column of that output are called the *loadings* of the variables.
+Each column of the output is a unit-norm vector (so the squared loadings sum to 1 in each column).
+This vector points in the direction of the principal component.
+
+Roughly speaking, the loadings capture how much each of our original variables contribute to the principal component direction.
+
+For example, we see that in the `USArrests` data, the three violent crime rates all have similarly large loadings on the first principal component, while the `UrbanPop` variable has a smaller loading.
+This captures the fact that the three crime rates are correlated with one another.
+
+A useful tool for visualizing PCA components is a kind of plot called a `biplot`.
+Once again, because this is a fundamental tool, it's built into R and easy to use.
+
+```{r}
+biplot( prcomp(USArrests, scale=TRUE) );
+
+```
+
+Okay, not the prettiest graphic. For that, see the `ggbiplot` package, which uses `ggplot2`-style plotting for biplots.
+
+Nonetheless, the idea here is that we have two different pieces of geometric information in a single plot.
+
+1. We have our data points, displayed in black in two-dimensional space. Remember, our original data here was four-dimensional, so we are looking at the "dimension reduced" data. These two dimensions are exactly the first two principal component directions.
+
+2. The loadings of the first two principal components are indicated in red. Again, we are showing the first two PC directions, so there are two loadings (one for each PC directionn) for each of the four original variables, hence four red vectors (one vector requires two values: and `x` and a `y`).
+
+What the red loading vectors show us is an indication of how our variables tend to correlate. For example, the three crime types all have their loadings pointed in similar directions, indicating that they are correlated with one another.
+
+See ISLR Figure 12.1 for a nicer-looking version of this plot and a longer discussion of biplots and how to read them.
+
+### Caution: PCA and scaling
+
+One important cautionary note.
+Consider a (fictional) data set that gives income as a function of years of schooling.
+
+```{r}
+source('dimred_demo.R'); # Contains datafram income_v_edu,
+# Loosely based on figure 2.2 in ISLR.
+
+pp <- ggplot(income_v_edu, aes(x=edu, y=income)) + geom_point()
+pp
+```
+
+If we naively apply PCA to this data, something weird happens:
+
+```{r}
+prcomp(income_v_edu); # Note lack of scaling, here!
+```
+
+The loadings are essentially equal to zero and one!
+This is because the scale of the data is inappropriate.
+```{r}
+biplot( prcomp(income_v_edu) )
+```
+
+When applying PCA, it is important to rescale the variables so that they all have (approximately) the same standard deviation.
+If we don't do that, variables with "larger" scales will eat up all the variance, and we won't find any interesting structure!
+
+```{r}
+biplot( prcomp(income_v_edu, scale=TRUE ) );
+```
+
+The loadings point in the same direction, indicating that income and education are highly correlated  (as we already knew because the data set was so simple).
+
+## Identifying structure: clustering
+
+Up to this point in your career, most of the time that you have seen a data set, the observations have come with labels or respones of some sort.
+
+As an example, let's consider the famous Iris data set, originally collected by Edgar Anderson and made famous by the statistician R. A. Fisher.
+
+This data set consists of a collection of flowers (specifically, specimens of three different species of iris).
+
+For each specimen, Anderson recorded four numbers: the length and width of the petals and the length and width of the sepal (the part of the plant that supports the flower).
+
+In addition, for each observation (i.e., specimen) in the data, Anderson recorded which of three different iris species it was.
+
+The iris dataset is available in R. Let's have a look.
+
+```{r}
+data('iris'); # Load the iris dataset.
+head(iris); # Four measurements, as well as the species label.
+```
+
+The three species labels are
+```{r}
+levels( iris$Species )
+```
+
+Let's visualize this dataset with a pairs plot.
+
+Note that this is one of the few kinds of plots that ggplot2 does not support natively. We could use the [GGally library](http://ggobi.github.io/ggally/articles/ggpairs.html), which has a pairs plot, but let's just use the built-in R plotting.
+```{r}
+# Assign the three species to colors.
+# unclass makes the factor Species play nice as an index. See ?unclass
+iris_colors <- c('red', 'blue', 'green')[unclass(iris$Species)];
+pairs(iris[,1:4], col=iris_colors);
+```
+
+Looking at the plot, it is clear that the different iris species each have different tendencies in their petal and sepal measurements.
+We call a structure like this, in which the data points naturally form groups, a *cluster structure*.
+
+Now, what if we got this data *without* the species labels?
+
+```{r}
+pairs(iris[,1:4]);
+```
+
+Can we identify the cluster structure that is present in the data without knowing the species labels?
+
+This is the goal of clustering, which is a prime example of an *unsupervised learning* task. Unsupervised learning asks, "what can we learn without labels"? That is, what can we learn without *supervisory* information?
+
+Typically, the goal of clustering is to partition our data into $k$ groups called *clusters*, in such a way that data points in the same cluster tend to be more similar to one another than they are to points in other clusters.
+That is, we want to find subsets of the data that "go together".
+
+In mathematical notation, our goal is to group the indices $1,2,\dots,n$ into $k$ sets $C_1,C_2,\dots,C_k$ such that
+
+1. $\cup_{i=1}^k C_i = \{ 1,2,\dots,n \}$
+2. $C_i \cap C_j = \emptyset$ for all $i \neq j$.
+
+If these two properties hold, then we say that the sets $C_1,C_2,\dots,C_k$ form a *partition* of $\{1,2,\dots,n\}$.
+
+__Aside:__ the issue of choosing the number of clusters $k$ is an important and interesting one, similar to choosing the number of principal components to keep.
+We will see some methods for choosing $k$ later this semester, when we discuss cross-validation.
+For now, we will assume that the "right" choice of $k$ is given to us, while bearing in mind that this is seldom the case in reality
+
+There are countless clustering methods, owing to the importance and ubiquity of clustering as a task.
+
+Let's look briefly at just two: $k$-means clustering and hierarchical clustering.
+
+### $k$-means clustering
+
+If you have seen clustering before, then you are almost certainly familiar with $k$-means.
+
+$k$-means seeks to partition the data by choosing $k$ points that we will call *cluster centers* (i.e., the means of each of the $k$ clusters) in such a way as to minimize the sum of squared distances between each of the data points and its nearest cluster center.
+
+In mathematical notation, letting $x_1,x_2,\dots,x_n \in \mathbb{R}^d$ be our data, we seek to solve
+$$
+\min_{c_1,c_2,\dots,c_k \in \mathbb{R}^d}
+\sum_{i=1}^n \min_{j=1,2,\dots,k} \| x_i - c_j \|^2
+$$
+
+Okay, that's a bit weird, so let's unpack what that says.
+
+There are two minimizations happening here.
+The outer one is where we choose our $k$ cluster centers $c_1,c_2,\dots,c_k \in \mathbb{R}^d$.
+
+Having chosen our cluster centers, the "cost" of that clustering solution is the sum over all of the data of the squared distance of each data point to its nearest cluster center.
+That's where the inner minimization (inside the summation) comes from.
+
+__Note:__ the optimization problem that ISLR (Eq 12.17) gives for $k$-means is different from this one, but it is completely equivalent. That is, finding a clustering that minimizes the quantity above is the same as minimizing the quantity in ISLR.
+
+Now, the details of how we solve this optimization problem are outside the scope of this course (but see ISLR for discussion if you are curious).
+Lucky for us, R has built-in code for solving this problem: the function `kmeans`. Let's throw it at the iris data.
+
+
+```{r}
+# Cluster the iris data
+# (column 5 is species labels, which we don't want to use...)
+
+km_results <- kmeans(iris[,1:4], centers=3);
+```
+
+The object returned by `kmeans` has a bunch of stuff going on.
+The most important piece for us is the clustering vector, stored in `km_results$cluster`.
+
+```{r}
+km_results$cluster
+```
+
+Let's make our pairwise scatter plot of the iris data again, this time coloring according to the cluster labels guessed by `kmeans`.
+
+```{r}
+# Assign the three k-means clusters to colors.
+cluster_colors <- c('red', 'green', 'blue')[km_results$cluster];
+pairs(iris[,1:4], col=cluster_colors);
+```
+
+Now, in actuality, this clustering will look a bit different each time we run this code.
+That's because `kmeans` doesn't minimize our clustering cost exactly.
+It starts with a random choice of cluster centers, and then tries to improve the clustering cost by moving those centers around.
+
+The result is that our clustering results in `km_results$cluster` are very sensitive to the starting conditions.
+One way to lessen that sensitivity is to have `kmeans` solve the problem multiple times, with different random starting conditions each time.
+
+```{r}
+# Cluster the iris data, with 20 random restarts.
+# (column 5 is species labels, which we don't want to use...)
+
+km_results <- kmeans(iris[,1:4], centers=3, nstart = 20);
+
+cluster_colors <- c('red', 'green', 'blue')[km_results$cluster];
+pairs(iris[,1:4], col=cluster_colors);
+```
+
+Just to compare, here are the true labels again:
+
+```{r}
+pairs(iris[,1:4], col=iris_colors);
+```
+
+
+Comparing these plots, we can see that $k$-means correctly groups most of the irises of the same species together, but it makes a mistake on a few of them.
+
+Looking at the data, we can perhaps see why $k$-means gets a few points wrong.
+
+$k$-means tries to choose $k$ points (i.e., the cluster centers) in the data space and assigns every observation to its nearest center.
+But in some dimensions, it's clear that the data is more elongated.
+
+Trying to place a cluster center close to the center of each of the species-specific point clouds risks having the points on the extreme ends (specifically on the blue-green boundary in our plot) get picked up by the wrong cluster center.
+
+One way to avoid this problem is to rescale the data like in PCA, but this usually only helps to an extent.
+
+Another option is to modify $k$-means to take the "non-spherical" stucture of the clusters into account.
+For example, one can apply Gaussian mixture modeling (GMM), in which we assume that each cluster was generated by drawing from a multivariate Gaussian.
+
+If we make that assumption, then clustering the data amounts to estimating $k$ cluster-specific means (one mean $\mu_i$ for $i=1,2,\dots,k$) and cluster-specific covariance matrices (i.e., a covariance matrix for each of the $k$ clusters).
+The details of setting up and solving that clustering problem are outside the scope of this course, but you can read more about it [on Wikipedia](https://en.wikipedia.org/wiki/Mixture_model#Multivariate_Gaussian_mixture_model) and see the documentation for the `gmm` [package in R](https://www.rdocumentation.org/packages/gmm/versions/1.6-6/topics/gmm).
+
+### Hierarchical clustering
+
+$k$-means illustrates one natural approach to clustering-- we write down a mathematical expression that captures how "good" a particular clustering of the data is, and then we try to maximize that "goodness".
+(Actually, in the case of $k$-means above we wrote down a measure of how "bad" a clustering is and then tried to minimize that badness, but you get the idea).
+
+Hierarchical clustering methods take a different approach.
+These methods try to build a good clustering from the bottom up, in a sense.
+
+The basic idea is to compute the distances between our observations (i.e., how "similar" or "disimilar" our data points are), and then "link" pairs that are closest to one another.
+
+Hierarchical clustering is done in R using the `hclust` function (strictly speaking, what R implements is a particular kind of hierarchical clustering called *agglomerative clustering*, but don't worry about that at this stage of your career).
+Let's just go ahead and apply `hclust` to the iris data, and then we'll come back and talk about what it is actually doing.
+
+The easiest way to visualize and understand hierarchical clustering is by looking at a *dendrogram* (*dendro* from the Greek for "tree").
+
+```{r}
+iris_dists <- dist( iris[,1:4] ); # reminder: col 5 of Irises is species labels
+hc_results <- hclust( iris_dists ); # Apply hclust to this array of distances
+
+# And plot it-- we're taking advantage of the fact that R just "knows" how to
+# plot certain objects (namely, dendrograms for hclust outputs).
+plot(hc_results, labels=FALSE); # Suppress the leaf labels because it just gives the row numbers of our data, which isn't helpful here and it gets crowded.
+# You can safely ignore all the warnings this might cause.
+```
+
+Okay, not the prettiest plot, but that's not the point.
+
+Each leaf of this tree structure corresponds to an observation in our data set.
+
+Having constructed all pairwise distances among our data, we find the smallest pairwise distance and "fuse" those two points.
+We repeat this operation until all data points have been fused.
+
+This "fusion" operation is encoded in the dendrogram at right-- "branches" that split lower in the tree (i.e., closer to the leaves) correspond to pairs of points that were fused earlier-- that is, points that are more similar to one another.
+
+Now, with this tree structure in hand, we can split our data into any number of clusters we like by "cutting" the tree at a given level.
+
+For example, if we split the tree at the level 5 (i.e., draw a horizontal line at $y=5$), we would "cut" the tree into two subtrees, corresponding to two different clusters in the data.
+
+```{r}
+plot(hc_results, labels=FALSE); # Suppress the leaf labels 
+abline(h=5, col='red');
+```
+
+On the other hand, splitting the tree at level 3.5 gives us three clusters.
+
+```{r}
+plot(hc_results, labels=FALSE); # Suppress the leaf labels 
+abline(h=3.5, col='red');
+```
+
+The advantage of hierarchical clustering, then, is that it doesn't require us to choose the number of clusters ahead of time-- often, it shows us what the "natural" number of clusters is.
+
+For example, in the iris data here, it kind of looks like the "right" choice is two clusters.
+
+Of course, we know that isn't the "right" number, though-- there are three species in the data!
+
+How well did hierarchical clustering do at capturing that "true" cluster structure?
+Let's examine by coloring the leaves according to their species.
+
+```{r}
+# R is annoying about this-- we need to write a function to gives each leaf of the tree its color.
+# You can safely treat this function as a black box unless you want to get some
+# good software engineering practice.
+
+label_color <- function(x) {
+  
+  # We don't want this code to run on anything that isn't a leaf node.
+  if( is.leaf(x) ) {
+    # "label"" is an attribute held by every leaf object.
+    # it defaults to the row number in the data.
+    rownumber <- attr(x, "label");
+  
+    # Use that row number to retrieve the true species label
+    species <- iris[rownumber,]$Species;
+  
+    ## set label color to red, green or blue according to species.
+    labcol <- c('red', 'green', 'blue')[unclass(species)]
+    # nodePar is a list of attributes that drive plotting of the leaves
+    # (e.g., color, size, etc.), so let's update it.
+    attr(x,"nodePar") <- list(lab.col=labcol);
+  }
+  
+  return(x)
+}
+
+# Now, apply this coloring function to our dendrogram.
+iris_dendro <- dendrapply(as.dendrogram(hc_results), label_color)
+
+plot(iris_dendro);
+```
+
+Hmm. Well, it looks like our "natural" choice to split the data basically would chop the green cluster in half.
+This seems to suggest that we're doing something wrong...
+What could it be?
+When in doubt, look at the data!
+
+```{r}
+pairs(iris[,1:4], col=iris_colors);
+```
+
+Pay attention to the scales on the x- and y-axes in these plots.
+The different measurements are on very different scales!
+
+__Question:__ why is that a bad thing for the hierarchical clustering that we just did? (this is a tricky question-- maybe a better question is "what operation did we do without thinking about it much?")
+
+Well, let's get all these numbers on the same scale and see what happens.
+
+```{r}
+# scale recenters and renormalizes each column. See ?scale
+iris_scaled <- as.data.frame( scale( iris[,1:4] ) );
+iris_scaled$Species <- iris$Species
+
+pairs(iris_scaled[,1:4], col=iris_colors)
+```
+
+Okay, looks about the same, except that the scale has changed.
+Let's try hierarchical clustering again.
+
+```{r}
+iris_scaled_dists <- dist( iris_scaled [,1:4] ); #ignoring col 5, species labs 
+hc_scaled_results <- hclust( iris_scaled_dists ); 
+# Reminder: label_color is our coloring function defined above.
+iris_scaled_dendro <- dendrapply(as.dendrogram(hc_scaled_results), label_color)
+plot(iris_scaled_dendro);
+```
+
+Hmm. Still not great, but it's definitely better.
+
+What's really going on here is that hierarchical clustering can get really badly messed up if it makes a few mistakes "early on" in the fusion process.
+There are ways to ameliorate this-- for example, we can modify how the "fusion" (a.k.a. "linking" in the literature) step happens. See ISLR for discussion.
+
+I don't mean to beat up on hierarchical clustering, here. There are problems that it does really well on!
+
+But this is intended as a cautionary tale that not every method is a magic bullet for every data set.
