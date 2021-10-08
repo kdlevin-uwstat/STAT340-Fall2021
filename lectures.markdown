@@ -19,5 +19,5 @@ permalink: /lectures/
 
 <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/06/L06_prediction.html">Lecture 6: Prediction</a> (October 4, 6) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/06/L06_prediction.Rmd">Rmd file</a>
 
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/07/L07_UnsupEDA.html">Lecture 7: Exploratory Data Analysis and Unsupervised Learning</a> (October 8, 11) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/07/lec07_UnsupEDA.zip">Files</a>
+<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/07/L07_UnsupEDA.html">Lecture 7: Exploratory Data Analysis and Unsupervised Learning</a> (October 8, 11, 13) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/07/lec07_UnsupEDA.zip">Files</a>
 
