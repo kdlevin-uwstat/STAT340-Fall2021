@@ -1,129 +1,162 @@
+
 ---
-title: 'STAT340 Discussion 04: EDA, PCA and clustering'
+title: "STAT340 Discussion: Estimation"
 author: "Keith Levin and Bi Cheng Wu"
-date: "Fall 2021"
+date: "September 2021"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
+require(ggplot2);
 ```
 
-## XKCD comic
+## Problem 1: Checking the CLT
 
-Relevant to our discussion of exploratory data analysis on Friday:
+The central limit theorem (or, at least the version of it that we saw in lecture) states that if $X_1,X_2,\dots$ are iid random variables with shared mean $\mu = \mathbb{E} X_1$ and variance $\sigma^2 = \operatorname{Var} X_1$, then as $n \rightarrow \infty$, the recentered, rescaled random variable
+$$
+\frac{ \frac{1}{n} \sum_{i=1}^n X_i - \mu }{ \sqrt{\sigma^2/n} }
+$$
+is well approximated by a standard normal.
 
-<center><a href="https://xkcd.com/2400/"><img id="comic" src="https://imgs.xkcd.com/comics/statistics.png" title="We reject the null hypothesis based on the 'hot damn, check out this chart' test."></a></center>
+Let's explore what that looks like in practice (or, at least, in the practice of simulated data) by running an experiment.
 
+We will generate $n$ draws from an exponential distrbution, and take their sample mean.
 
-##  Problem 1: PCA and clustering
-
-In lecture, we saw that PCA and $k$-means are both useful ways to identify structure in data.
-Unsurprisingly, a common workflow is to apply PCA to reduce the dimension of a data set, and then apply $k$-means on the result to identify clusters.
-
-Let's see that in action on the iris data set that we played around with in lecture.
-
-### Part a : Reading and plotting the data
-
-Following the code from lecture, import the `iris` dataset with `data(iris)` and create a pairs plot .
-__Hint:__ it might be easiest to separate the first four columns of the data frame from the fifth-- recall that the first four columns are numeric, and the last one contains the species labels.
+We will repeat this experiment many times and plot the histogram of the sample means, and we'll see that the plot looks more and more "normal" as we increase $n$.
 
 ```{r}
-data(iris);
-head(iris);
+Nrep <- 1000;
+nvals <- c(5,10,40);
+lambda <- 1/5; # True rate parameter in the exponential.
+truemean <- 1/lambda; # Mean of exp is 1/rate
+truevar <- 1/lambda**2; # var of exp is 1/rate^2.
+# We will store our results in a data frame with columns
+# reps : Each entry is a centered, scaled sample mean.
+# n : the sample size (= 20, 50, 100)
+nvec <- rep( nvals, each=Nrep );
+reps <- rep(NA,Nrep*length(nvals));
+results <- data.frame('n'=as.factor(nvec), 'reps'=reps);
+# Now let's run our experiment
+for (n in nvals) {
+  centered_scaled <- rep(NA, Nrep);
+  for ( i in 1:Nrep ) { # Repeat expt Nrep times for this n value.
+    sample <- rexp(n=n, rate=lambda);
+    centered_scaled[i] <- (mean(sample) - truemean)/sqrt(truevar/n);
+  }
+  results[results$n==n,]$reps <- centered_scaled;
+}
+# Now let's plot, with one histogram for each of those n values.
+pp <- ggplot( results, aes(x=reps) );
+pp <- pp + geom_histogram( aes() );
+pp <- pp+ facet_wrap(~n);
+pp
 ```
+
+Try changing the distribution above from the Exponential to something else (e.g, Poisson or uniform).
+Alternatively, try playing around with the parameters (e.g., changing the rate parameter in the exponential).
+Don't forget to update the true mean and true variance accordingly (feel free to look up the mean and variance of your distribution of choice on Wikipedia or in an introductory probability textbook).
+
+## Problem 2: Widgets revisited
+
+Having seen our widgets example in lecture, let's use our simulation-based approach to produce a confidence interval for the parameter $p$ (the probability that a widget is functional).
+
+Remember, the basic recipe is
+
+1. Estimate the parameter from the data
+2. Generate many "fake" data samples by generating from the model as though that (estimated) parameter were the truth. On each sample, estimate the parameter from that "fake" sample.
+3. Use the resulting estimates (the "replicates", in the language from lecture), to compute quantiles
+
+So let's implement that, part by part.
+
+Before we can do that, here's code to generate data for us.
+```{r}
+ptrue <- 0.8; # 80% of widgets are functional.
+n <- 200; # We'll examine 200 widgets.
+data <- rbinom(1, size=n, p=ptrue);
+```
+
+### Part a: estimating p
+
+The first step is to estimate $p$. Fill in this function so that it produces an estimate of $p$.
+The sample mean is a perfectly good estimator, here.
 
 ```{r}
-
-# TODO: code goes here.
-
-# Create a pairs plot with the points colored according to species, like in the lecture code.
-# You have permission to simply copy the code from lecture, if you wish.
-
+compute_phat <- function( sample ) {
+  
+  #TODO: code goes here.
+  
+  # You'll call this like compute_phat( data ), where data is
+  # like the variable data in the code block above.
+  # Your function should return a single number, ideally between 0 and 1, since it is supposed to be an estimate of probability p.
+  
+}
 ```
 
-### Part b : Applying PCA
+### Part b: generating replicates
 
-Examining the pairs plot, try and predict what the principal directions will be.
-Here's one that stands out to me: look at the relation between the `Petal.Length` and `Petal.Width` variables. Anything else?
+Now, our next step is to write code that lets us repeatedly sample from $\operatorname{Binomial}(n,\hat{p})$ and (re)estimate $p$ each time.
 
-***
-
-TODO: write any observations/predictions here.
-
-***
-
-Now, apply PCA to the data. Again, you may copy-paste code from the lecture notes if you like.
+First, we need a function to run one instance of the experiment.
+This is *roughly* analogous to the for-loop inside the function `run_trial` from lecture.
 
 ```{r}
-
-#TODO: code goes here.
-
+resample_and_estimate <- function( phat, nsamp ) {
+  
+  #TODO: write code that
+  
+  # 1) Samples from a Binomial with success probabikity phat and size nsamp (phat will be our estimate based on data, nsamp is the size parameter, which we know)
+  
+  # 2) Compute an estimate of p from that new sample (i.e, by taking the sample mean.)
+  
+  # 3) Return that estimate. Something like 'return sample_mean'
+}
 ```
 
-Examine the summary of PCA (in particular, the loadings). Do they agree with your predictions? Discuss. You may also find it helpful to look at the biplot of the data.
+### Part c: building the confidence interval
 
-### Part c: Projecting the Data
-
-We have applied PCA to our data in R, and we got back four principal components directions.
-If we have $d$-dimensional data, then we can only ever get $d$ principal components, but the whole point of PCA is that often, we can represent the data quite well with fewer than $d$ principal components.
-
-This is an example of data compression (indeed, dimensionality reduction is a kind of data compression).
-We have data that is high-dimensional and thus takes up a lot of memory, so it is expensive to store, even more expensive to process with our ML algorithm of choice, and even more expensive than that to send over the internet.
-
-One solution is to... well, throw out some dimensions!
-PCA shows us how to throw away dimensions in the "best" way (i.e., by minimizing the reconstruction error, as we discussed in lecture).
-
-So let's suppose (again, this is a silly example, but just go with it!) that we can only afford to store two dimensions rather than the four dimensions in our original iris data.
-
-Above, we computed the principal components of the data, and to optimize our reconstruction error, we want to keep the top two components (i.e., the first two columns ).
-
-The `x` attribute of the PCA output stores the actual PCA projections of the data.
-
-Extract the first two dimensions of this representation, corresponding to the first two principal components.
-That is, extract what the two-dimensional PCA representation of our data would be.
-Plot this two-dimensional representation, coloring the points in your plot according to the species labels.
-
-__Hint:__ the $k$-th column of the `x` attribute corresponds to the projection of the data onto the $k$-th principal component direction. So you want to extract the first two columns of the `x` attribute.
+Okay, now lets use `resample_and_estimate` repeatedly to get a bunch of replicates.
+Then we can use those replicates to get quantiles.
 
 ```{r}
-
-#TODO: code goes here.
-
+Nrep <- 100; # Feel free to increase this once you are confident your code works!
+replicates <- rep(NA, Nrep); # Store replicates here.
+# Just repeating this code from above to remind us of the true params.
+ptrue <- 0.8; # 80% of widgets are functional.
+n <- 200; # We'll examine 200 widgets.
+data <- rbinom(1, size=n, p=ptrue);
+# TODO: add a line of code here to get an estimate for ptrue (e.g, using a function you defined above)
+for ( i in 1:Nrep) {
+  replicates[i] <- NA # TODO: fix this to store a single replicate!
+}
 ```
 
-### Part d: clustering after PCA?
+### Part d: constructing an interval.
 
-A common pipeline is to apply PCA to a high-dimensional data set to get something that is easier to work with and/or visualize, and then apply our clustering method of choice to the PCA outputs to identify clusters.
+Choose a confidence level (95% like in lecture is fine, but feel free to choose something else) and use the vector `replicates` created in the code block above to create a confidence interval.
 
-The intuition is that once PCA has identified the dimensions that carry most of the information, clustering will be able to identify the cluster structure present in those dimensions.
+```{r}
+# TODO: use the quantile() function to get a CI from the variable replicates.
+```
 
-__Note:__ it is possible that at the time you are doing this discussion section, we have not yet discussed clustering in class (depending on how quickly we got through material!).
-For now, it suffices to think of clustering as a way of assigning a set of observations to a set of $k$ different groups.
-Ideally, observations assigned to the same cluster (i.e., group) should tend to be more similar to one another than they are to observations assigned to other clusters.
+Does your CI contain the true value of $p$?
 
-Examine your plot created in Part c above. Do you see any obvious cluster structure? That is, are there obvious groups of observations that tend to "clump together"?
+### Optional: repeating the experiment.
 
-How does the structure you see here compare with that observed in the data as a whole (refer back to your pairs plot created in Part a)? Discuss.
+A $(1-\alpha)$ confidence interval should fail to contain the true parameter $\alpha$ portion of the time.
 
-***
+Following the code from lecture, write code to repeat the above experiment many times and record how often the confidence interval contains the true value of $p$.
 
-TODO: any observations, here.
+It won't be exact, due to randomness, but it should be close to $1-\alpha$.
 
-***
-
-### Part e (optional): Clustering with $k$-means
-
-If we have covered $k$-means in lecture, or if you are familiar with it from elsewhere, try applying $k$-means to the full data and to the two-dimensional PCA representation constructed in Part d.
-
-How do the resulting clusterings compare?
-
-By inspection, does it look like one or the other is doing a better job of recovering the true species labels?
-
-There are actually quantitative ways to assess how well two clusterings (e.g., the true species labels and our $k$-means clustering) agree.
-For example, there is the Adjusted Rand Index (ARI; see [Wikipedia](https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index) or [the mclust package in R](https://rdrr.io/cran/mclust/man/adjustedRandIndex.html)).
-
-Unfortunately, giving this a thorough discussion would take us rather far afield.
-If time allows, we will come back to it later in the semester.
-Meanwhile, if you're curious, you can try installing the `mclust` package and use its `adjustedRandIndex` function to measure how well your clustering captured the true cluster structure.
+```{r}
+# Number of experiments, which we call "trials" below and in lecture
+Nexpt <- 100; # Increase this once you are sure your code works.
+ptrue_in_CI <- rep(NA, Nexpt);
+for( i in 1:Nexpt ) {
+  # TODO: Call a function here that computes a CI, like run_trial from lecture
+  
+  ptrue_in_CI[i] <- NA #TODO: update this to be a Boolean that says whether or not ptrue was in the CI on this trial.
+}
+sum(ptrue_in_CI)/Nexpt; # Compute how many of the trials managed to "catch" ptrue.
+```
