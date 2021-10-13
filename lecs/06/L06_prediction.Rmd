@@ -1,0 +1,40 @@
+
+---
+title: "STAT340 Lecture 06: Prediction & Linear models"
+author: "Keith Levin and Bi Cheng Wu"
+date: "October 2021"
+output: html_document
+---
+
+These notes on *prediction* are based on Karl Rohe's.
+
+# Prediction    
+
+In a prediction problem, you are given data pairs $(X_1, Y_1), (X_2, Y_2), \dots, (X_n, Y_n)$ and you want to use $X_i$ to predict $Y_i$.  We typically imagine $X_i$ as containing several values (i.e. it is a "vector").  
+
+There are two types of prediction problems, continuous $Y_i$ and discrete $Y_i$.  For example, you might want to predict tomorrow's the price for asset $i$ using data that is available today. So, develop an historical training set, where you have information on asset $i$ from one day contained in $X_i$ and that asset's price for the next day contained in $Y_i$.  Here, stock price is continuous.  
+
+Alternatively, you might only be interested in knowing if you should buy the stock, sell the stock, or hold the stock.  So, you develop an historical training set where $X_i$ contains the information that is available on one day. Then, you develop "labels" $Y_i$ using data from the next day that say whether you should have bought, sold, or held onto the asset.  Here, the label (buy, sell, hold) is discrete.  
+
+We will often call continuous outcomes "regression" and discrete outcomes "classification".
+
+Alternatively, perhaps we want to make predictions about the 2020 election.  You could try to predict who is going to win (classification) or the number of delegates/votes that the Republicans recieve (regression).  
+
+In the cases above, there are two natural versions of the same problem (one is regression and one is classification).  However, many classification problems do not have an analogous regression problem.  For example, in the handwritten digit example in [Chapter 1 of ISLR](http://pages.stat.wisc.edu/~karlrohe/ht/01-introduction.pdf), $X_i$ is an image of a handwritten digit and $Y_i$ is a label that says whether the digit is 0, 1, 2, 3, 4,... , or 9.  
+
+We are going to imagine two broad approaches to regression and classification.  
+
+1)  **Model-based approaches** parameterize the distribution of $Y_i$ given $X_i$.  That is, we imagine $Y_i$ being a random variable that follows some distribution and that distribution is somehow parameterized by the variables in $X_i$. 
+2)  **Black-box approaches** are defined algorithmically. 
+
+[Chapter 2 in ISLR](http://pages.stat.wisc.edu/~karlrohe/ht/02-statistical_learning.pdf) provides a broad overview of prediction. In the previous weeks of this course, Monte Carlo provided the basic computational tool; we were always working to get the problem stated as something that we could solve with Monte Carlo.  Now, the basic computational tool is numerical optimization. We will not write code to do optimization.  Instead, we will see optimization problems multiple times; it is often used to define our various techniques. 
+
+## Background
+
+[Chapter 2 in ISLR](http://pages.stat.wisc.edu/~karlrohe/ht/02-statistical_learning.pdf)
+
+## Putting it all together: Linear models
+
+[Devore's notes on regression](https://www.colorado.edu/amath/sites/default/files/attached-files/ch12_0.pdf)
+
+[ISLR notes on regression](http://pages.stat.wisc.edu/~karlrohe/ht/03-linear_regression.pdf)
