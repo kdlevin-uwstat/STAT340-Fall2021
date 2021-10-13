@@ -25,13 +25,11 @@ options(width=100)
 
 ## Instructions
 
-Complete the exercises, update the "author" and "date" fields in the header, knit it, and submit **both the HTML and RMD** files to Canvas. Due date: **Oct 13, 2021 at 11:59pm".
+Complete the exercises, update the "author" and "date" fields in the header, knit it, and submit **both the HTML and RMD** files to Canvas. Due date: **Oct 13, 2021 at 11:59pm**.
 
 ---
 
-## Exercise 1: Generalized [birthday problem](https://en.wikipedia.org/wiki/Birthday_problem)
-
-[20 points]
+## Exercise 1 (20 points): Generalized [birthday problem](https://en.wikipedia.org/wiki/Birthday_problem)
 
 The birthday problem asks for the probability that in a group of $n$ people, at least 2 people will share the same birthday. This is easy to solve, and the solution is easily found online.
 
@@ -75,9 +73,7 @@ This class currently has 162 enrolled students. What is the approximate probabil
 
 ---
 
-## Exercise 2: Simulate RV
-
-[15 points]
+## Exercise 2 (15 points): Simulate RV
 
 $X$ is a random variable defined between 0 and 1 with the probability density function $f(x)=2x$. Note this means the cumulative distribution function is $$F(x)=\int_0^xf(x)dx=x^2$$ Write a function `rx(n)` to sample from this random variable, where `n` is the size of the sample to be drawn. Then, use your function to draw a sample of 500 and plot a histogram of the output.
 
@@ -104,9 +100,7 @@ rx = function(n){
 
 ---
 
-## Exercise 3: Testing coin flips
-
-[15 points]
+## Exercise 3 (15 points): Testing coin flips
 
 In the six sequences below, **only one** of them is actually randomly generated from a fair coin. Use a combination of everything you know (common sense, monte carlo, hypothesis testing, etc.) to identify which is actually random and explain your reasoning.
 

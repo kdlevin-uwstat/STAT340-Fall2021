@@ -1,0 +1,179 @@
+
+---
+title: "STAT340 Discussion: Estimation"
+author: "Keith Levin and Bi Cheng Wu"
+date: "September 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(ggplot2);
+```
+
+## Problem 1: Checking the CLT
+
+The central limit theorem (or, at least the version of it that we saw in lecture) states that if $X_1,X_2,\dots$ are iid random variables with shared mean $\mu = \mathbb{E} X_1$ and variance $\sigma^2 = \operatorname{Var} X_1$, then as $n \rightarrow \infty$, the recentered, rescaled random variable
+$$
+\frac{ \frac{1}{n} \sum_{i=1}^n X_i - \mu }{ \sqrt{\sigma^2/n} }
+$$
+is well approximated by a standard normal.
+
+Let's explore what that looks like in practice (or, at least, in the practice of simulated data) by running an experiment.
+
+We will generate $n$ draws from an exponential distrbution, and take their sample mean.
+
+We will repeat this experiment many times and plot the histogram of the sample means, and we'll see that the plot looks more and more "normal" as we increase $n$.
+
+```{r}
+Nrep <- 1000;
+nvals <- c(5,10,40);
+lambda <- 1/5; # True rate parameter in the exponential.
+truemean <- 1/lambda; # Mean of exp is 1/rate
+truevar <- 1/lambda**2; # var of exp is 1/rate^2.
+# We will store our results in a data frame with columns
+# reps : Each entry is a centered, scaled sample mean.
+# n : the sample size (= 20, 50, 100)
+nvec <- rep( nvals, each=Nrep );
+reps <- rep(NA,Nrep*length(nvals));
+results <- data.frame('n'=as.factor(nvec), 'reps'=reps);
+# Now let's run our experiment
+for (n in nvals) {
+  centered_scaled <- rep(NA, Nrep);
+  for ( i in 1:Nrep ) { # Repeat expt Nrep times for this n value.
+    sample <- rexp(n=n, rate=lambda);
+    centered_scaled[i] <- (mean(sample) - truemean)/sqrt(truevar/n);
+  }
+  results[results$n==n,]$reps <- centered_scaled;
+}
+# Now let's plot, with one histogram for each of those n values.
+pp <- ggplot( results, aes(x=reps) );
+pp <- pp + geom_histogram( aes() );
+pp <- pp+ facet_wrap(~n);
+pp
+```
+
+Try changing the distribution above from the Exponential to something else (e.g, Poisson or uniform).
+Alternatively, try playing around with the parameters (e.g., changing the rate parameter in the exponential).
+Don't forget to update the true mean and true variance accordingly (feel free to look up the mean and variance of your distribution of choice on Wikipedia or in an introductory probability textbook).
+
+
+__Solution:__ the above is straight-forward plotting.
+
+## Problem 2: Widgets revisited
+
+Having seen our widgets example in lecture, let's use our simulation-based approach to produce a confidence interval for the parameter $p$ (the probability that a widget is functional).
+
+Remember, the basic recipe is
+
+1. Estimate the parameter from the data
+2. Generate many "fake" data samples by generating from the model as though that (estimated) parameter were the truth. On each sample, estimate the parameter from that "fake" sample.
+3. Use the resulting estimates (the "replicates", in the language from lecture), to compute quantiles
+
+So let's implement that, part by part.
+
+Before we can do that, here's code to generate data for us.
+```{r}
+ptrue <- 0.8; # 80% of widgets are functional.
+n <- 200; # We'll examine 200 widgets.
+data <- rbinom(1, size=n, p=ptrue);
+```
+
+### Part a: estimating p
+
+The first step is to estimate $p$. Fill in this function so that it produces an estimate of $p$.
+The sample mean is a perfectly good estimator, here.
+
+```{r}
+
+# We are just computing the sample mean directly below.
+
+```
+
+### Part b: generating replicates
+
+Now, our next step is to write code that lets us repeatedly sample from $\operatorname{Binomial}(n,\hat{p})$ and (re)estimate $p$ each time.
+
+First, we need a function to run one instance of the experiment.
+This is *roughly* analogous to the for-loop inside the function `run_trial` from lecture.
+
+```{r}
+resample_and_estimate <- function( phat, nsamp ) {
+  
+  # 1) Samples from a Binomial with success probability phat and size nsamp (phat will be our estimate based on data, nsamp is the size parameter, which we know)
+  fakedata <- rbinom(n=1, size=nsamp, prob=phat );
+  
+  # 2) Compute an estimate of p from that new sample (i.e, by taking the sample mean.)
+  phat_rep <- fakedata/nsamp;
+  
+  # 3) Return that estimate. Something like 'return sample_mean'
+  return( phat_rep )
+}
+```
+
+### Part c: building the confidence interval
+
+Okay, now lets use `resample_and_estimate` repeatedly to get a bunch of replicates.
+Then we can use those replicates to get quantiles.
+
+```{r}
+Nrep <- 100; # Feel free to increase this once you are confident your code works!
+replicates <- rep(NA, Nrep); # Store replicates here.
+# Just repeating this code from above to remind us of the true params.
+ptrue <- 0.8; # 80% of widgets are functional.
+n <- 200; # We'll examine 200 widgets.
+data <- rbinom(1, size=n, p=ptrue);
+# TODO: add a line of code here to get an estimate for ptrue (e.g, using a function you defined above)
+phat <- data/n;
+for ( i in 1:Nrep) {
+  replicates[i] <-resample_and_estimate( phat, n );
+}
+```
+
+### Part d: constructing an interval.
+
+Choose a confidence level (95% like in lecture is fine, but feel free to choose something else) and use the vector `replicates` created in the code block above to create a confidence interval.
+
+```{r}
+CI <- quantile(replicates, probs=c(0.025, 0.975));
+```
+
+Does your CI contain the true value of $p$?
+
+```{r}
+CI[1] < ptrue & ptrue < CI[2];
+```
+
+### Optional: repeating the experiment.
+
+A $(1-\alpha)$ confidence interval should fail to contain the true parameter $\alpha$ portion of the time.
+
+Following the code from lecture, write code to repeat the above experiment many times and record how often the confidence interval contains the true value of $p$.
+
+It won't be exact, due to randomness, but it should be close to $1-\alpha$.
+
+```{r}
+
+run_trial <- function( n, ptrue, Nrep ) {
+  data <- rbinom(1, size=n, p=ptrue);
+  phat <- data/n;
+  for ( i in 1:Nrep) {
+    replicates[i] <-resample_and_estimate( phat, n );
+  }
+  
+  CI <- quantile(replicates, probs=c(0.025, 0.975));
+  return( CI[1] < ptrue & ptrue < CI[2] );
+}
+
+# Number of experiments, which we call "trials" below and in lecture
+Nexpt <- 100; # Increase this once you are sure your code works.
+ptrue_in_CI <- rep(NA, Nexpt);
+for( i in 1:Nexpt ) {
+  
+  # TODO: Call a function here that computes a CI, like run_trial from lecture
+  
+  ptrue_in_CI[i] <- run_trial( 200, 0.8, 1000 );
+}
+
+sum(ptrue_in_CI)/Nexpt; # Compute how many of the trials managed to "catch" ptrue.
+```

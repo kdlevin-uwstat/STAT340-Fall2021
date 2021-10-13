@@ -1,6 +1,6 @@
 
 ---
-title: "STAT340 Lecture 06: Prediction & Linear models"
+title: "STAT340 Lecture 06: Prediction (regression & classification)"
 author: "Keith Levin and Bi Cheng Wu"
 date: "October 2021"
 output: html_document
@@ -29,12 +29,127 @@ We are going to imagine two broad approaches to regression and classification.
 
 [Chapter 2 in ISLR](http://pages.stat.wisc.edu/~karlrohe/ht/02-statistical_learning.pdf) provides a broad overview of prediction. In the previous weeks of this course, Monte Carlo provided the basic computational tool; we were always working to get the problem stated as something that we could solve with Monte Carlo.  Now, the basic computational tool is numerical optimization. We will not write code to do optimization.  Instead, we will see optimization problems multiple times; it is often used to define our various techniques. 
 
-## Background
+## Regression
 
-[Chapter 2 in ISLR](http://pages.stat.wisc.edu/~karlrohe/ht/02-statistical_learning.pdf)
+## Example: Simple Linear Regression (SLR)
 
-## Putting it all together: Linear models
+### Background
 
-[Devore's notes on regression](https://www.colorado.edu/amath/sites/default/files/attached-files/ch12_0.pdf)
+[ISLR Chapter 2](http://pages.stat.wisc.edu/~karlrohe/ht/02-statistical_learning.pdf)
 
-[ISLR notes on regression](http://pages.stat.wisc.edu/~karlrohe/ht/03-linear_regression.pdf)
+[Devore regression notes](https://www.colorado.edu/amath/sites/default/files/attached-files/ch12_0.pdf)
+
+### Demo - Lead poisoning and violent crimes
+
+You are encouraged to follow along here with the demo! The data below comes from real sources.
+
+In the 1920s, [Thomas Midgley Jr.](https://en.wikipedia.org/wiki/Thomas_Midgley_Jr) discovered that adding [tetraethyllead](https://en.wikipedia.org/wiki/Tetraethyllead) to gasoline decreased engine knocking (i.e. fuel doesn't ignite correctly in engine, which may damage the engine). He won the prestigious 1923 Nichols medal for his discovery. There were other safer additives, but because he and General Motors owned a patent on tetraethyllead, they marketed it as the best option.
+
+Later, in the 1950s to 70s, people began to realize the increased levels of lead in the atmosphere due to all the leaded gasoline being burned was causing widespread lead poisoning, with symptoms ranging from depression, loss of appetite, and amnesia to  anemia, insomnia, slurred speech, and cognitive impairment like decrease in concentration and loss of short-term memory. In the 1980s its usage was slowly phased out ^[https://archive.org/details/toxictruthscient00denw_0/page/210/mode/2up].
+
+Later, in the late 1990s to early 2000s, researchers also realized levels of lead in the atmosphere correlated strongly with rates of violent crime later in life ^[https://ir.lawnet.fordham.edu/ulj/vol20/iss3/1] ^[https://doi.org/10.1016/j.envres.2007.02.008]. This study was first conducted in the US, but it was soon replicated in other countries and the same results were found over and over again.
+
+<img src="lead1.png" style="width:32%;"/>
+<img src="lead2.png" style="width:32%;"/>
+<img src="lead3.png" style="width:32%;"/>
+
+Let's look at a [dataset](https://doi.org/10.1016/j.envint.2012.03.005) that contains atmospheric lead content levels and aggravated assault rates for several cities in the US and see if we can build a simple linear regression model to effectively explain the trend and make predictions. The data we are using comes from.
+
+For simplicity, let's focus on the city of Atlanta. First, we plot the data. The variables here are metric tons of lead in atmosphere (independent/explanatory), and aggravated assault rate per million 22 years later (dependent/response).
+
+```{r,message=F,warning=F}
+library(tidyverse)
+
+lead = read_csv("https://raw.githubusercontent.com/kdlevin-uwstat/STAT340-Fall2021/93c315a378f3fe421e7e2217f9b039471d313741/lecs/06/lead.csv")
+
+head(lead)
+
+atlanta_lead = lead %>% filter(city == "Atlanta")
+
+ggplot(atlanta_lead,aes(x=air.pb.metric.tons, y=aggr.assault.per.million)) + 
+  geom_point() + labs(x="Lead in air (metric tons)",
+                      y="Aggravated assault rate (per million)",
+                      title="Violent crime v. atmospheric lead (22 year lag)")
+```
+
+The data is a little wider at one side than the other side, but the trend does appear to be pretty linear. We can use the `geom_smooth()` function to get `ggplot` to plot the line of best fit for us before we fit it manually ourselves.
+
+```{r}
+ggplot(atlanta_lead,aes(x=air.pb.metric.tons,y=aggr.assault.per.million)) + 
+  geom_point() + geom_smooth(method="lm", formula="y~x", se=F) + 
+  labs(x="Lead in air (metric tons)",
+       y="Aggravated assault rate (per million)",
+       title="Violent crime v. atmospheric lead (22 year lag)")
+```
+
+To build a linear model, the syntax is as simple as `lm(y~x, data=df)`. Running `summary()` on the model object gives us a variety of useful summary statistics and other information about the model.
+
+```{r}
+atlanta_lead_lm = lm(aggr.assault.per.million ~ air.pb.metric.tons, data=atlanta_lead)
+summary(atlanta_lead_lm)
+```
+
+You can also access key properties of the model using certain built in functions
+
+```{r}
+# gets fitted y-values (points on line of best fit)
+fitted(atlanta_lead_lm)
+
+# gets residuals (difference between actual y and fitted y)
+resids = residuals(atlanta_lead_lm)    # can also use resid()
+resids
+
+# gets coefficients of model
+coefs = coefficients(atlanta_lead_lm)  # can also use coef()
+coefs
+```
+
+We can plot our model just to make sure it looks correct and appropriate.
+
+```{r}
+ggplot(atlanta_lead,aes(x=air.pb.metric.tons,y=aggr.assault.per.million)) + 
+  geom_point() + 
+  geom_abline(slope=coefs[2], intercept=coefs[1], color="red") + 
+  labs(x="Lead in air (metric tons)",
+       y="Aggravated assault rate (per million)",
+       title="Violent crime v. atmospheric lead (22 year lag)")
+```
+
+A good way of seeing if our model looks appropriate is by examining the residuals. Remember, we want to check if the residuals look normal, have mean 0, and have constant variance. Most of these looks pretty good; there's some change in the variance across the dataset, but it's not too large.
+
+```{r}
+par(mfrow=c(1,3))
+plot(atlanta_lead_lm,which=1:2,ask=F)
+hist(resids)
+```
+
+Note the summary tells us that our slope estimate is significant. This basically conducts a $t$-test to see if it's significantly different from 0. In this case it is. Note that this is strictly speaking **correlation, NOT causation**. However, it's a **very suspicious correlation** and warrants further studies and analysis. We can also get confidence intervals for our coefficients.    
+
+```{r}
+confint(atlanta_lead_lm, level=0.95)
+```
+
+At the very least, lead in air is **a useful predictor** for levels of violent crime 22 years later. For example, suppose tomorrow, a chemical company near Atlanta has an explosion, and some more lead is released into the atmosphere. New measurements of lead are found to be 1300 metric tons. What would you predict the approximate aggravated assault rate in 2043 to be?
+
+```{r}
+predict(atlanta_lead_lm, newdata=data.frame(air.pb.metric.tons=1300))
+```
+
+Suppose the lead factory continues to release more lead into the atmosphere, and next year, the levels are measured to be 2000 metric tons. Can we use our model to predict what aggravated assault rates in 2044 might look like?
+
+```{r}
+predict(atlanta_lead_lm, newdata=data.frame(air.pb.metric.tons=2000))
+```
+
+These predictions have to be treated more carefully, since they are out of the range of our data. They may be reliable, but they also may not. The reliability of a prediction usually decreases the further away it is from your data.
+
+<center><a href="https://xkcd.com/1007/"><img id="comic" src="https://imgs.xkcd.com/comics/sustainable.png" title="Though 100 years is longer than a lot of our resources."></a></center>
+
+
+## Classification example
+
+Example: logistic regression. Very similar to simple linear regression, but applied to predicting categories.    
+[ISLR chapter 4](http://pages.stat.wisc.edu/~karlrohe/ht/04-classification.pdf)
+
+
+
