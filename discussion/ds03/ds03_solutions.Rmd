@@ -21,6 +21,7 @@ pacman::p_load(knitr,tidyverse)
 
 knitr::opts_chunk$set(tidy=FALSE,strip.white=FALSE,fig.align="center",comment=" #")
 options(width=120)
+
 ```
 
 <br/>
@@ -169,7 +170,8 @@ a. Inspect the built-in example data frame `mtcars` that's loaded with every R s
 
 ```{r}
 ### do 2.a here
-
+data(mtcars);
+mtcars.small <- subset(mtcars, select=c(mpg,drat))
 ```
 
 
@@ -185,8 +187,8 @@ b. Below, I've performed a simple linear regression, showing the coefficients. *
 # data=mtcars.small means use columns from this data frame,
 # then run coef() function to extract coefficients from model
 # 
-# summary(lm(mpg ~ drat, data=mtcars.small))$coefficients
-# 2*(1-pt(5.096042,30))
+summary(lm(mpg ~ drat, data=mtcars.small))$coefficients
+2*(1-pt(5.096042,30))
 ```
 
 
@@ -198,11 +200,30 @@ c. Another way you can estimate the significance of $\beta_1$ under the null hyp
    ii. Run linear regression using `lm`.
    iii. Save the estimate for the slope of each iteration to be returned.
    
+```{r}
+mtcars.small <- subset(mtcars, select=c(mpg,drat))
+permtest <- function( n ) {
+  
+  coefs <- rep( NA, n );
+  for( i in 1:n ) {
+    perm <- sample(1:nrow(mtcars.small), replace=FALSE)
+    mtcars.perm <- mtcars.small;
+    # Permute the drat entries.
+    mtcars.perm$drat <- mtcars.small[perm,]$drat
+    coefs[i] <- coef(lm(mpg ~ drat, data=mtcars.perm))[2];
+  }
+  return(coefs)
+}
+
+```
+
+
    Run your function with at least $N=1000$ (can you get it to $10,000$ or even higher?). What is the $p$-value you get from this method?
    
    - **Note:** If the method in part b. is accurate and the $p$-value is on the order of $10^{-5}$, you may need $10^5=100,000$ iterations to see a single case where the permuted slope is equal to or greater than in absolute value to the actual slope, so if you run a lower $N$ and don't see a single case, that's ok, it just means the $p$-value is so small that your simulation size cannot detect it.
 
 ```{r}
-### do 2.c here
+# Running your permutation test should yield lots of values that are between 02 and 2; it is very unlikely that you will see a value as extreme as the beta_1=7.678 that we got from fitting to the non-permuted data.
 
+# That is the point! The fact that the coefficient for the true data is so much more extreme than the values that we see on the random permutations suggests that there is something special about the data that we actually observed!
 ```
