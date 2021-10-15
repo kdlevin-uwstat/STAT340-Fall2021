@@ -1,3 +1,4 @@
+
 ---
 title: 'STAT340 Discussion 05: EDA, PCA and clustering'
 author: "Keith Levin and Bi Cheng Wu"
