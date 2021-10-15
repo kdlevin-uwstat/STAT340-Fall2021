@@ -103,7 +103,7 @@ _Note: you can either use `log10(N)` as the `y` aesthetic, OR directly use `y=N`
 
 Ideally, it might look something like this (don't forget to add nice title/labels!)
 
-<center><img src="https://kdlevin-uwstat.github.io/STAT340-Fall2021/discussion/ds06/plot.png" style="width:240px;"></center>
+<center><img src="https://kdlevin-uwstat.github.io/STAT340-Fall2021/discussion/ds06/plot.png" style="width:328px;"></center>
 
 ```{r}
 # ggplot(quakes.count,aes(...)) + ...
