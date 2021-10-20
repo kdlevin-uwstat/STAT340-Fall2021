@@ -21,5 +21,5 @@ permalink: /lectures/
 
 <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/07/L07_UnsupEDA.html">Lecture 7: Exploratory Data Analysis and Unsupervised Learning</a> (October 8, 11, 13) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/07/lec07_UnsupEDA.zip">Files</a>
 
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/08/L08_regression.html">Lecture 8: Regression in more detail (simple, logistic, multiple)</a> (October 20, 22, ...) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/08/L08_regression">file</a>
+<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/08/L08_regression.html">Lecture 8: Regression in more detail (simple, logistic, multiple)</a> (October 20, 22, ...) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/08/L08_regression.Rmd">file</a>
 
