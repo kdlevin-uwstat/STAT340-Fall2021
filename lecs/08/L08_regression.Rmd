@@ -9,8 +9,8 @@ output: html_document
 Parts of these notes adapted from
 [here](https://github.com/jefftwebb/IS-6489-Course-Notes/blob/master/06-linear_regression.Rmd),
 [here](https://github.com/desmond-ong/stats-notes/blob/master/06-a-regression.Rmd),
-[here](https://www.andrew.cmu.edu/user/achoulde/94842/homework/regression_diagnostics.Rmd).
-
+[here](https://www.andrew.cmu.edu/user/achoulde/94842/homework/regression_diagnostics.Rmd),
+[here](https://stats.stackexchange.com/questions/88461/derive-variance-of-regression-coefficient-in-simple-linear-regression).
 
 # Part 1: Simple regression (1 predictor)
 
@@ -103,11 +103,42 @@ $$
 \hat{\epsilon_i}=y_i-\hat{y_i}
 $$
 
-From this, we also get for free an estimate of the variance of the residuals $\sigma^2$, which happens to be useful in other expressions down the line.
+From this, we also get for free an estimate of the variance of the residuals $\sigma^2$, which happens to be very useful in computing other statistics. The reason is that **the larger the residuals' variance, the less precisely we can estimate our regression coefficients**, which should make a lot of sense.
 
 $$
 \hat{\sigma}^2=\text{mean squared error}=\frac{SSE}{n-2}=\frac1{n-2}\sum_i(y_i-\hat{y_i})^2
 $$
+
+We can also easily derive the variance of the slope. First, observe that
+
+\begin{align}
+\sum_i (x_i - \bar{x})\bar{y}
+&= \bar{y}\sum_i (x_i - \bar{x})\\
+&= \bar{y}\left(\left(\sum_i x_i\right) - n\bar{x}\right)\\
+&= \bar{y}\left(n\bar{x} - n\bar{x}\right)\\
+&= 0
+\end{align}
+
+This means that
+
+\begin{align}
+\sum_i (x_i - \bar{x})(y_i - \bar{y})
+&= \sum_i (x_i - \bar{x})y_i - \sum_i (x_i - \bar{x})\bar{y}\\
+&= \sum_i (x_i - \bar{x})y_i\\
+&= \sum_i (x_i - \bar{x})(\beta_0 + \beta_1x_i + \epsilon_i )\\
+\end{align}
+
+Using this, we can easily derive $\text{Var}(\hat{\beta_1})$ as follows:
+
+\begin{align}
+\text{Var}(\hat{\beta_1})
+& = \text{Var} \left(\frac{\sum_i (x_i - \bar{x})(y_i - \bar{y})}{\sum_i (x_i - \bar{x})^2} \right) \\
+&= \text{Var} \left(\frac{\sum_i (x_i - \bar{x})(\beta_0 + \beta_1x_i + \epsilon_i )}{\sum_i (x_i - \bar{x})^2} \right), \;\;\;\text{substituting in the above} \\
+&= \text{Var} \left(\frac{\sum_i (x_i - \bar{x})\epsilon_i}{\sum_i (x_i - \bar{x})^2} \right), \;\;\;\text{noting only $\epsilon_i$ is a random variable} \\
+&=  \frac{\sum_i (x_i - \bar{x})^2\text{Var}(\epsilon_i)}{\left(\sum_i (x_i - \bar{x})^2\right)^2} , \;\;\;\text{independence of } \epsilon_i \text{ and, Var}(cX)=c^2\text{Var}(X) \\
+&= \frac{\sigma^2}{\sum_i (x_i - \bar{x})^2} \\
+\end{align}
+
 
 ### Model diagnostics
 
