@@ -9,6 +9,8 @@ ul{counter-reset: item;list-style-type:none;}
 ul li:before{content:'• Lecture 'counter(item, decimal)': ';counter-increment:item;}
 </style>
 
+Source code for lectures available [on github](https://github.com/kdlevin-uwstat/STAT340-Fall2021/tree/master/lecs).
+
  - [Motivation](../lecs/01) &nbsp; (Sep 8)
  - [Random Variables, Probability and Models](../lecs/02) &nbsp; (Sep 10-13)
  - [Monte Carlo methods](../lecs/03) &nbsp; (Sep 17-22)
