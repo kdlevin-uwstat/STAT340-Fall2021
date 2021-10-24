@@ -7,19 +7,12 @@ title: Lectures
 permalink: /lectures/
 ---
 
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/01/L01_motivation.html">Lecture 1: Motivation</a> (September 8) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/01/lec01_motivation.zip">Files</a>
-
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/02/L02_randomvariables.html">Lecture 2: Random Variables, Probability and Models</a> (September 10, 13) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/02/L02_randomvariables.Rmd">Rmd file</a>
-
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/03/L03_monte-carlo.html">Lecture 3: Monte Carlo methods</a> (September 17, 20, 22)
-
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/04/L04_testing.html">Lecture 4: Testing (Part 1)</a> (September 22, 24, 27)
-
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/05/L05_estimation.html">Lecture 5: Estimation</a> (September 29, October 1, October 4) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/05/L05_estimation.Rmd">Rmd file</a>
-
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/06/L06_prediction.html">Lecture 6: Prediction</a> (October 4, 6) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/06/L06_prediction.Rmd">Rmd file</a>
-
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/07/L07_UnsupEDA.html">Lecture 7: Exploratory Data Analysis and Unsupervised Learning</a> (October 8, 11, 13) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/07/lec07_UnsupEDA.zip">Files</a>
-
-<a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/08/L08_regression.html">Lecture 8: Regression in more detail (simple, logistic, multiple)</a> (October 20, 22, ...) <a href="https://kdlevin-uwstat.github.io/STAT340-Fall2021/lecs/08/L08_regression.Rmd">file</a>
+ - [Lecture 1: Motivation](lecs/01) (September 8) 
+ - [Lecture 2: Random Variables, Probability and Models](lecs/02) (September 10, 13) 
+ - [Lecture 3: Monte Carlo methods](lecs/03) (September 17, 20, 22)
+ - [Lecture 4: Testing (Part 1)](lecs/04) (September 22, 24, 27)
+ - [Lecture 5: Estimation](lecs/05) (September 29, October 1, October 4) 
+ - [Lecture 6: Prediction](lecs/06) (October 4, 6) 
+ - [Lecture 7: Exploratory Data Analysis and Unsupervised Learning](lecs/07) (October 8, 11, 13) 
+ - [Lecture 8: Regression in more detail (simple, logistic, multiple)](lecs/08) (October 20, 22, ...) 
 
