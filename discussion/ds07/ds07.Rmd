@@ -1,0 +1,105 @@
+
+---
+title:  "STAT340: Discussion 7: Linear regression"
+documentclass: article
+classoption: letterpaper
+output:
+  html_document:
+    highlight: tango
+    fig_caption: false
+---
+
+<style>
+table{width:50%!important;margin-left:auto!important;margin-right:auto!important;}
+ol[style*="decimal"]>li{margin-top:40px!important;}
+</style>
+
+```{r setup, include=FALSE}
+# check packages installed
+knitr::opts_chunk$set(echo=T,tidy=F,strip.white=F,fig.align="center",comment=" #",message=F,warning=F)
+options(width=120)
+```
+
+<br/>
+
+[link to source](ds09.Rmd)
+
+## XKCD comic
+
+<center><a href="https://xkcd.com/1725/"><img id="comic" src="https://imgs.xkcd.com/comics/linear_regression.png" title="The 95% confidence interval suggests Rexthor's dog could also be a cat, or possibly a teapot."></a></center>
+
+---
+
+## Exercise
+
+Today we're going to use the built-in `mtcars` dataset to practice simple linear regression. Note this is a built-in dataset provided as part of the `datasets` package in `R`.
+
+
+### Background
+
+Run `?(mtcars)` in the console (do NOT add it to this `Rmd` file) and briefly read the help page. Specifically, take note of the following:
+
+1. What is the source of this data?
+2. What is this dataset measuring? (i.e. what is the response variable?)
+3. What predictors are available and what do they mean?
+
+Feel free to also run `head(mtcars, 10)` or `View(mtcars)` to inspect the data frame briefly before moving on.
+
+
+### Fitting
+
+Uncomment the line below and finish it. Specifically, use `lm` to run a regression of `mpg` on one other predictor (an easy way to do this is to use `mpg ~ var` where `var` is the predictor you're using). Make sure to also include `data = mtcars` as an argument or it won't know where to get the variable names from.
+
+```{r}
+# lm.mtcars = lm(...)
+```
+
+View a summary of the regression by uncommenting and running the line below
+
+```{r}
+# summary(lm.mtcars)
+```
+
+
+Briefly inspect the residuals plot by running `plot(lm.mtcars,which=1:2)` . What do you observe, and what does it mean?
+
+> _REPLACE TEXT WITH RESPONSE_
+
+
+### Interpretation
+
+Uncomment the line below to get the estimated coefficients along with their standard errors.
+
+```{r}
+# summary(lm.mtcars)$coefficients[,1:2]
+```
+
+Give an interpretation of the estimate and standard error for your predictor. Be careful in your wording of the interpretation.
+
+> _REPLACE TEXT WITH RESPONSE_
+
+What does the intercept here mean? (Except for special situations, we generally don't care much about the intercept, but you should still understand what it means.)
+
+> _REPLACE TEXT WITH RESPONSE_
+
+What is the R² for this model? (Hint: look at the output of `summary`) Give an interpretation of this value.
+
+> _REPLACE TEXT WITH RESPONSE_
+
+Briefly read about the [adjusted R² here](https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/adjusted-r2/). What is the adjusted R² of this model and how does this differ from the normal R² value? (Hint: again, look at the output of `summary`).
+
+> _REPLACE TEXT WITH RESPONSE_
+
+Generate $95\%$ confidence intervals for the coefficients using the `confint` function. Give an interpretation of these confidence intervals.
+
+```{r}
+# confint(...)
+```
+
+> _REPLACE TEXT WITH RESPONSE_
+
+
+# Try with others!
+
+Repeat the steps above for at least 1 other predictor. Which of these two predictors seems to offer a better "predictive" ability for `mpg`? How do you know?
+
