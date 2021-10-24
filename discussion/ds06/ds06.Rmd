@@ -1,0 +1,207 @@
+
+---
+title:  "STAT340: Discussion 6: Earthquake frequencies"
+documentclass: article
+classoption: letterpaper
+output:
+  html_document:
+    highlight: tango
+    fig_caption: false
+---
+
+<style>
+table{width:50%!important;margin-left:auto!important;margin-right:auto!important;}
+ol[style*="decimal"]>li{margin-top:40px!important;}
+</style>
+
+```{r setup, include=FALSE}
+# check packages installed
+knitr::opts_chunk$set(echo=T,tidy=F,strip.white=F,fig.align="center",comment=" #",message=F,warning=F)
+options(width=120)
+```
+
+<br/>
+
+[link to source](ds06.Rmd)
+
+## XKCD comic
+
+<center><a href="https://xkcd.com/2370/"><img id="comic" src="https://imgs.xkcd.com/comics/prediction.png" title="You'd think it'd be easy to just bet money against these people, but you have to consider the probability of them paying up."></a></center>
+
+---
+
+## Exercise
+
+Today, we will be using *real data* from the [US Geological Survey (USGS)](https://www.usgs.gov/natural-hazards/earthquake-hazards/earthquakes) to build a model to **estimate the frequency of earthquakes** across the world. As usual, we encourage you to work in small groups, but this is up to you.
+
+<br/>
+
+
+### Background
+
+In seismology (the study of earthquakes), the relationship between the frequency and magnitude of earthquakes (in a certain place and period of time) can be modeled by the [Gutenberg-Richter law](https://en.wikipedia.org/wiki/Gutenberg%E2%80%93Richter_law) (GR law). Let $M$ be the [Richter magnitude](https://en.wikipedia.org/wiki/Richter_magnitude_scale) of a seismic event, and $N$ be the number of events with magnitude ***greater than or equal to $M$***. Then, the GR law states that $$N=10^{a-bM}$$ or in other words $$\log_{10}(N)=a-bM$$ where $a$ and $b$ are unknown constants that depend on the particular choice of place/period. Note that this relationship should appear as a line on a plot of $\log_{10}(N)$ vs $M$.
+
+<br/>
+
+
+### Data import
+
+This dataset contains every earthquake (on Earth) of magnitude 4.5 or greater that was detected by USGS from beginning of 2011 to end of 2020. A detailed description of the columns can be [**found here**](https://earthquake.usgs.gov/data/comcat/data-eventterms.php), but the **main variables** we are interested in **are `time` and `mag.binned`** (magnitude rounded to nearest half integer).
+
+For convenience, much of the data cleaning and preprocessing has already been done for you; [**download the prepared data here**](https://kdlevin-uwstat.github.io/STAT340-Fall2021/discussion/ds06/quakes.csv.gz) and **save into the same directory as this source file**. Then, uncomment and run the lines of code below to import the data.
+
+```{r}
+# library(tidyverse)
+# library(lubridate)
+# 
+# parseTime = function(times){
+#   as.POSIXct(strptime(times,"%Y-%m-%d %H:%M:%OS",tz="UTC"))
+# }
+# 
+# quakes = read_csv("quakes.csv.gz", col_types="TddddcddddccTccddddccc") %>%
+#   mutate_at(c("time","updated"),parseTime)
+
+
+# NOTES:
+# col_types tells R precisely what the column types are, to avoid wrong type errors
+# parseTime here is a function to help convert the datetime strings in this file to datetime format
+# mutate_at is used to apply parseTime to both the "time" and "updated" columns
+# also, recall that .gz means it's been compressed using the gz program, which saves a lot of space,
+#   but R can still directly read it as if it's an ordinary csv file (underrated feature)
+```
+
+For our purposes, this data needs to be summarized to obtain $N$ vs $M$ values for each year, where $N$ is the number of earthquakes with magnitude at least as strong as a given value of $M$ (see wiki page on [GR law](https://en.wikipedia.org/wiki/Gutenberg%E2%80%93Richter_law) for more details). Since this is a bit tricky, it's also been done for you below.
+
+```{r}
+# quakes.count = quakes %>%
+#   count(year,mag.binned,name='count') %>%
+#   group_by(year) %>%
+#   mutate(N=rev(cumsum(rev(count))), year=as.character(year))
+
+# NOTES:
+# count(year,mag.binned) counts how many events with that magnitude occurred each year
+#   (see https://dplyr.tidyverse.org/reference/count.html for more info)
+# 
+# group_by(year) followed by cumsum(...) takes the cumulative sum in each year
+# the rev(...rev(...)) runs this cumsum in reverse (otherwise we get ≤M instead of ≥M)
+```
+
+Before moving onto the next step, inspect the data frame to **make sure you completely understand what it represents** and check that everything looks right. (Your first and last rows should look something like `2011, 4.5,  7430, 10636` and `2020, 7, 10, 10`).
+
+```{r}
+# print(quakes.count,n=Inf)
+```
+
+<br/>
+
+
+### Visualization
+
+As usual, the **first step is to visualize the data**. Make a **scatter plot** of $\log_{10}(N)$ vs $M$ (note this means $M$ is on the horizontal axis (you say $y$ vs $x$, NOT $x$ vs $y$)). Then, **add a line plot on top**, making sure the **years are correctly grouped** together and distinguished from each other (use something like color or linetype (or both!), or even something else, (use your judgment to determine what looks best)).
+
+_Note: you can either use `log10(N)` as the `y` aesthetic, OR directly use `y=N` and just rescale the axis to be logarithmic using `scale_y_log10()`. I recommend this second method since it makes the axis easier to read ([see here for an example](https://stackoverflow.com/a/9223257))._
+
+Ideally, it might look something like this (don't forget to add nice title/labels!)
+
+<center><img src="https://kdlevin-uwstat.github.io/STAT340-Fall2021/discussion/ds06/plot.png" style="width:328px;"></center>
+
+```{r}
+# ggplot(quakes.count,aes(...)) + ...
+```
+
+<br/>
+
+
+### Estimation
+
+Next, we will fit a simple linear regression to the data to estimate $a$ and $b$. Complete the line of code below to fit the model (don't forget the linear relationship is NOT between $N$ and $M$ but rather between $\log_{10}(N)$ and $M$, so adjust your model formula accordingly!).
+
+```{r}
+# lm.quakes = lm(...)
+```
+
+View a summary of the model to see coefficients' estimates, $p$-values, and other relevant info.
+
+```{r}
+# summary(lm.quakes)
+```
+
+From your fit, what are your estimates for the constants $a$ and $b$? Pay **careful attention** to the signs here! (hint: remember the GR law uses the convention $a-bM$ whereas R assumes you are fitting `intercept + slope * M`, so therefore your fitted slope = $-b$).
+
+Try to avoid copy-pasting or manually typing in values. The `coef()` function lets you extract coefficients from a model object (e.g. `lm.quakes`). You can then use `[i]` to access the i-th value of this coefficients vector. You may also want to use `unname()` at the end to remove the name from the value (if you don't, it may carry through later calculations and no longer be a correct name for the output value).
+
+```{r}
+# a = ...?
+# b = ...?
+```
+
+(Hint: if you did this correctly, `a+b` should evaluate to approximately `9.68`)
+
+<br/>
+
+
+### Checking fit
+
+It's always **nice to visually check your fit** to make sure everything looks right. Plot your **line of best fit along with the data points** in the chunk below.
+
+_Hint: this time, I recommend using `log10(N)` as the `y` aesthetic, then using [`geom_abline()`](https://ggplot2.tidyverse.org/reference/geom_abline.html) to plot your line of regression using your estimated slope and intercept values (this avoids dealing with distorted axis cause by the other method's `scale_y_log10()` which can be non-intuitive to deal with). Note you can use your variables `a` and `b` here that were defined previously to avoid manually typing in numerical estimates (which is almost always bad!)._
+
+```{r}
+# ggplot(quakes.count,aes(...)) + ...
+```
+
+You can also check [the residuals of your fit](https://rpubs.com/iabrady/residual-analysis). This is fairly convenient to do in base R. Note there is some **heteroscedasticity** due to the fact that higher magnitude earthquakes occur much less often than lower magnitude earthquakes so it's harder to estimate them as precisely. **This is expected** and not a huge problem. Normality is mostly satisfied.
+
+```{r}
+# par(mfrow=c(1,2))
+# plot(lm.quakes,which=1:2)
+```
+
+<br/>
+
+
+### Confidence & prediction
+
+Give $95\%$ confidence intervals for $a$ and $b$ ([help page](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/confint)).
+
+```{r}
+# confint(...)
+```
+
+Give a brief interpretation of these intervals.
+
+> ***REPLACE TEXT WITH RESPONSE***
+
+From the [GR law](https://en.wikipedia.org/wiki/Gutenberg%E2%80%93Richter_law#Background), we can deduce that the **total number of earthquakes of _ANY_ magnitude** is equal to $$N_\text{Total}=10^a$$ Using your estimate for $a$, ***approximately*** how many earthquakes are there in total every year on Earth? (Remember to think about how precisely you can estimate this and **round your answer appropriately!** Not all the digits you get from R are significant, so don't present all of them!).
+
+Use the box below to compute your answer, then respond with a short sentence below.
+
+```{r}
+# perform calculations here
+```
+
+> ***REPLACE TEXT WITH RESPONSE***
+
+Using your $95\%$ confidence interval for $a$, give an approximate $95\%$ confidence interval for $N_\text{Total}$.
+
+```{r}
+# perform calculations here
+```
+
+> ***REPLACE TEXT WITH RESPONSE***
+
+According to your model, how many earthquakes of magnitude 8 or greater do you expect to see on average every year?
+
+```{r}
+# perform calculations here
+```
+
+> ***REPLACE TEXT WITH RESPONSE***
+
+According to your model, you would expect to see an earthquake with magnitude between 9.5 and 10 on average _once every how many years_?
+
+```{r}
+# perform calculations here
+```
+
+> ***REPLACE TEXT WITH RESPONSE***

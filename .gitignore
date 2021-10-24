@@ -3,4 +3,4 @@
 **/*.out
 **/*_cache/
 **/*_files/
-hw/**/*solution*
+**/*solution*
