@@ -444,6 +444,59 @@ This process is exactly the same as 1 predictor regression, except we're fitting
 
 <center><img src="https://i.imgur.com/T2HKRUN.png" style="width:70%"/></center>
 
-[Continue on page 23 of ISLR](http://pages.stat.wisc.edu/~karlrohe/ht/03-linear_regression.pdf)
+<br/>
 
+> [Continue on page 23 of ISLR](http://pages.stat.wisc.edu/~karlrohe/ht/03-linear_regression.pdf)
+
+> [Advanced R formulae](https://thomasleeper.com/Rcourse/Tutorials/formulae.html)
+
+Other examples of interaction plots: [here](https://cehs-research.github.io/EDUC-7610/Slides/13_EDUC7610_interactions_example) and [here](https://cran.r-project.org/web/packages/interactions/vignettes/interactions.html)
+
+<br/>
+
+# Logistic regression
+
+<br/>
+
+> [Chapter 4 of ISLR](http://pages.stat.wisc.edu/~karlrohe/ht/04-classification.pdf)
+
+Example:
+
+
+```{r}
+admit = read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+admit$rank <- factor(admit$rank)
+
+head(admit)
+summary(admit)
+```
+
+```{r}
+logit.admit = glm(admit~gre+gpa+rank, data=admit, family="binomial")
+summary(logit.admit)
+```
+
+```{r}
+confint(logit.admit)
+```
+
+```{r}
+# by default, gives you type="link"
+pred.link = predict(logit.admit, newdata=data.frame(gre=800, gpa=4, rank="1"))
+pred.link
+
+# to give response, use type="response"
+predict(logit.admit, newdata=data.frame(gre=800, gpa=4, rank="1"), type="response")
+
+# relationship between two
+1/(1/exp(pred.link)+1)
+
+# predict completely manually
+coef(logit.admit)
+1/(1/exp(sum(coef(logit.admit) * c(1,800,4,0,0,0)))+1)
+
+# another example
+predict(logit.admit, newdata=data.frame(gre=750, gpa=3.7, rank="2"), type="response")
+1/(1/exp(sum(coef(logit.admit) * c(1,750,3.7,1,0,0)))+1)
+```
 
