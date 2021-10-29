@@ -1,0 +1,341 @@
+---
+title: 'STAT340 Homework: EDA, Unsupervised Learning and Regression'
+author: "Keith Levin and Bi Cheng Wu"
+date: "Fall 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+> ***TODO: points***
+
+
+# Regression
+
+[Chapter 3 of ISLR](https://www.statlearning.com/) (page 121 in book, or page 131 in pdf document), questions 1,3,4,10.
+
+Also chapter 4 (page 193 in book, or page 203 in pdf) question 13(a-b only). Which variables appear to be significant? Which have the largest effect sizes? Interpret one of the coefficient estimates. What does the number mean?
+
+## Problem 1
+
+**Work goes here**
+
+## Problem 3
+
+**Work goes here**
+
+## Problem 4
+
+**Work goes here**
+
+## Problem 10
+
+**Work goes here**
+
+## Problem 13
+
+**Work goes here**
+
+
+
+# EDA/Unsupervised Learning
+
+
+## Problem 1: Clustering
+
+The `faithful` data set, which comes packaged with R, represents measurements of the eruptions of [Old Faithful](https://en.wikipedia.org/wiki/Old_Faithful), a geyser in Yellowstone National Park.
+Each row of the data frame represents a single eruption of the geyser, with a column that captures the length of the eruption in minutes (`eruptions`) and the time in minutes until the next eruption (`waiting`).
+
+```{r}
+data(faithful);
+```
+
+__Important note:__ there is another data set built into R called `faithfuld`.
+This problem __is not__ about that data set.
+We are working with `faithful`, here.
+
+### Part a: visualizing the data
+
+Let's start by following the first rule of data science [Editor's note: Keith made that name up] and look at our data.
+Create a scatter plot showing the waiting time as a function of the eruption time.
+You may use either the built-in R plotting functions or `ggplot2`, whichever you prefer.
+Give your plot an appropriate title and axis labels.
+
+```{r}
+
+# TODO: plotting code goes here.
+
+```
+
+### Part b: Inspecting the plot
+
+If all went well, you should see some pretty obvious cluster structure in the plot.
+Repeat your plot from Part (a) above, but this time include a line indicating where you think is a reasonable boundary between the two different clusters.
+That is, draw a line such that on one side of the line are all of the points that you think belong to "cluster 1" and on the other is all of the points that you think belong to "cluster 2".
+
+__Note:__ once again, there are plenty of different but equally "right" answers, here.
+
+__Hint:__ If you are using the built-in R plotting functions, you'll want to use `abline`. If you are using `ggplot2`, you'll want to look at `geom_abline`.
+You may need to toy around with the slope and intercept arguments a bit to get things looking right.
+Don't worry about getting your line *exactly* where you want it, just make it so that it separates the data into what you think are the "best" two clusters.
+You can even be lazy, if you want, and just use `vline` or `hline` to add a vertical or horizontal line, respectively.
+
+```{r}
+
+#TODO: plotting code goes here.
+
+```
+
+### Part c: a bit more data viz
+
+Just to make things interesting, let's visualize your guess a bit more vividly.
+Make the same plot as Part (b) (i.e., with the line indicating the cluster of the points), but now color the points in your plot according to which side of the line they are on. You may use any two colors you like, so long as they are easy to tell apart (e.g., blue and red).
+
+__Hint:__ given a line with slope $m$ and intercept $b$, the two-dimensional point $(x,y)$ is on one or the other side of the line according to the sign of $y - mx - b$. Use this to create a vector with one entry for each observation in the data set, specifying which of your two colors to use. Refer to the EDA lecture notes for examples of how to do this.
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+### Part d: normalizing the data
+
+We are going to play around with clustering a bit, now, but as we saw in lecture, clustering can be sensitive to different scales in the data.
+To avoid those pitfalls, let's standardize our data.
+Create a new data frame `faithful_z` (Z for Z-score, but don't worry, that's the last you'll hear of them this lecture!), with the same two columns as `faithful`, but with the column data recentered and rescaled so that they have mean 0 and variance 1.
+Recall that we do this by subtracting out the mean and dividing by the standard deviation.
+Something like `x <- (x - mean(x))/sd(x)`.
+
+As a sanity check, you should see that `mean(faithful_z$eruptions)` and `mean(faithful_z$waiting)` are both zero,
+and `sd(faithful_z$eruptions)` and `sd(faithful_z$waiting)` are both 1.
+Note that this standardization is precisely the operation carried out by `prcomp` when we specify `scale=TRUE` (don't worry-- you'll use `prcomp` in the next problem!).
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+### Part e: plotting again
+
+Having recentered and rescaled the data, plot it again.
+That is, plot your new `faithful_z` data set, again showing showing the waiting time as a function of the eruption time.
+Color the points in your plot with the same color assignments as your plot in Part (c).
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+Do you still agree with your initial clustering guess? Why or why not? A sentence or two is plenty, here.
+
+***
+
+TODO: explanation/discussion goes here.
+
+***
+
+### Part f: clustering
+
+Okay, here's the payoff. Use `kmeans` to group the rows of your data set `faithful_z` into two clusters.
+Don't forget to set the `nstart` argument to something moderately large (10 or 20 should be fine) to make sure you are finding a reasonably good solution.
+Then, make a plot of the data, colored according to its true cluster.
+
+```{r}
+#TODO: code goes here.
+```
+
+How does this clustering compare with your original clustering guess from Part (e)?
+Bear in mind that depending on the output of `kmeans`, you might have the cluster colors swapped from one plot to the other.
+This is no big deal-- after all, like we said in lecture, clusterings are invariant to what we label the clusters.
+
+***
+
+TODO: discussion goes here (just a sentence or two is fine!)
+
+***
+
+## Problem 2 (TODO points): Principal Components Regression (PCR)
+
+In this problem, we'll see a brief illustration of why PCA is often useful as a preprocessing step in linear regression or as a regression method all its own.
+
+Let's set the stage by considering a regression problem with two predictors $x_1$ and $x_2$ and one response $Y$.
+As a simple example, perhaps $x_1$ is height, $x_2$ is weight, and the response $Y$ is blood pressure.
+
+We try to predict our response $Y$ as a linear function of $x_1$ and $x_2$ (plus an intercept term) 
+$$
+Y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \epsilon,
+$$
+where $\epsilon$ is mean-zero normal noise, independent of the $x$ and $\beta$ terms, with unknown variance $\sigma^2 > 0$.
+
+We can solve multiple linear regression problems almost as easily as we can solve simple linear regression, but a problem can arise if two or more of our predictors are highly correlated.
+
+### Part a: loading the data
+
+The following code downloads a synthetic data set from the course webpage adn loads it into a data frame called `illustrative`.
+```{r}
+download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/hw/04/illustrative.csv', destfile='illustrative.csv');
+illustrative <- read.csv('illustrative.csv');
+```
+
+The data frame has three columns: `x1`, `x2` and `y`.
+Here, `y` is a response variable driven by `x1` and `x2`.
+
+```{r}
+head(illustrative);
+```
+
+The problem is, as you'll see, `x1` and `x2` are highly correlated.
+
+Create a pairs plot showing the relation between the three columns in this data frame.
+Briefly describe what you see (a sentence or two is fine).
+
+```{r}
+
+# TODO: plotting code goes here
+
+```
+
+***
+
+TODO: brief description/explanation goes here.
+
+***
+
+Just to drive things home, compute the correlations between each of the three pairs of variables `x1`, `x2` an `y`. The built-in function `cor` will do fine, here, but feel free to explore more if you wish.
+
+```{r}
+
+#TODO: correlation code goes here.
+
+```
+
+### Part b: understanding the issue
+
+To understand the issue, suppose that `y` is determined completely by `x1`, say $Y = \beta_0 + \beta_1 x_1$ for some $\beta_0,\beta_1 \in \mathbb{R}$.
+Then we should expect `x_1` to be a good predictor of `y`, and simply by virtue of `x_1` and `x_2` being correlated, `x_2` will be a very good predictor of `y`, as well.
+
+Fit two regression models: one regressing `y` against `x1` (and an intercept term), the other regressing `y` against `x2` (and an intercept term).
+Compare the two models and their fits.
+Is one better than the other?
+Just a few sentences of explanation is plenty, here.
+
+```{r}
+
+#TODO: model fitting goes here.
+
+```
+
+***
+
+TODO: brief discussion/description goes here.
+
+***
+
+### Part c: residuals of the multivariate model
+
+Now, instead of predicting `y` from just `x1` or just `x_2`, let's consider the model that uses both predictors.
+That is, we will consider a model $Y = \beta_0 + \beta_1 x_1 + \beta_2 x_2$.
+To see the problem with our correlated predictors, we need to be able to see how our model's squared error changes as a function of these coefficients.
+
+Write a function `illustrative_residual( beta0, beta1, beta2 )`, where `beta0`, `beta1` and `beta2` are all numerics, which computes the sum of squared residuals between the observed responses `y` in the data frame `illustrative` and the predicted responses if we predict `y` as `beta0 + beta1*x_1 + beta2*x_2`.
+That is, for any choice of coefficients `beta0`, `beta1`, `beta2`, your function should return the sum of squared residuals under the model using these coefficients. Something like
+$$
+\sum_i \left( y_i - (\beta_0 + \beta_1 x_{i,1} + \beta_2 x_{i,2} )  \right)^2.
+$$
+
+```{r}
+
+illustrative_residual <- function( beta0, beta1, beta2 ) {
+  
+  # TODO: code goes here.
+  
+}
+
+```
+
+
+### Part d: ambiguous coefficients
+
+Now, we'll use `illustrative_residual` to get to the heart of the matter.
+Evaluate the sum of squared residuals for different choices of the coefficients `beta0`, `beta1` and `beta2`.
+A natural starting point is to set `beta0` equal to the estimated intercept term from one of the two models fitted in Part (b) above, and either
+
+1. Set `beta1` to the coefficient of `x1` estimated in the `y ~ 1 + x1` model in Part (b) and set `beta2` to 0
+2. Set `beta2` to the coefficient of `x2` estimated in the `y ~ 1 + x2` model in Part (b) and set `beta1` to 0.
+
+Both of these should yield fairly small sum of squared residuals, at least compared with 
+more arbitrary choices of `(beta0,beta1,beta2)`.
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+Now, the trouble is that since `x1` and `x2` are correlated, there exists a constant $c$ such that $\beta_1 x_{i,1} \approx \beta_1 c x_{i,2}$ for all $i=1,2,\dots,n$.
+So if $y_i = \beta_1 x_{i,1}$ is a good model (i.e., has small squared error),
+$y_i = \beta_2 x_{i,2}$ with $\beta_2 = c \beta_1$ will be a good model, too.
+In the data in data frame `illustrative`, $c=1$.
+Try evaluating the squared residuals with the same choice of `beta0` but with `beta1` set to the coefficient of `x2` from Part (b) (and `beta2` set to $0$).
+Similarly, keep `beta0` as it was and evaluate the squared residuals with `beta2` set to the coefficient of `x1` in Part (b) (and `beta1` set to zero).
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+You should see that all of the suggested settings above yield approximately the same sum of squared residuals (again, at least compared to other more arbitrary choices of coefficients-- there will be random variation!).
+So we have many different estimates of the coefficients that have about the same performance.
+But the problem is even worse than that.
+Continuing to keep `beta0` equal to the intercept in the `y ~ 1 + x1` model from Part (b), let `b` denote the coefficient of `x1` in that model.
+Try changing `beta1` and `beta2` in `illustrative_residual` so that `beta1 + beta2` is approximately equal to `b`.
+You should see that so long as `beta1 + beta2` is approximately `b`, the sum of squared residuals remains small (again compared to "sillier" choices of coefficients).
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+So we see that there are a wide range of different choices of coefficients, all of which give comparably good fits to the data.
+The problem is that these different choices of coefficients lead to us making very different conclusions about the data.
+In our example above, different choices of coefficients `beta1` and `beta2` mean blaming either height or weight for increased blood pressure.
+
+### Part e: principal components regression to the rescue
+
+Let's look at one possible solution to the above issue (though hardly the only solution-- see ISLR Sections 3.3.3 and 6.3 for more discussion) using PCA.
+We saw in lecture and in the readings that PCA picks out the directions along which the data varies the most.
+So to avoid the colinearity and correlation issues illustrated in Parts (a) through (d), principal components regression (PCR; not to be confused with [PCR](https://en.wikipedia.org/wiki/Polymerase_chain_reaction) applies principal components analysis to obtain a lower-dimensional representation of the data, in which the data has been projected onto those high-variance directions, and then performs regression on the projected, lower-dimensional data.
+
+Use PCA to extract the first principal component of the two-dimensional data stored in the `x1` and `x2` columns of the `illustrative` data frame, and regress the `y` column against the projection of the `(x1, x2)` data onto this first component.
+
+That is, fit a model that looks something like `y ~ 1 + pc1`.
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+Compute this model's sum of squared residuals and compare to what you saw in Part (d). A sentence or two will suffice.
+
+```{r}
+
+#  TODO: code goes here.
+
+```
+
+***
+
+TODO: brief discussion/comment goes here.
+
+***
+
+
