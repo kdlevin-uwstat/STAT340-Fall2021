@@ -1,0 +1,306 @@
+---
+title: "The Maximum Likelihood Framework"
+author: "Keith Levin and Bi Cheng Wu"
+date: "Fall 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This brief set of lecture notes discusses the maximum likelihood framework, which is a common framework for choosing a cost function (i.e., measuring how good or bad a solution is) for estimation and prediction problems.
+
+__Important note:__ this lecture includes some non-trivial mathematics. You will not be expected to prove or recite any of the below on an exam.
+However, while you are not responsible for the mathematical details of this lecture, you are responsible for understanding the high-level ideas.
+
+## Learning objectives
+
+After this lecture, you will be able to
+
+- Explain, at a conceptual level, the *maximum likelihood* estimation framework
+- Contrast maximum likelihood estimation with other approaches, such as least squares and other loss functions
+
+## How do we choose among estimates?
+
+On multiple occasions this semester, we have seen situations where our estimate takes the form of a *least squares* solution.
+That is, it solves a problem along the lines of
+$$
+\min_{\theta} \sum_{i=1}^n \left( X_i - \theta \right)^2.
+$$
+
+### Example: the sample mean
+
+The most common example of a least-squares estimator is the sample mean.
+To find the value of $\theta$ that minimizes
+$$
+\sum_{i=1}^n \left( X_i - \theta \right)^2,
+$$
+we take the derviative with respect to $\theta$, set that derivative equal to $0$, and solve for $\theta$
+(of course, if we were being careful calculus students, we would also check that this is indeed a minimum by verifying that the second derivative with respect to $\theta$ is positive, but we'll leave that to you).
+
+Taking derivatives with respect to $\theta$,
+$$
+  \frac{ d }{ d \theta } \sum_{i=1}^n \left( X_i - \theta \right)^2
+  = \sum_{i=1}^n \frac{ d }{ d \theta }\left( X_i - \theta \right)^2
+  = \sum_{i=1}^n 2\left( X_i - \theta \right).
+$$
+
+Setting this equal to zero, we want to find $\theta$ such that
+$$
+\sum_{i=1}^n 2\left( X_i - \theta \right) = 0,
+$$
+which is solved by $\theta = n^{-1} \sum_i X_i = \bar{X}$.
+
+### Example: simple linear regression
+
+We just saw simple linear regression, which models a response $Y_i$ as an affine (linear plus a bias term) function of a predictor $X_i$ plus normal noise,
+$Y_i = \beta_0 + \beta_1 X_i + \epsilon_i$.
+
+There, we decided that we would measure the qualit of a solution $(\beta_0,\beta_1)$ according to
+$$
+\sum_{i=1}^n \left( Y_i - (\beta_0 + \beta_1 X_i) \right)^2,
+$$
+and we found that (again,taking derivatives and setting equal to zero) the solution was given by
+$$
+\begin{aligned}
+\hat{\beta}_1
+&= \frac{ \sum_i (X_i - \bar{X})(Y_i - \bar{Y})}{   \sum_i (X_i - \bar{X})^2  } \\
+\hat{\beta}_0 &= \bar{Y} - \hat{\beta}_1 \bar{X}.
+\end{aligned}
+$$
+
+## Loss functions
+
+Of course, the sum of squared errors is not the only way to measure how good a solution is.
+
+For example, it feels a lot more natural to try and estimate the population mean according to the value of $\theta$ that minimizes
+$$
+\frac{1}{n} \sum_{i=1}^n \left| X_i - \theta \right|.
+$$
+Indeed, this is minimized by taking $\theta$ to be the median of the data (strictly speaking, we should say "any median", because there may exist multiple medians, but that's a technicality).
+See (this StackExchange post)[https://math.stackexchange.com/questions/113270/the-median-minimizes-the-sum-of-absolute-deviations-the-ell-1-norm] for more.
+
+## Maximum likelihood
+
+Given what we've seen so far this semester, you might think that least squares is the only way we can measure how good or bad an estimate is.
+
+But let's consider a different approach.
+When we are fitting a model to data, we are trying to choose one particular distribution from among a family of distributions.
+
+### Example: fitting a normal
+
+Suppose that we observe data $X_1,X_2,\dots,X_n$ drawn i.i.d. from a normal distribution with unknown mean $\mu$ and known variance $\sigma^2 = 1$.
+We have already seen the idea of using the sample mean $\bar{X}$ as our estimate for $\mu$, with the goal of minimizing least-squares error between our data and our estimate.
+
+Let's consider a different approach.
+We have already assumed that our data came from a normal distribution with variance $1$.
+So we need to choose from among the set of models
+$$
+\left\{ \mathcal{N}(\theta, 1) : \theta \in \mathbb{R} \right\}.
+$$
+
+(Note that we are using $\theta$ here just to make it clear that this is not the same as the *true but unknown* mean $\mu$.)
+That is, choosing a mean $\theta$ amounts to picking out one distribution from this set of possible distributions that might have described the data.
+
+When we have a number like $\theta$ that picks out a particular distribution in this way, we say that $\theta$ is a *parameter* of the model.
+Presumably this is a term that you have heard before in your courses, but you may not have seen the formal definition.
+Formally, a parameter is a number (or set of numbers, like a vector) that lets us pick out a particular distribution from among a set of possible distributions.
+
+How should we choose from among the infinite number of possible means available to us?
+The *maximum likelihood* approach goes as follows.
+
+Having observed data $X_1=x_1,X_2=x_2,\dots,X_n=x_n$, for any particular choice of the mean $\theta$, we get a distribution over the data, and we can write down the *likelihood* of the data, which we usually denote
+$$
+f_\theta\left( x_1, x_2, \dots, x_n \right)
+= \prod_{i=1}^n f_\theta\left( x_i \right),
+$$
+where $f_\theta$ denotes the density of the normal with mean $\theta$ and standard deviation $1$, and we have used the independence of the observations to write the joint probability as a product of probabilities.
+
+In the particular case of $\mathcal{N}(\theta,1)$, by definition of the probability density, we have
+$$
+f_\theta(x_i )
+= \frac{1}{\sqrt{2 \pi}}
+  \exp\left\{ -(x_i - \theta)^2 \right\}.
+$$
+Plugging this into our expression above, the likelihood of the data under the mean $\theta$ is
+$$
+f_\theta\left( x_1, x_2, \dots, x_n \right)
+= \prod_{i=1}^n \frac{1}{\sqrt{2 \pi}}
+  \exp\left\{ -\frac{ (x_i - \theta)^2 }{ 2 } \right\}
+= \frac{1}{(2\pi)^{n/2}} \prod_{i=1}^n \exp\left\{ \frac{ -(x_i - \theta)^2 }{ 2 } \right\}.
+$$
+So, this is the likelihood.
+Roughly (very roughly! Don't repeat this to your other stats professors!), it describes the probability of the data under the model.
+Maximum likelihood estimation says that we should choose $\theta$ so as to make this quantity as large as possible.
+
+From a philosophical standpoint, maximum likelihood says that we should choose the model that "likes" the data best.
+Or, said another way, the model that "best describes" the data.
+
+We think of the likelihood as a function of the parameter $\theta$, but a function that depends on the data.
+Let's generate some data from this model (with the true parameter $\mu = 3$) and plot the likelihood as a function of the (estimated) mean $\theta$.
+
+Actually, we're going to plot the logarithm of the likelihood, because the likelihood itself is way too small to plot easily, and we're going to ignore the $2 \pi$ term, because it doesn't depend on $\theta$.
+We'll see details about that in the next section.
+```{r}
+mu <- 1; # "true" mean of the normal (variance assumed to be 1)
+data <- rnorm( 10, mean=mu, sd=1 );
+likfn <- function( theta ) {
+  # We're using the fact that the product of exps is the exp of a sum.
+  # See the next section for details.
+  lik <- -sum( (data-theta)^2 )/2;
+  return( lik)
+}
+likfn <- Vectorize(likfn)
+
+thetas <- seq(-1,4,0.1);
+liks <- likfn(thetas);
+plot( thetas, likfn(thetas) )
+```
+
+Unsurprisingly, the function appears to be maximized somewhere close to $\theta=1$, i.e., when the mean is set to the correct/true mean.
+
+### Finding the maximum likelihood esitmate
+
+Now, of course, we are left with the problem of actually finding the maximum likelihood estimate (MLE).
+In the case of the normal, this is actually fairly simple.
+Let's look at that, then we'll talk more generally.
+
+Recalling that $e^x x^y = e^{x +y}$, we can turn the product of exponents in our likelihood into the exponential of a sum:
+$$
+f_\theta\left( x_1, x_2, \dots, x_n \right)
+= \frac{1}{(2\pi)^{n/2}} \prod_{i=1}^n \exp\left\{ \frac{ -(x_i - \theta)^2 }{ 2 } \right\}
+= \frac{1}{(2\pi)^{n/2}} \exp\left\{ \frac{ -\sum_{i=1}^n (x_i - \theta)^2 }{2} \right\}.
+$$
+Now, let's do something that might seem a bit silly at first.
+Let's take the logarithm of both sides.
+Importantly, note that whatever value of $\theta$ maximizes the likelihood will also maximize the logarithm of the likelihood (commonly just called the *log-likelihood*),
+so maximizing the likelihood is the same as maximizing
+$$
+\ell(\theta)
+= \log f_\theta\left( x_1, x_2, \dots, x_n \right)
+= \log \frac{1}{(2\pi)^{n/2}} \exp\left\{ \frac{ -\sum_{i=1}^n (x_i - \theta)^2 }{ 2 } \right\}.
+$$
+Now, since the log of a product is the sum of the logs, we have
+$$
+\ell(\theta)
+= \log \frac{1}{(2\pi)^{n/2}}
++ \log \exp\left\{ \frac{ -\sum_{i=1}^n (x_i - \theta)^2 }{ 2 } \right\}.
+$$
+Now, we are trying to maximize this quantity with respect to $\theta$, and the first term on the right does not depend on $\theta$, so we can ignore it.
+Looking at the second term on the right, the logarithm and exponential are inverses of one another, so when all the dust settles, maximizing the likelihood is equivalent to maxmimizing
+$$
+\frac{-1}{2} \sum_{i=1}^n (x_i - \theta)^2.
+$$
+Maximizing a quantity is the same as minimizing its negation, and we can ignore th $1/2$ out front, because it doesn't depend on $\theta$.
+So, the maximum-likelihood estimator for $\mu$ in this setting is given by the value of $\theta$ that solves
+$$
+\min_{\theta \in \mathbb{R}} \sum_{i=1}^n (x_i - \theta)^2.
+$$
+Does that look familiar?
+
+Under the normal distribution, the maxmimum-likelihood estimator and the least-squares estimator are the same!
+
+### Example: other distributions
+
+Somewhat surprisingly, among the "nice" distributions that you're used to, the least-squares and the maximum-likelihood estimates of the model parameters are both the sample mean.
+This is, in a way, a consequence of the fact that these distributions are "nice".
+You'll learn more about what "nice" means here when you take your advanced theory courses.
+
+As an example, how about the Bernoulli? $X_1,X_2,\dots,X_n$ are drawn i.i.d. from a Bernoulli distribution with (unknown) success parameter $p$, and we want to estimate $p$.
+Maximum likelihood says that we should choose the value of $p$ that maximizes the joint probability mass function
+$$
+\prod_{i=1}^n p^{X_i}(1-p)^{1-X_i},
+$$
+where we have used the fact that $X_i \in \{0,1\}$ for every $i$ (by definition of the Bernoulli) and the fact that $p^{X_i}=p$ when $X_i=1$ and $p^{X_i}= 1$ when $X_i = 0$, and similarly for $(1-p)^{1-X_i}$.
+
+Rearranging the equation similarly to how we did the product of exponentials in our normal example, we want to choose $p$ to maximize
+$$
+p^{\sum_{i=1}^n X_i} (1-p)^{n-\sum_{i=1}^n X_i}
+$$
+
+Now, let's take logarithms (you will find that this is an overwhelmingly common trick when working with maximum likelihood...), we want to choose $p$ so as to maximize
+$$
+\ell(p)
+= \log p^{\sum_{i=1}^n X_i} (1-p)^{n-\sum_{i=1}^n X_i}
+= \left( \sum_{i=1}^n X_i \right) \log p
+  + \left(n-\sum_{i=1}^n X_i \right) \log(1-p).
+$$
+Now, maximizing this one with respect to $p$ is a bit trickier.
+We're going to take the derivative with respect to $p$, set it equal to zero, and solve for $p$.
+Of course, if we were being good calculus students we would also verify that this was indeed a maximizer and not a minimizer, but let's leave that for math class.
+Recalling that the derivative of $\log x$ with respect to $x$ is $1/x$,
+$$
+\begin{aligned}
+\ell'(p)
+&= \frac{ \left( \sum_{i=1}^n X_i \right) }{ p }
+  - \frac{ \left(n-\sum_{i=1}^n X_i \right) }{ 1-p } \\
+& = \frac{ (1-p) \left( \sum_{i=1}^n X_i \right) - p\left(n-\sum_{i=1}^n X_i \right) }{ p(1-p) } \\
+&= \frac{ \left( \sum_{i=1}^n X_i \right) - p n}{ p(1-p) }
+\end{aligned}
+$$
+Now, setting this equal to zero and solving for $p$, we find that the likelihood is maximized by taking
+$$
+p = \frac{1}{n} \sum_{i=1}^n X_i = \bar{X}.
+$$
+Once again, the MLE is just the sample mean, the least squares estimate!
+
+### Example: logistic regression
+
+Now, it's easy to think based on the above examples that the least squares estimate and the maximum likelihood estimate (MLE) are always the same.
+I promise this is not the case!
+It is just because they are the same in many of the "nice" distributions that you are familiar with.
+
+Let's see an example where things aren't so simple: logistic regression, which we saw last lecture.
+
+Remember, in (simple) logistic regression, we have predictor-response pairs $(X_i,Y_i)$ for $i=1,2,\dots,n$, where $X_i \in \mathbb{R}$ and $Y_i \in \{0,1\}$.
+We model the responses $Y_i$ as being Bernoulli outcomes, with
+$$
+\Pr[ Y_i = 1; \beta_0, \beta_1 ] = \frac{ 1 }{1 + \exp\left\{ -( \beta_0 + \beta_1 X_i ) \right\} }
+$$
+and
+$$
+\Pr[ Y_i = 0; \beta_0, \beta_1 ] = 1 - \Pr[ Y_i = 1; \beta_0, \beta_1 ]
+= \frac{ \exp\left\{ -( \beta_0 + \beta_1 X_i ) \right\} }{1 + \exp\left\{ -( \beta_0 + \beta_1 X_i ) \right\} }.
+$$
+With those expressions in hand, maximum-likelihood estimation says that we should choose the coefficients $\beta_0$ and $\beta_1$ to maximize
+$$
+\prod_{i=1}^n \Pr\left[ Y_i=y_i ; \beta_0, \beta1, x_i \right].
+$$
+Unfortunately, even taking logs doesn't make this an easier quantity to minimize.
+There is no "nice" expression (i.e., no closed-form expression) for the values of $\beta_0$ and $\beta_1$ that maximize the likelihood.
+Instead, we have to rely on optimization routines that are built into R to solve this.
+
+You can take a whole class on optimization (indeed, some researchers spend their whole careers studying optimization), so we aren't going to discuss the details of that here.
+We are just looking at this example to illustrate that the maximum-likelihood solution isn't always so easy (and isn't always the sample mean!).
+
+## How "good" is a solution, revisted: loss functions
+
+So we have now seen a few different ways of measuring how "good" or "bad" a potential estimate is:
+
+- Least squares: $\min_\theta \sum_{i=1}^n \left( X_i - \theta \right)^2$
+- Least absolute deviation: $\min_\theta \sum_{i=1}^n \left| X_i - \theta \right|$
+- (Negative) log-likelihood: $\min_\theta -\sum_i \log f_\theta(X_i)$
+
+In all these cases, our goal is to choose our estimate $\theta$ so as to make a quantity, called the *loss function* or the *cost function*, small.
+
+But of course, these are not exhaustive.
+There are potentially infinitely many different ways to measure how good or bad a solution is.
+
+For example, suppose we have observations $X_1,X_2,\dots,X_n$ (these might be images, audio signals, bank applicant profiles, etc.) and associated outcomes $Y_1,Y_2,\dots,Y_n \in \{0,1\}$ (e.g., cat/non-cat images, male/female voices, default/non-default, etc.).
+In such a setting, our goal is to correctly predict the label given the observation.
+
+We want to produce a function $g$ that takes in an observation (image, audio, etc) and produces a guess as to the correct label (i.e., $0$ or $1$).
+One way to measure how good our predictor (i.e., the function $g$) is would be to count how many of the observations are correctly labeled:
+$$
+\frac{1}{n} \sum_{i=1}^n \mathbf{1}\left\{ g(X_i) \neq Y_i \right\}.
+$$
+Here we are using the notation $\mathbf{1}E$ to denote the *indicator function*, which is a $1$ if the event $E$ happens, and is $0$ if it doesn't.
+So our *loss function* above counts what fraction of the observations are mislabeled by our predictor $g$.
+
+The point here is that there are many different ways to encode what a "good" estimate is, and our estimate can often depend in important ways on our choice of loss function.
+
+Now, how to choose a loss function (and how to minimize it) is mostly outside the scope of this course, but it's an important idea to have in the back of your head as you start to learn more statistical methods, especially in machine learning applications.
+
+
+
+

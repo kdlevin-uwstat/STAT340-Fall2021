@@ -18,4 +18,5 @@ Source code for lectures available [on github](https://github.com/kdlevin-uwstat
  - [Estimation](../lecs/05) &nbsp; (Sep 29-Oct 4)
  - [Prediction](../lecs/06) &nbsp; (Oct 4-6)
  - [Exploratory Data Analysis and Unsupervised Learning](../lecs/07) &nbsp; (Oct 8-13)
- - [Regression in more detail (simple, logistic, multiple)](../lecs/08) &nbsp; (Oct 20-..)
+ - [Regression in more detail (simple, logistic, multiple)](../lecs/08) &nbsp; (Oct 20-27)
+ - [Maximum Likelihood](../lecs/09) &nbsp; (Oct 28)
