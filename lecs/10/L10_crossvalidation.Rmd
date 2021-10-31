@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 require(ggplot2)
 ```
 
-__Readings:__ ISLR Section 5.1, Sections 6.1-6.4
+__Readings:__ ISLR Section 5.1
 
 Several times this semester, we have discussed methods that required the choice of a number of components, clusters or dimensions.
 
