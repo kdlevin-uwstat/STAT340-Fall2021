@@ -20,4 +20,5 @@ Source code for lectures available [on github](https://github.com/kdlevin-uwstat
  - [Exploratory Data Analysis and Unsupervised Learning](../lecs/07) &nbsp; (Oct 8-13)
  - [Regression in more detail (simple, logistic, multiple)](../lecs/08) &nbsp; (Oct 20-27)
  - [Maximum Likelihood](../lecs/09) &nbsp; (Oct 28)
- - Model Section &nbsp (Nov 1-5, coming soon)
+ - [Model Selection with Cross-validation](../lecs/10)  &nbsp (Nov 1-3)
+ - Model Selection, cont'd (Nov 3-5; coming soon)
