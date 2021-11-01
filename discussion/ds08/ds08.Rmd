@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 require(ggplot2)
 ```
 
+[link to source](ds08.Rmd)
+
 ## XKCD comic
 
 Relevant to our discussion of exploratory data analysis on Friday:
