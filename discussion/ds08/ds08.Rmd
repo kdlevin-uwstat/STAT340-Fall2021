@@ -1,0 +1,187 @@
+---
+title: 'STAT340 Discussion 08: Predicting Diabetes with Logistic Regression'
+author: "Keith Levin and Bi Cheng Wu"
+date: "Fall 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(ggplot2)
+```
+
+## XKCD comic
+
+Relevant to our discussion of exploratory data analysis on Friday:
+
+<center><a href="https://xkcd.com/2048/"><img id="comic" src="https://imgs.xkcd.com/comics/curve_fitting.png" title="Cauchy-Lorentz: Something alarmingly mathematical is happening, and you should probably pause to Google my name and check what field I originally worked in."></a></center>
+
+## Introduction: the Pima Indian diabetes data set
+
+Let's get some practice working with logistic regression by exploring the famous Pima diabetes data set.
+This data set consists of biometric data collected from women of Pima Indian descent living in Arizona, including whether or not each woman had diabetes.
+The data set is included in the `MASS` library (this library should already be installed in your R setup, but if not, you should install it):
+```{r}
+library(MASS);
+head(Pima.te)
+```
+
+__Important note:__ the `MASS` library actually includes three different versions of this data set. We will work with the `Pima.te` data frame and the `Pima.tr` data frame in this discussion section.
+We will use `Pima.te` to fit our models and `Pima.tr` to evaluate them.
+
+### Read the documentation!
+
+Take a few minutes to read the documentation surrounding this data set, so that you understand the sampled population, the meaning of the different variables, etc.
+```{r}
+?Pima.te
+```
+
+### Predicting diabetes: exploration
+
+Our goal in this discussion section is to fit logistic regression to this data set so that we can predict, given biometric data, whether or not a patient is likely to have diabetes.
+The `type` column of the `Pima.te` data frame (and the `Pima.tr` data frame ) encodes whether a patient has diabetes (coded as `Yes`) or not (coded as `No`), but logistic regression requires that we have binary outcomes.
+Let's create a new column of this data frame called `diabetes` that takes the value `1` if `type` is `Yes` and takes the value `0` otherwise.
+
+```{r}
+Pima.te$diabetes <- ifelse( Pima.te$type=='Yes', 1, 0);
+head(Pima.te)
+```
+
+And do the same for `Pima.tr` data frame.
+
+```{r}
+
+#TODO: code goes here to add a `diabetes` column to Pima.tr.
+
+```
+
+Having done that, there remains the question of which variables to include in our model.
+This is a *model selection* problem.
+
+One way to see which variables are predictive and which aren't is to, well, look.
+
+Let's try plotting some of the above variables, breaking them out by whether or not each patient tested positive for diabetes.
+
+```{r}
+pp <- ggplot(Pima.te, aes(x=as.factor(diabetes), group=diabetes, y=glu)) + geom_boxplot();
+pp
+```
+
+This plot certainly suggests that there is a difference in `glu` between diabetic and non-diabetic patients.
+This is in keeping with the known relationship between blood glucose levels and diabetes.
+
+Choose (at least) two more predictor variables from among the predictors in the `Pima.te` data set and make boxplots like the one above.
+Do these variables appear to be predictive or not? Discuss.
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+### Predicting diabetes: simple logistic regression
+
+Let's first try fitting a logistic regression using each of the variables `npreg`, `glu`, `bp`, `skin`, `bmi`, `ped` and `age` to predict the `diabetes` outcome.
+Then, having fit a model, we'll evaluate it on another set of patient data.
+
+We'll give an example for you to work from.
+
+```{r}
+lr_glu <- glm( diabetes ~ 1 + glu, data=Pima.te, family=binomial );
+lr_glu
+```
+
+Note the AIC entry above-- AIC stands for *Akaike Information Criterion*.
+It can be useful in model selection, and we will discuss it in more detail in coming lectures.
+For now, you can ignore it-- just note that it's included in your model output.
+
+Note the coefficient of `glu` above. Is it positive or negative? Is it large (in absolute value)? How might you interpret this?
+
+In the case of linear regression, the coefficients essentially capture the (expected) change in our outcome based on a unit change in the predictor.
+The story is a bit more complicated in the case of logistic regression.
+Refering back to our lecture notes on logistic regression, give a brief (two or three sentences should be plenty) description of how we should interpret this coefficient.
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+### Evaluating model predictive performance
+
+Now, we would like to know how good our model actually is.
+That is, how well our model does at predicting diabetes in other patients.
+But if we evalute our model on the data that we just used to train it, well, of course it will do well!
+This idea is well known in machine learning-- you shouldn't "test" your model on the "train" data.
+
+Lucky for us, there the `Pima.tr` data set contains another collection of patient data from the same study.
+We can use our trained model to *predict* the diabetes outcome based on the predictors, and that will give us a sense of how well our trained model does at predicting on data it hasn't seen before.
+
+This idea of applying our model to data it hasn't seen before is the motivation for cross-validation (e.g., leave-one-out CV and K-fold CV), which we are discussing in class this week.
+In CV, we separate our data into "training" data and a "validation" set.
+In the case of the Pima data, we don't need to use CV, because we have a separate set of patient data just kind of lying around for us to use!
+
+For example, let's predict the outcome for the first patient:
+```{r}
+# type='response' tells R to output p(X), i.e., the (estimated) logistic function
+# evaluated on the given data.
+# newdata=Pima.tr[1,] tells R to apply our trained model lr_glu
+# to the predictors (in this case, just `glu`) in the first row of Pima.tr.
+predict(lr_glu, type='response', newdata = Pima.tr[1,] )
+```
+Okay, but this outputs a probability.
+So this says that our model thinks that the probability that this patient has diabetes is about 0.09, which is pretty small!
+And we can check that indeed this patient doesn't have diabetes:
+```{r}
+Pima.tr[1,]$diabetes
+```
+So let's say that for a given patient, if our model outputs a probability larger than $0.5$, we will predict that the patient has diabetes, and we will predict that she doesn't, otherwise.
+```{r}
+probabilities <- predict(lr_glu, type='response', newdata = Pima.tr );
+predictions <- ifelse(probabilities>0.5, 1, 0);
+# Now, how many predictions did we get right?
+# Count up how many of our predicted diabetes statuses agree with the true labels,
+# and divide by the total number of patients to get fraction of correct labels.
+sum(predictions==Pima.tr$diabetes)/nrow(Pima.tr)
+```
+
+Not bad based on a single variable!
+
+___Side note:__ 74% accuracy isn't actually as impressive as you might think.
+Suppose that we just always guess that a patient doesn't have diabetes.
+Then our accuracy would be:
+```{r}
+sum(Pima.tr$diabetes==0)/nrow(Pima.tr)
+```
+This is an important thing to keep in mind when working on classification and prediction problems!
+If you have a rare outcome, if can be easy to convince yourself that you are doing a very good job of prediction, when in fact you are performing near chance.
+
+Of course, in this setting, 0.74 and 0.66 are certainly not the same-- out model has surely learned something useful, this is just meant as a caution for future work (e.g., in your group projects!).
+
+## Your turn!
+
+Pick another predictor variable from the `Pima.te` data set and repeat the analysis above-- fit a model on `Pima.te` and evaluate its prediction accuracy on the `Pima.tr` data set.
+
+***
+TODO: code and explanation/discussion go here.
+***
+
+## Bonus: combining variables (optional, but highly recommended)
+
+Now, just like in multiple linear regression, it seems like that we can do better by including multiple variables in our model.
+Choose two variables in the `Pima.te` data set and fit models for them.
+Then, fit a third model that predicts an outcome based on an intercept term and *both* of your variables.
+So, for example, if you have trained models with formulas `diabetes ~ 1 + glu` and `diabetes ~ 1 + age`, try training a third model with the formual `diabetes ~ 1 + glu + age`.
+Having trained these three models on the `Pima.te` model, evaluate them on the `Pima.tr` data.
+Compare their performances and discuss.
+
+***
+TODO: code and explanation/discussion go here.
+***
+
