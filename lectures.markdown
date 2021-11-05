@@ -22,3 +22,4 @@ Source code for lectures available [on github](https://github.com/kdlevin-uwstat
  - [Maximum Likelihood](../lecs/09) &nbsp; (Oct 28)
  - [Model Selection with Cross-validation](../lecs/10) &nbsp; (Nov 1-5)
  - [Linear Regression and Model Selection](../lecs/11) &nbsp; (Nov 5-10)
+ - Resampling and the Bootstrap &nbsp; (Nov 12-15; coming soon)
