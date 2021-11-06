@@ -144,172 +144,6 @@ This can be helpful when, for example, a predictor is useful "early" in the sele
 You can learn more about these selection methods in a regression course.
 If you think these methods may be useful in your group project, refer to ISLR for more information or post on the discussion board.
 
-## Comparing models: information criteria
-
-The variable selection methods discussed above all require that, after fitting a few different models, we compare among them.
-
-The issue is that if we have models $M_0,M_1,M_2,\dots,M_p$, involving $0,1,2,\dots,p$ variables, respectively, the models with more variables will always have a better RSS on the training data itself.
-
-So how do we adjust for the fact that more variables give us a trivially better model?
-
-Cross-validation, discussed in our last lecture, provides one possible approach.
-We compare the models by applying them to previously unseen data, where additional predictors *do not* necessarily guarantee better performance.
-
-Cross-validation essentially tries to directly estimate how each model would do if it were applied to more data.
-That is, CV tries to estimate the model test error.
-But cross-validation is not the *only* way to compare different models.
-
-An alternative approach is to do something a bit more subtle.
-Since adding more variables to the model trivially makes the model fit the training data better, we would like to find a way to "penalize" larger models.
-
-### Penalizing complexity
-
-Rather than simply adding more and more variables to our model, we want to make it so that we only add predictors to the model that are "worth" the additional model complexity.
-
-There is an entire research community within statistics devoted to exploring and developing these kinds of complexity measures, but we'll just discuss four of these, surely the four most popular (and the four that are discussed in your textbook!):
-
-- Mallow's $C_p$ (__note:__ the $p$ subscript in $C_p$ has nothing to do with the number of predictors)
-- Akaike Information Criterion (AIC)
-- Bayesian Information Criterion (BIC)
-- Adjusted $R^2$
-
-The goal of all of these different quantities is to give us a measure that puts models with different numbers of variables on similar footing, so that we can compare them properly.
-
-A nice thing about these measures is that they can be naturally extended to settings beyond regression.
-For example, AIC and BIC are very popular frameworks for choosing the number of clusters (i.e., choosing $K$) in $K$-means and related clustering methods.
-The details are beyond the scope of the course, but the important point is that these ideas are applicable well beyond the specific problem of variable selection.
-It is far less obvious how to apply cross-validation in unsupervised problems (e.g., clustering).
-
-For the sake of keeping us on schedule, we'll just discuss one of these measures, the Akaike Information Criterion (AIC), but all of them are discussed in ISLR if you are curious about the details (and their advantages and disadvantages).
-
-### Akaike Information Criterion (AIC)
-
-The Akaike Information Criterion applies to models that are fit according to maximum likelihood estimation (so, for example, it applies to all of the least-squares estimators we have seen this semester, because they are all equivalent to MLE).
-Suppose that
-
-1. We fit a regression model with $d$ predictors (i.e., we have chosen $d$ of the $p$ available predictors to include in the model).
-2. We have estimated the variance of the error terms $\epsilon_i$ to be $\hat{\sigma}^2$ (typically we estimate this from the "full" model, though details are beyond the scope of the course).
-
-Then we define the AIC of our model to be
-$$
-\frac{1}{n}\left( \operatorname{RSS} + 2 d \hat{\sigma}^2 \right)
-$$
-Strictly speaking, this is the special case of linear regression.
-In general, the AIC for a model with log-likelihood function $\ell(\theta)$ is given by
-$$
-2d - 2\ell(\hat{\theta}),
-$$
-where $\hat{\theta}$ is the maximum-likelihood estimate, i.e., the value of $\theta$ that maximizes the log-likelihood $\ell(\theta)$.
-
-Let's unpack this-- minimizing the AIC is the same as *maximizing*
-$$
--\left(2d - 2\ell(\hat{\theta}) \right)
-= 2\ell( \hat{\theta} ) - 2d.
-$$
-That is, we are trying to maximize a likelihood, but we also have to pay a penalty of $-2d$.
-So more predictors (larger value of $d$) gives us a (hopefully) better likelihood, but we have to "pay" for those predictors.
-
-So let's recall the AIC specific to linear regression.
-
-$$
-\frac{1}{n}\left( \operatorname{RSS} + 2 d \hat{\sigma}^2 \right)
-$$
-
-The RSS term comes from the log-likelihood.
-The $\hat{\sigma}^2$ comes from the fact that the likelihood of the data depends on the variance of the errors, which we don't know, and thus must estimate and plug-in for the true but unknown variance $\sigma^2$.
-
-For ease of use, let's implement a function that takes a vector of residuals and returns the RSS.
-```{r}
-RSS <- function( resids ) {
-  return( sum( resids^2 ) );
-}
-```
-
-Let's try using AIC to compare diffrent regression models on the `mtcars` data again.
-Recall that we are trying to predict miles per gallon, `mpg` as a function of `hp`, and we were comparing the performance of models that used different powers of `hp` as predictors.
-
-```{r}
-data('mtcars');
-head(mtcars);
-```
-
-And just to refresh our memory, here's the scatter plot.
-```{r}
-pp <- ggplot( mtcars, aes(x=hp, y=mpg ) ) + geom_point();
-pp
-```
-
-Let's compare the models of order 1 through 5.
-To start, we need to actually fit the models.
-```{r}
-m1 <- lm(mpg ~ 1 + hp,                                         mtcars);
-m2 <- lm(mpg ~ 1 + hp + I(hp^2),                               mtcars);
-m3 <- lm(mpg ~ 1 + hp + I(hp^2) + I(hp^3),                     mtcars);
-m4 <- lm(mpg ~ 1 + hp + I(hp^2) + I(hp^3) + I(hp^4),           mtcars);
-m5 <- lm(mpg ~ 1 + hp + I(hp^2) + I(hp^3) + I(hp^4) + I(hp^5), mtcars);
-```
-
-We'll estimate the residual variance using the "full" model, which in this case means the highest-order model.
-```{r}
-# Recall that the residuals attribute stores Y_i - beta0 - beta1 X_i.
-head( m5$residuals )
-```
-
-```{r}
-# Now let's actually do the estimation-- estimate the variance to be, well,
-# the variance of the observed residuals!
-sigma2hat <- var( m5$residuals );
-
-# As usual, there are less clumsy ways to put these residuals into a data frame,
-# but we are being lazy, here.
-resids <- rbind( m1$residuals, m2$residuals, m3$residuals,
-             m4$residuals, m5$residuals);
-
-# and let's compute the AIC for the different models
-# We are using our RSS function from above to get a vector of length 5 of the
-# RSSs for the five different models, and then we are adding the sigmahat term,
-# including the d-factor that counts how many predictors there are.
-modelRSS <- apply( resids, 1, RSS )
-penalties <- 2*sigma2hat*(1:5); # The second term in the AIC definition.
-
-AICdf <- data.frame( 'Order'=1:5, 'RSS'=modelRSS, 'penalty'=penalties );
-
-# Let's add a column to this data frame that specifically contains AIC.
-# Notice that we're ignoring the 1/n term in the definition.
-# That term can be ignored because it doesn't depend on the model order.
-AICdf$AIC <- 2*AICdf$RSS + AICdf$penalty
-
-AICdf
-```
-
-Let's plot that, just to make it really concrete
-```{r}
-pp <- ggplot( AICdf, aes(x=Order, y=AIC )) + geom_point() + geom_line();
-pp
-```
-
-The order-2 model achieves the lowest AIC, suggesting that we should be using that model.
-Happily, this agrees with the conclusion that we came to using CV in our previous lecture (at least on most random replicates of the CV process...).
-
-### Other information criteria and adjustments
-
-As mentioned above, there are other ways of scoring models against one another that penalize models for having more complexity (i.e., more predictors, clusters, etc.).
-While the details vary from one to the next, the general story is still the same.
-
-To compare a collection of models, we compute this score (e.g., AIC, BIC, etc) for each model, and choose the one with the smallest score.
-The core idea is that we have a term that we want to make small (e.g., RSS or negative log-likelihood) plus a "penalty" term.
-Models that are "more complex" have a larger penalty term that simpler models, to make up for the fact that more predictors generally make it easier to get a better model fit.
-
-### CV or Information Criterion?
-
-So we now know two different ways to compare models: cross-validation and information criteria (AIC, BIC, adjusted $R^2$, etc.).
-Which one is better?
-
-__CV__ is preferable because it lets us avoid having to estimate $\sigma^2$ or other unknown model parameters.
-
-__AIC/BIC/etc__ are preferable because they avoid the expensive computations associated with CV.
-
-Generally speaking, given how cheap computing is these days, most practitioners would lean toward using cross-validation, but it's good to have these other methods in your back pocket just in case, especially because there are situations where CV doesn't really make a lot of sense, like clustering.
 
 ## Shrinkage and Regularization
 
@@ -651,3 +485,169 @@ We choose different values of $\lambda$, fit the corresponding models, and use C
 
 Section 6.2.3 has a more detailed discussion of this, using $10$-fold CV to compare different choices of $\lambda$.
 
+## Comparing models: information criteria
+
+The variable selection methods discussed above all require that, after fitting a few different models, we compare among them.
+
+The issue is that if we have models $M_0,M_1,M_2,\dots,M_p$, involving $0,1,2,\dots,p$ variables, respectively, the models with more variables will always have a better RSS on the training data itself.
+
+So how do we adjust for the fact that more variables give us a trivially better model?
+
+Cross-validation, discussed in our last lecture, provides one possible approach.
+We compare the models by applying them to previously unseen data, where additional predictors *do not* necessarily guarantee better performance.
+
+Cross-validation essentially tries to directly estimate how each model would do if it were applied to more data.
+That is, CV tries to estimate the model test error.
+But cross-validation is not the *only* way to compare different models.
+
+An alternative approach is to do something a bit more subtle.
+Since adding more variables to the model trivially makes the model fit the training data better, we would like to find a way to "penalize" larger models.
+
+### Penalizing complexity
+
+Rather than simply adding more and more variables to our model, we want to make it so that we only add predictors to the model that are "worth" the additional model complexity.
+
+There is an entire research community within statistics devoted to exploring and developing these kinds of complexity measures, but we'll just discuss four of these, surely the four most popular (and the four that are discussed in your textbook!):
+
+- Mallow's $C_p$ (__note:__ the $p$ subscript in $C_p$ has nothing to do with the number of predictors)
+- Akaike Information Criterion (AIC)
+- Bayesian Information Criterion (BIC)
+- Adjusted $R^2$
+
+The goal of all of these different quantities is to give us a measure that puts models with different numbers of variables on similar footing, so that we can compare them properly.
+
+A nice thing about these measures is that they can be naturally extended to settings beyond regression.
+For example, AIC and BIC are very popular frameworks for choosing the number of clusters (i.e., choosing $K$) in $K$-means and related clustering methods.
+The details are beyond the scope of the course, but the important point is that these ideas are applicable well beyond the specific problem of variable selection.
+It is far less obvious how to apply cross-validation in unsupervised problems (e.g., clustering).
+
+For the sake of keeping us on schedule, we'll just discuss one of these measures, the Akaike Information Criterion (AIC), but all of them are discussed in ISLR if you are curious about the details (and their advantages and disadvantages).
+
+### Akaike Information Criterion (AIC)
+
+The Akaike Information Criterion applies to models that are fit according to maximum likelihood estimation (so, for example, it applies to all of the least-squares estimators we have seen this semester, because they are all equivalent to MLE).
+Suppose that
+
+1. We fit a regression model with $d$ predictors (i.e., we have chosen $d$ of the $p$ available predictors to include in the model).
+2. We have estimated the variance of the error terms $\epsilon_i$ to be $\hat{\sigma}^2$ (typically we estimate this from the "full" model, though details are beyond the scope of the course).
+
+Then we define the AIC of our model to be
+$$
+\frac{1}{n}\left( \operatorname{RSS} + 2 d \hat{\sigma}^2 \right)
+$$
+Strictly speaking, this is the special case of linear regression.
+In general, the AIC for a model with log-likelihood function $\ell(\theta)$ is given by
+$$
+2d - 2\ell(\hat{\theta}),
+$$
+where $\hat{\theta}$ is the maximum-likelihood estimate, i.e., the value of $\theta$ that maximizes the log-likelihood $\ell(\theta)$.
+
+Let's unpack this-- minimizing the AIC is the same as *maximizing*
+$$
+-\left(2d - 2\ell(\hat{\theta}) \right)
+= 2\ell( \hat{\theta} ) - 2d.
+$$
+That is, we are trying to maximize a likelihood, but we also have to pay a penalty of $-2d$.
+So more predictors (larger value of $d$) gives us a (hopefully) better likelihood, but we have to "pay" for those predictors.
+
+So let's recall the AIC specific to linear regression.
+
+$$
+\frac{1}{n}\left( \operatorname{RSS} + 2 d \hat{\sigma}^2 \right)
+$$
+
+The RSS term comes from the log-likelihood.
+The $\hat{\sigma}^2$ comes from the fact that the likelihood of the data depends on the variance of the errors, which we don't know, and thus must estimate and plug-in for the true but unknown variance $\sigma^2$.
+
+For ease of use, let's implement a function that takes a vector of residuals and returns the RSS.
+```{r}
+RSS <- function( resids ) {
+  return( sum( resids^2 ) );
+}
+```
+
+Let's try using AIC to compare diffrent regression models on the `mtcars` data again.
+Recall that we are trying to predict miles per gallon, `mpg` as a function of `hp`, and we were comparing the performance of models that used different powers of `hp` as predictors.
+
+```{r}
+data('mtcars');
+head(mtcars);
+```
+
+And just to refresh our memory, here's the scatter plot.
+```{r}
+pp <- ggplot( mtcars, aes(x=hp, y=mpg ) ) + geom_point();
+pp
+```
+
+Let's compare the models of order 1 through 5.
+To start, we need to actually fit the models.
+```{r}
+m1 <- lm(mpg ~ 1 + hp,                                         mtcars);
+m2 <- lm(mpg ~ 1 + hp + I(hp^2),                               mtcars);
+m3 <- lm(mpg ~ 1 + hp + I(hp^2) + I(hp^3),                     mtcars);
+m4 <- lm(mpg ~ 1 + hp + I(hp^2) + I(hp^3) + I(hp^4),           mtcars);
+m5 <- lm(mpg ~ 1 + hp + I(hp^2) + I(hp^3) + I(hp^4) + I(hp^5), mtcars);
+```
+
+We'll estimate the residual variance using the "full" model, which in this case means the highest-order model.
+```{r}
+# Recall that the residuals attribute stores Y_i - beta0 - beta1 X_i.
+head( m5$residuals )
+```
+
+```{r}
+# Now let's actually do the estimation-- estimate the variance to be, well,
+# the variance of the observed residuals!
+sigma2hat <- var( m5$residuals );
+
+# As usual, there are less clumsy ways to put these residuals into a data frame,
+# but we are being lazy, here.
+resids <- rbind( m1$residuals, m2$residuals, m3$residuals,
+             m4$residuals, m5$residuals);
+
+# and let's compute the AIC for the different models
+# We are using our RSS function from above to get a vector of length 5 of the
+# RSSs for the five different models, and then we are adding the sigmahat term,
+# including the d-factor that counts how many predictors there are.
+modelRSS <- apply( resids, 1, RSS )
+penalties <- 2*sigma2hat*(1:5); # The second term in the AIC definition.
+
+AICdf <- data.frame( 'Order'=1:5, 'RSS'=modelRSS, 'penalty'=penalties );
+
+# Let's add a column to this data frame that specifically contains AIC.
+# Notice that we're ignoring the 1/n term in the definition.
+# That term can be ignored because it doesn't depend on the model order.
+AICdf$AIC <- 2*AICdf$RSS + AICdf$penalty
+
+AICdf
+```
+
+Let's plot that, just to make it really concrete
+```{r}
+pp <- ggplot( AICdf, aes(x=Order, y=AIC )) + geom_point() + geom_line();
+pp
+```
+
+The order-2 model achieves the lowest AIC, suggesting that we should be using that model.
+Happily, this agrees with the conclusion that we came to using CV in our previous lecture (at least on most random replicates of the CV process...).
+
+### Other information criteria and adjustments
+
+As mentioned above, there are other ways of scoring models against one another that penalize models for having more complexity (i.e., more predictors, clusters, etc.).
+While the details vary from one to the next, the general story is still the same.
+
+To compare a collection of models, we compute this score (e.g., AIC, BIC, etc) for each model, and choose the one with the smallest score.
+The core idea is that we have a term that we want to make small (e.g., RSS or negative log-likelihood) plus a "penalty" term.
+Models that are "more complex" have a larger penalty term that simpler models, to make up for the fact that more predictors generally make it easier to get a better model fit.
+
+### CV or Information Criterion?
+
+So we now know two different ways to compare models: cross-validation and information criteria (AIC, BIC, adjusted $R^2$, etc.).
+Which one is better?
+
+__CV__ is preferable because it lets us avoid having to estimate $\sigma^2$ or other unknown model parameters.
+
+__AIC/BIC/etc__ are preferable because they avoid the expensive computations associated with CV.
+
+Generally speaking, given how cheap computing is these days, most practitioners would lean toward using cross-validation, but it's good to have these other methods in your back pocket just in case, especially because there are situations where CV doesn't really make a lot of sense, like clustering.
