@@ -1,0 +1,211 @@
+---
+title: 'STAT340 Discussion 09: the LASSO'
+author: "Keith Levin and Bi Cheng Wu"
+date: "Fall 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(ggplot2)
+```
+
+[link to source](ds09.Rmd)
+
+## XKCD comic
+
+<center><a href="https://xkcd.com/1838/"><img id="comic" src="https://imgs.xkcd.com/comics/machine_learning.png" title=""></a></center>
+
+## Refresher: the LASSO
+
+In lecture, we discussed the LASSO, which is a technique for regularizing linear regression while simultaneously doing variable selection.
+
+Recall that under the LASSO, we try to choose our coefficients $\beta_0,\beta_1,\beta_2,\dots,\beta_p$ to minimize
+$$
+\sum_{i=1}^n \left( Y_i - \beta^T X_i \right)^2 + \lambda \sum_{j=1}^p |\beta_j|,
+$$
+where $\lambda \ge 0$ controls the amount of regularization (i.e., how much we care about the second term) and we are assuming that the vectors of predictors $X_1,X_2,\dots,X_n \in \mathbb{R}^{p+1}$ include an entry equal to 1 to account for the intercept term:
+$$
+X_i = \left( 1, X_{i,1}, X_{i,2}, \dots, X_{i,p} \right)^T \in \mathbb{R}^{p+1}.
+$$
+
+The LASSO objective (an *objective* is just a quantity that we want to optimize-- in this case, we are trying to minimize the LASSO cost) is very similar to ridge regression, which we discussed at length in lecture, and tries to minimize:
+$$
+  \operatorname{RSS} + \lambda \sum_{j=1}^p \beta_j^2.
+$$
+
+The difference is that ridge regression penalizes the sum of squares of the coefficients, while the LASSO penalizes the sum of their absolute values.
+It turns out that this small change has a surprisingly large effect on the solution that we find.
+
+Specifically, as discussed in lecture, the LASSO penalty actually encourages us to set "unhelpful" coefficients to zero.
+This is in contrast to ridge regression, which "encourages" coefficients that do not help much with prediction to be *close* to zero, but if you examine our worked example in lecture, you'll see that the coefficients in our estimated models, even for large values of $\lambda$, are not equal to zero.
+
+In lecture, we waved our hands at the LASSO, and we mentioned that `glmnet` is a popular package for fitting the LASSO, but we didn't dive into implementation like we did with ridge regression.
+So let's get a bit of practice with `glmnet` now.
+
+## `mtcars` yet again
+
+We've been using the `mtcars` data set as a running example in lecture for our regression problems, so why stop now?
+Let's load the `mtcars` data set and just remind ourselves of the variables involved.
+
+```{r}
+data(mtcars);
+head(mtcars);
+```
+
+In the event that this output doesn't fit on one screen, here's the full list of variables:
+```{r}
+names(mtcars);
+```
+
+Our goal is still to predict the fuel efficiency (`mpg`) from all of the other variables, this time using the LASSO.
+
+## Installation and overview of `glmnet`
+
+To start, we need to install `glmnet`. So let's do that.
+```{r}
+# Uncomment this line and run it if you need to install glmnet.
+#install.packages('glmnet');
+```
+
+If you run into weird errors about `clang` or anything like that, you might need to try including the `dependencies=TRUE` argument in `install.packages`.
+Also, if your version of `R` is too old (something like older than 3.4, if I remember correctly), you may need to update `R`.
+
+Once you have `glmnet` installed, let's have a look at the documentation.
+
+```{r}
+library(glmnet);
+?glmnet
+```
+
+Read over the help documentation.
+Note that the documentation refers to "generalized linear model via penalized maximum likelihood".
+This is a fancy way of saying that `glmnet` covers a much wider array of regression problems than *just* linear regression with the LASSO.
+We'll return to that below.
+
+Skipping to the "Arguments" section of the documentation, we see that we need to first specify the input data matrix `x` (i.e., the matrix of predictors) and the responses `y`.
+
+In our data, then the `y` argument will be the column of car `mpg` values, and the matrix `x` will be everything else.
+
+We also need to specify a `family`.
+This tells `glmnet` what kind of regression we want to do (e.g., linear vs logistic).
+
+Skipping down a few arguments, we see that there are some arguments related to specifying the $\lambda$ parameter that controls the amount of regularization.
+We'll just set $\lambda$ by hand, using the `lambda` parameter, but you can see that there are other options in the documentation.
+
+Reading through more of the docs, you'll see that are plenty more arguments available to modify the behavior of our fitting procedure.
+We'll leave most of those for another day when you know more about the nuts and bolts of regression and optimization.
+
+However, there is one very important one: if you read the documentation for the `alpha` parameter, this is described as "The elasticnet mixing parameter, with $0 \le \alpha \le 1$."
+We need to set $\alpha = 1$ to get the LASSO.
+
+## Fitting a model
+
+So let's get down to it and fit a model, already!
+
+From reading the documentation, we see that we need to split the `mtcars` data set into a column of responses and... everything else.
+Recall that the `mpg` column is the 1st column,
+```{r}
+head(mtcars)
+```
+So let's split it out.
+```{r}
+y_mtc <- mtcars[,1]; # Grab just the first column
+# ... and the predictors are everything else.
+x_mtc <- mtcars[, -c(1)];
+# Just to verify:
+head(x_mtc);
+```
+Let's start with a sanity check. We'll fit the LASSO with $\lambda=0$.
+This is just linear regression, so the predictions should be the same (up to rounding errors) if we use the built-in linear regression in `lm`.
+
+```{r}
+# Remember, alpha=1 for the LASSO.
+mtc_lasso_lambda0 <- glmnet(x_mtc, y_mtc, alpha = 1, lambda=0);
+```
+
+__Note:__ if you get an error along the lines of missing functions in `Rcpp`, try running `install.packages('Rcpp'); library(Rcpp)`.
+This will reinstall the `Rcpp` package and should correct the issue.
+This was a common problem for students earlier in the semester, so you are unlikely to encounter it now, but just in case.
+
+Let's extract the coefficients just to see what they're like.
+```{r}
+coef( mtc_lasso_lambda0 )
+```
+
+Now, let's fit linear regression and compare the coefficients.
+```{r}
+#TODO: code goes here.
+# Fit linear regression to the mtcars data set and extract the coefficients.
+mtc_vanilla_lm <- lm( mpg ~ ., mtcars )
+coef(mtc_vanilla_lm)
+```
+
+The coefficients are largely the same, though they are often only in agreement to one or two decimal points.
+This has a lot to do with the fact that the scalings of the variables in the `mtcars` data set are very different.
+Let's compare the model predictions.
+Note that this is still just prediction on the train set.
+We are doing this not to evaluate model fit but just to verify that the two different models we fit are reasonably similar (as they should be, because they are both actually the same linear regression model with no regularization).
+```{r}
+# Note that the lasso model object requires its input prediction examples
+# to be in a matrix, so we are obliging it with as.matrix().
+predict( mtc_lasso_lambda0, newx=as.matrix(x_mtc) )
+```
+And compare with
+```{r}
+predict( mtc_vanilla_lm, mtcars)
+```
+
+
+Okay, it's a little annoying to scroll back and forth, but you'll see that the predictions agree quite well.
+
+### Adding some regularization
+
+All right, now, modify the above code to run LASSO with $\lambda=1$ and extract the coefficients.
+Compare the coefficients with those returned by linear regression.
+Any observations?
+You may find it useful to plot the different sets of coefficients in a plot.
+
+```{r}
+#TODO: code goes here.
+```
+
+***
+
+TODO: discussion/observations go here.
+
+***
+
+### Sending coefficients to zero
+
+Okay, now try running the same LASSO code with increasing values of $\lambda$.
+What happens as you increase $\lambda$?
+
+Try a few different choices of $\lambda$ and compare the resulting coefficients.
+Note that you can pass a vector of values to the `lambda` argument in `glmnet` to use multiple values for $\lambda$ at once.
+
+__Question 1:__ What is (approximately) the smallest value of $\lambda$ for which all of the coefficients get set to zero?
+
+```{r}
+#TODO: code goes here.
+```
+
+***
+
+TODO: discussion/observations go here.
+
+***
+
+__Question 2:___ When $\lambda = 0$, we saw that all of the coefficients were non-zero, and we know that as $\lambda$ increases, the LASSO penalizes non-zero coefficients more and more.
+So there *should* exist a point, as $\lambda$ increases from $0$, at which the first coefficient gets set to zero.
+What is (approximately) this value of $\lambda$?
+
+```{r}
+#TODO: code goes here.
+```
+
+***
+
+TODO: discussion/observations go here.
+
+***
