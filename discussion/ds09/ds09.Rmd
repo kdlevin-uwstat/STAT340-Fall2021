@@ -196,7 +196,7 @@ TODO: discussion/observations go here.
 
 ***
 
-__Question 2:___ When $\lambda = 0$, we saw that all of the coefficients were non-zero, and we know that as $\lambda$ increases, the LASSO penalizes non-zero coefficients more and more.
+__Question 2:__ When $\lambda = 0$, we saw that all of the coefficients were non-zero, and we know that as $\lambda$ increases, the LASSO penalizes non-zero coefficients more and more.
 So there *should* exist a point, as $\lambda$ increases from $0$, at which the first coefficient gets set to zero.
 What is (approximately) this value of $\lambda$?
 
