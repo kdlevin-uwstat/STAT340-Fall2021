@@ -15,4 +15,5 @@ permalink: /discussion/
  - [Discussion 06](ds06/ds06.html)
  - [Discussion 07](ds07/ds07.html)
  - [Discussion 08](ds08/ds08.html)
+ - [Discussion 09](ds09/ds09.html)
 
