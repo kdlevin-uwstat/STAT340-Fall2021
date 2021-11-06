@@ -147,8 +147,7 @@ If you think these methods may be useful in your group project, refer to ISLR fo
 
 ## Shrinkage and Regularization
 
-Let's return to the subset selection problem.
-The methods that we saw earlier in this lecture involved trying out different subsets of the predictors and seeing how the model performance changed as a result.
+The variable selection methods we just discussed involved trying out different subsets of the predictors and seeing how the model performance changed as a result.
 
 Let's consider an alternative approach.
 What if instead of trying lots of different models with different numbers of predictors, we went ahead and fit a model with all $p$ available predictors, but we modify our loss function in such a way that we will set the coefficients of "unhelpful" predictors to zero?
