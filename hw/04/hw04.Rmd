@@ -9,42 +9,37 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-> ***TODO: points***
-
-
-# Regression
+# Part 1: Regression (20 points)
 
 [Chapter 3 of ISLR](https://www.statlearning.com/) (page 121 in book, or page 131 in pdf document), questions 1,3,4,10.
 
 Also chapter 4 (page 193 in book, or page 203 in pdf) question 13(a-b only). Which variables appear to be significant? Which have the largest effect sizes? Interpret one of the coefficient estimates. What does the number mean?
 
-## Problem 1
+## Problem 1 (4 points)
 
 **Work goes here**
 
-## Problem 3
+## Problem 3 (4 points)
 
 **Work goes here**
 
-## Problem 4
+## Problem 4 (4 points)
 
 **Work goes here**
 
-## Problem 10
+## Problem 10 (4 points)
 
 **Work goes here**
 
-## Problem 13
+## Problem 13 (4 points)
 
 **Work goes here**
 
 
 
-# EDA/Unsupervised Learning
+# Part 2: EDA/Unsupervised Learning
 
-
-## Problem 1: Clustering
+## Clustering (15 points)
 
 The `faithful` data set, which comes packaged with R, represents measurements of the eruptions of [Old Faithful](https://en.wikipedia.org/wiki/Old_Faithful), a geyser in Yellowstone National Park.
 Each row of the data frame represents a single eruption of the geyser, with a column that captures the length of the eruption in minutes (`eruptions`) and the time in minutes until the next eruption (`waiting`).
@@ -160,7 +155,7 @@ TODO: discussion goes here (just a sentence or two is fine!)
 
 ***
 
-## Problem 2 (TODO points): Principal Components Regression (PCR)
+## Principal Components Regression (PCR; 15 points)
 
 In this problem, we'll see a brief illustration of why PCA is often useful as a preprocessing step in linear regression or as a regression method all its own.
 
