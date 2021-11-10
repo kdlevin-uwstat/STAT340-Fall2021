@@ -21,5 +21,5 @@ Source code for lectures available [on github](https://github.com/kdlevin-uwstat
  - [Regression in more detail (simple, logistic, multiple)](../lecs/08) &nbsp; (Oct 20-27)
  - [Maximum Likelihood](../lecs/09) &nbsp; (Oct 28)
  - [Model Selection with Cross-validation](../lecs/10) &nbsp; (Nov 1-5)
- - [Linear Regression and Model Selection](../lecs/11) &nbsp; (Nov 5-10) &nbsp; Optional additional notes: [information criteria](../lecs/11/L11b_inforcrit.html) &nbsp;
+ - [Linear Regression and Model Selection](../lecs/11) &nbsp; (Nov 5-10) &nbsp; Optional additional notes: [information criteria](../lecs/11/L11b_infocrit.html) &nbsp;
  - Resampling and the Bootstrap &nbsp; (Nov 12-15; coming soon)
