@@ -1,5 +1,5 @@
 ---
-title: 'STAT340 Lecture 11: Information Criteria'
+title: 'STAT340 Lecture 11b: Information Criteria'
 author: "Keith Levin and Bi Cheng Wu"
 date: "Fall 2021"
 output: html_document
@@ -7,6 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+require(ggplot2)
 ```
 
 ## Comparing models: information criteria
