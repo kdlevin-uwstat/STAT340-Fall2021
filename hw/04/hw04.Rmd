@@ -9,6 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+[link to source](hw04.Rmd)
+
 # Part 1: Regression (20 points)
 
 [Chapter 3 of ISLR](https://www.statlearning.com/) (page 121 in book, or page 131 in pdf document), questions 1,3,4,10.
