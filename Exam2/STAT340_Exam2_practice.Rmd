@@ -247,7 +247,7 @@ TODO: discussion/explanation goes here.
 The following code downloads a CSV file called `binary.csv` and reads it into a data frame `data` with one column, `X`, which is a vector of binary observations (i.e., every entry is zero or one).
 ```{r}
 
-download.file(destfile='binary.csv', url='https://kdlevin-uwstat.github.io/STAT340-Fall2021/Exam2/binary_data.csv')
+download.file(destfile='binary.csv', url='https://kdlevin-uwstat.github.io/STAT340-Fall2021/Exam2/binary.csv')
 data <- read.csv('binary.csv' )
 head(data)
 ```
