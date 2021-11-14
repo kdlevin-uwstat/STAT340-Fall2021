@@ -130,8 +130,8 @@ The single-column data frame stored in `pima.y` encodes a binary variable (calle
 The `i`-th row of `pima.x` corresponds to the `i`th entry in `pima.y`, and these jointly correspond to the `i`-th row of the `Pima.te` data frame in the `MASS` library.
 
 ```{r}
-#download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/Exam2/exam2_takehome_pimaX.csv', 'pimaX.csv')
-#download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/Exam2/exam2_takehome_pimaY.csv', 'pimaY.csv')
+download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/Exam2/pimaX.csv', 'pimaX.csv')
+download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/Exam2/pimaY.csv', 'pimaY.csv')
 
 pima.x <- read.csv('pimaX.csv')
 pima.y <- read.csv('pimaY.csv')
