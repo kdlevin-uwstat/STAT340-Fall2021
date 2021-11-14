@@ -1,0 +1,301 @@
+---
+title: 'Exam 2: Practice Problems'
+author: "Keith Levin and Bi Cheng Wu"
+date: "Fall 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Fitting and Interpreting a Linear Regression Model: the `cars` Data Set
+
+The `cars` data set (note: this is distinct from the `mtcars` data set!) contains data on stopping distances for cars driving at different speeds.
+```{r}
+data(cars)
+head(cars)
+```
+
+As you can see, the data set has just two columns: `speed` and `dist`, corresponding to speed (in miles per hour) and stopping distance (in feet), respectively.
+Note that this data was gathered in the 1920s. Modern cars can go a lot faster and stop far more effectively!
+
+__Part a: plotting the data__
+
+Create a scatter plot of the data, showing stopping distance as a function of speed (i.e., distance on the y-axis and speed on the x-axis).
+Do you notice a trend? Discuss (a sentence or two is plenty).
+
+```{r}
+
+#TODO: plotting code goes here.
+```
+
+***
+
+TODO: brief discussion here.
+
+***
+
+__Part b: fitting linear regression__
+
+Use `lm` to fit a linear regression model that predicts stopping distance from speed (and an intercept term).
+That is, fit a model like `dist = beta0 + beta1*speed`.
+
+```{r}
+
+# TODO: regression code goes here.
+
+```
+
+Use the resulting slope and intercept terms to create the scatter plot from Part a, but this time add a line, __in blue__, indicating our fitted model (i.e., add a line with slope and intercept given by your estimated coefficients).
+
+```{r}
+
+# TODO: plotting code goes here.
+
+```
+
+Do you notice anything about your model?
+Is the model a good fit for the data?
+Why or why not?
+Two or three sentences is plenty here.
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+Examine the output produced by `lm`.
+Should we or should we not reject the null hypothesis that the `speed` variable has a non-zero coefficient?
+
+```{r}
+#TODO: code goes here (if you need to extract model information not obtained above)
+```
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+__Part c: accounting for nonlinearity__
+
+Let's see if we can improve our model.
+We know from physics class that kinetic energy grows like the square of the speed.
+Since stopping amounts to getting rid of kinetic energy, it stands to reason that stopping distance might be better predicted by the square of the speed, rather than the speed itself.
+It's not exactly clear in the data that such a trend exists, but let's try fitting a different model and see what happens.
+
+Fit the model `dist = beta0 + beta1*speed^2` to the `cars` data.
+
+```{r}
+
+# TODO: regression code goes here.
+
+```
+
+Plot stopping distance as a function of speed again and again add the regression line __in blue__ from Part c.
+Then add another line (a curve, really, I guess), __in red__, indicating the prediction of this new model.
+That is, the predicted distance as a linear function of *squared* speed.
+
+__Hint:__ the speed values in the data range from 4 to 25. You may find it useful to create a vector `x` containing a sequence of appropriately-spaced points from 4 to 25 and evaluate your model at those `x` values.
+
+__Another hint:__ this is the rare problem where it's probably actually easier to use `ggplot2`, but if you prefer to do everything in R, don't forget about the `lines` function, which might be helpul here.
+
+```{r}
+
+# TODO: plotting code goes here.
+
+```
+
+
+## PCA for data exploration: the Pima Indian data revisited
+
+Let's return to the Pima Indian data set that we saw in a previous discussion section.
+This data set contains biometric data and diabetes diagnoses from a collection of Pima Indian women.
+The data is described in detail in the `MASS` library documentation.
+
+```{r}
+library(MASS)
+?Pima.te
+```
+
+If you have not installed `MASS` (highly unlikely, since it is included by default in most R installations), you'll get an error running the above code block.
+You can install the library by running `install.packages(MASS)` and then the above should run without a hitch.
+
+The following code downloads a slightly modified version of the data set from the course website.
+The data frame `pima.x` contains the biometric data (e.g., blood glucose levels, age, etc.).
+Each row corresponds to a patient in the study.
+The single-column data frame stored in `pima.y` encodes a binary variable (called `type`) indicating whether or not each patient has diabetes.
+The `i`-th row of `pima.x` corresponds to the `i`th entry in `pima.y`, and these jointly correspond to the `i`-th row of the `Pima.te` data frame in the `MASS` library.
+
+```{r}
+#download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/Exam2/exam2_takehome_pimaX.csv', 'pimaX.csv')
+#download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/Exam2/exam2_takehome_pimaY.csv', 'pimaY.csv')
+
+pima.x <- read.csv('pimaX.csv')
+pima.y <- read.csv('pimaY.csv')
+```
+
+__Part a: plotting to spot correlations__
+
+Create a pairs plot that shows how the seven biometric variables vary with one another.
+Do you see any obvious correlations between the variables?
+A sentence or two describing what you see is plenty, here.
+
+__Note:__ Pair plots can get quite crowded once they involve more than three or four variables.
+You may find it helpful, after identifying an interesting pair of variables, to make a full-sized scatter plot of just these two variables to make it easier to see exactly what's going on.
+
+```{r}
+# TODO: code goes here.
+```
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+
+__Part b: adding diabetes status to the plot__
+
+Use the data in `pima.y` to create the same plot as above, but now color the points according to diabetes status, with diabetic patients colored red and non-diabetic patients colored blue.
+
+```{r}
+# TODO: code goes here.
+```
+
+Suppose that you were required to choose only two variables from among the seven biometric variables in the data set (i.e., two of the seven columns of `pima.x`) with which to predict diabetes status.
+Which two would you choose to maximize your predictive accuracy?
+
+__Note:__ There is no need to do any additional coding or math, just interpret the plot and explain your answer in a few sentences.
+There is no single right answer, here.
+Clear explanation and well-motivated reasoning is enough for full credit.
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+__Part c: dimensionality reduction with PCA__
+
+Use `prcomp` to extract the first two principle components of the data.
+Don't forget to use the `scale` argument to ensure that the variables are all on the same scale.
+
+```{r}
+# TODO: code goes here
+```
+
+Interpret the loadings in these first two components.
+Which variables appear to be corrlated based on the loadings?
+
+```{r}
+#TODO: code goes here if you didn't display the loadings above.
+```
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+__Part d: creating a biplot__
+
+Visualize the data projected onto the first two principal components using `biplot` (or, if you prefer, you may use the `ggbiplot` package).
+Do you see anything interesting?
+Which variables tend to behave similarly?
+Do you find this surprising? Unsuprising?
+
+```{r}
+#TODO: code goes here.
+```
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+__Part e: PCA and classification__
+
+Use the output of `prcomp` to create a scatter plot of the data projected onto the first two principal component directions, with the data colored according to diabetes status.
+As in our plot in Part b, color points corresponding to diabetic patients red, and color non-diabetic patients blue.
+
+__Note:__ it would be great to just do this with `biplot`, but `biplot` does not have a simple way to pass information for coloring individual points in the plot-- the `col` argument specifies colors for the points and the loading vectors.
+If you are using `ggbiplot`, the support for this is better, and you may use that instead of extracting the components from the `prcomp` output if you wish.
+
+__Hint:__ you want the `x` attribute of the object returned by `prcomp`.
+
+```{r}
+# TODO: code goes here.
+```
+
+Do you see any clear structure in the data?
+How well do you think we would do if we tried to use PCA coordinates to predict diabetes status?
+Going back to your explanation from Part a, would you prefer to use these two PCA components or the two variables you picked in Part a if your goal was to accurately predict diabetes status?
+Why?
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+## Estimating the success parameter of a Bernoulli
+
+The following code downloads a CSV file called `binary.csv` and reads it into a data frame `data` with one column, `X`, which is a vector of binary observations (i.e., every entry is zero or one).
+```{r}
+
+download.file(destfile='binary.csv', url='https://pages.stat.wisc.edu/~kdlevin/teaching/Fall2021/STAT340/Exam2/binary_data.csv')
+data <- read.csv('binary.csv' )
+head(data)
+```
+
+Let us suppose that these observations were drawn iid froma Bernoulli distribution with unknown success probability $p$, and we are interested in estimating $p$.
+
+__Part a__
+
+Use Monte Carlo to construct a 90% (__note:__ 90%, not 95%) confidence interval for the parameter $p$.
+
+```{r}
+# TODO: code goes here.
+```
+
+__Part b__
+
+Now, use the same method to construct a 95% confidence interval for $p$.
+```{r}
+# TODO
+```
+
+Is this CI wider or narrower than the one in Part a?
+Is this what you would expect?
+Why or why not?
+
+***
+
+TODO: brief discussion/explanation goes here.
+
+***
+
+__Part c__
+
+Now, using the same data, construct a 95% (__note:__ 95% now, like in part b, *not* 90%) CLT-based confidence interval for $p$.
+```{r}
+#TODO: code goes here.
+```
+
+__Part d__
+
+We said in lecture that in general, these two approaches should yield fairly similar results.
+Is that the case here?
+Compare the two confidence intervals (e.g., which one is narrower, if any).
+A sentence or two is fine.
+
+***
+
+TODO: brief discussion/explanation goes here.
+
+***
+
