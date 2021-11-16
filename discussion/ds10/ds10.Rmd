@@ -1,0 +1,332 @@
+---
+title: 'STAT340 Discussion 10: the Bootstrap'
+author: "Keith Levin and Bi Cheng Wu"
+date: "Fall 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(MASS)
+```
+
+In lecture, we saw the (possibly magical?) bootstrap, which, under certain circumstances, allows us to make inferences about a population-level quantity of interest (e.g., the Poisson parameter $\lambda$) by resampling from our data *as though it were the population itself*.
+
+This is indeed a really paradoxical thing!
+How on earth can it be that we learn more about a quantity of interest by reusing the same data over and over?
+
+As we said in lecture, the mathematical details explaining why the bootstrap works and under what circumstances will have to wait until later in your statistical career.
+
+In this discussion section, you'll get some practice implementing the bootstrap yourself, using it to construct a confidence interval, and develop an intuition for how to choose the number of bootstrap replicates $B$.
+
+## Bootstrapping the correlation coefficient.
+
+Suppose that we have random pairs $(X_i,Y_i)$, $i=1,2,\dots,n$ drawn iid from some distribution, and we are interested in estimating the correlation coefficient of the pairs,
+$$
+\rho = \frac{ \operatorname{Cov}(X,Y) }{ \sqrt{ \sigma^2_X, \sigma^2_Y} }
+= \frac{ \mathbb{E} X_1 Y_1 - \mathbb{E} X_1 \mathbb{E} Y_1 }
+    { \sqrt{ \sigma^2_X, \sigma^2_Y} },
+$$
+where
+$$
+\sigma^2_X = \operatorname{Var} X_1
+~~~\text{ and }~~~
+\sigma^2_Y = \operatorname{Var} Y_1
+$$
+
+Here's some code that generates $(X,Y)$ pairs from a two-dimensional normal distribution.
+```{r}
+generate_normal_pairs <- function( n, muX, muY, CovMx ) {
+  data <- mvrnorm( n=n, mu=c(muX, muY), Sigma=CovMx );
+  # Put the X and Y data into their own columns in a data frame, just to be fancy
+  df <- data.frame( 'X' = data[,1], 'Y'=data[,2] );
+  return(df);
+}
+
+muX <- 1;
+muY <- -1;
+sigma2XX <- 2;
+sigma2YY <- 1;
+sigmaXY <- -0.75
+
+Sigma <- matrix( c(sigma2XX, sigmaXY, sigmaXY, sigma2YY), nrow = 2);
+generate_normal_pairs( 5, muX, muY, Sigma );
+```
+
+Note that we can read the variances and covariance off of the covariance matrix $\Sigma$ as
+$$
+\Sigma = \begin{bmatrix} \sigma^2_X & \sigma_{XY} \\
+                      \sigma_{XY} & \sigma^2_Y \end{bmatrix}, 
+$$
+So plugging in our choices of variances and covariances in the code above, we have
+$$
+\Sigma = \begin{bmatrix} 2 & -0.75 \\
+                      -0.75 & 1 \end{bmatrix},
+$$
+and, similarly plugging into the definition of $\rho$,
+$$
+\rho = \frac{ -0.75 }{ \sqrt{2} } \approx -0.53.
+$$
+Specifically,
+```{r}
+rhotrue <- sigmaXY/sqrt( sigma2XX * sigma2YY );
+rhotrue
+```
+
+So, here's some data for us to work with from this model.
+
+```{r}
+original_data <- generate_normal_pairs( 100, muX, muY, Sigma );
+head(original_data)
+```
+
+Let's use this data to estimate $\rho$.
+
+Just like in our estimation of $\alpha$ in lecture, we can use the plug-in principle to estimate $\rho$ as
+$$
+\hat{\rho}
+= \frac{ \hat{\sigma}_{XY} }{ \sqrt{ \hat{\sigma}^2_X \hat{\sigma}^2_Y} },
+$$
+where
+$$
+\begin{aligned}
+\hat{\sigma}^2_X &= \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar{X})^2 \\
+\hat{\sigma}^2_Y &= \frac{1}{n-1} \sum_{i=1}^n (Y_i - \bar{Y})^2 \\
+\hat{\sigma}_{XY} &= \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar{X} )( Y_i - \bar{Y}).
+\end{aligned}
+$$
+Implementing that in code,
+```{r}
+compute_rhohat <- function( data ) {
+  # Assume data is a data frame with columns X and Y.
+
+  # Get the sample covariance matrix of the data. 
+  # This includes the variances AND the covariance term we want.
+  Sigmahat <- cov(data);
+  # Pull the variance and covariance estimates out of the covariance matrix.
+  sigma2hatXX <- Sigmahat[1,1]; 
+  sigma2hatYY <- Sigmahat[2,2];
+  sigmahatXY <- Sigmahat[1,2];
+  
+  rhohat <- sigmahatXY/sqrt( sigma2hatXX * sigma2hatYY);
+  return( rhohat );
+}
+
+rhohat_original <- compute_rhohat( original_data );
+rhohat_original
+```
+
+But of course, a point estimate isn't enough.
+We want a confidence interval for $\rho$.
+
+## Refresher: simulation-based inference
+
+Well, we know the true distribution of this data-- after all, we generated it ourselves!
+So as a warm-up, let's construct a simulation-based confidence interval for $\rho$, first.
+
+Remember, the recipe is:
+
+1. Estimate the model parameters
+2. Generate "fake" data under that model.
+3. Evaluate our estimator on the fake data
+4. Repeat steps 2 and 3 many times and use the resulting replicates to estimate the variance
+
+Okay, so let's do that.
+First, we need to estimate the normal parameters ($\mu_X, \mu_Y$ and $\Sigma$) from the data.
+
+```{r}
+# The means are easy.
+muXhat <- mean(original_data$X)
+muYhat <- mean(original_data$Y)
+# The cov function gets the sample covariance matrix, which is the right choice
+# of estimator for the true matrix Sigma.
+# You'll see why in your theory courses. For now, take this on faith.
+Sigmahat <- cov( original_data );
+```
+
+Okay, now it's time to generate replicates.
+Complete the code below appropriately.
+
+```{r}
+
+N_MC <- 200;
+nsamp <- nrow(original_data);
+replicates <- rep( NA, N_MC );
+for( i in 1:N_MC ) {
+  muhat <- c(0,0);
+  # Comment or delete the line above. It's just there so the file knits.
+  # Uncomment the next line and specify the vector muhat correctly.
+  # muhat <- c( ??, ?? );
+  
+  Sigmahat <- matrix(c(1,0,0,1),nrow=2);
+  # Comment or delete the line above. It's just there so the file knits.
+  # Uncomment the next line and specify Sigmahat correctly.
+  # Sigmahat <- ??
+  fake_data <- mvrnorm(n=nsamp, mu=muhat, Sigma=Sigmahat);
+  replicates[i] <- compute_rhohat(fake_data);
+}
+
+hist(replicates);
+# Edit this next line to put a vertical line at our point estimate of rho
+# computed on the original data.
+abline( v=0, lwd=2, col='red')
+
+```
+
+__Solution:__
+
+```{r}
+N_MC <- 200;
+nsamp <- nrow(original_data);
+replicates <- rep( NA, N_MC );
+for( i in 1:N_MC ) {
+  muhat <- c( muXhat, muYhat );
+  fake_data <- mvrnorm(n=nsamp, mu=muhat, Sigma=Sigmahat);
+  replicates[i] <- compute_rhohat(fake_data);
+}
+
+hist(replicates);
+abline( v=rhohat_original, lwd=2, col='red')
+```
+
+Now, use the replicates to construct a 95% CI for $\rho$.
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+__Solution:__
+```{r}
+
+sd_rhohat <- sd( replicates );
+CI <- c( rhohat_original-1.96*sd_rhohat, rhohat_original+1.96*sd_rhohat);
+CI
+```
+
+Does your CI contain the true value of $\rho$?
+
+```{r}
+
+#TODO: code goes here
+
+```
+
+What is the width of your CI? We will need this information later on.
+
+```{r}
+
+#TODO: code goes here.
+
+```
+
+### Validation 
+Now, the natural next step would be to run the experiment we've seen so many times this semester-- repeat the above procedure many times and measure how often we successfully catch the true value of $\rho$.
+
+But you've seen the above example before, and it's beside the point.
+Everything is nice in the example above, and we're here to do the bootstrap!
+
+__Optional exercise (at home):__ write code to repeat the above experiment many times and record how often our simulation-based CI "catches" $\rho$ correctly.
+Don't forget that you need to generate a new random copy of `original_data` for each experimental trial!
+
+## Bootstrapping $\hat{\rho}$
+
+Okay, so let's get a CI using the bootstrap, and compare.
+
+Remember, the recipe now is:
+
+1. Resample with replacement from the data
+2. Compute our statistic on the resample
+3. Repeat steps 1 and 2 many times.
+4. Use the resulting bootstrap replicates to estimate the variance.
+
+The following code has a number of errors in it. Correct them so that we correctly compute 200 bootstrap replicates of $\hat{\rho}$.
+```{r}
+B <- 200; # Number of bootstrap replicates.
+nsamp <- nrow(original_data);
+
+boot_reps <- rep(NA, B);
+for( i in 1:B ) {
+  # To get a resample, we need to first pick out indices, and grab those rows of
+  # the data frame, since passing a data frame directly to sample() breaks things.
+  # Unfortunately, there are a coule of things wrong with this line. Correct it.
+  resamp_inds <-sample( 1:B, nsamp, replace=FALSE );
+  # Use resampled indices to pick out corresponding rows of the original data
+  resamp_data <- original_data[ resamp_inds, ];
+  
+  # The following line is incorrect. Correct it.
+  boot_reps[i] <- compute_rhohat( original_data );
+}
+
+# This histogram will look bizarre until the above errors are corrected.
+hist( boot_reps )
+abline( v=rhohat_original, lwd=2, col='red' );
+```
+
+__Solution:__
+
+```{r}
+B <- 200; # Number of bootstrap replicates.
+nsamp <- nrow(original_data);
+
+boot_reps <- rep(NA, B);
+
+# sample gets confused if we pass it a data frame.
+original_data_mx <- as.matrix( original_data );
+# We can't c
+for( i in 1:B ) {
+  # To get a resample, we need to first pick out indices, and grab those rows of
+  # the data frame, since passing a data frame directly to sample() breaks things.
+  resamp_inds <-sample( 1:nsamp, nsamp, replace=TRUE );
+  resamp_data <- original_data[ resamp_inds, ];
+  boot_reps[i] <- compute_rhohat( resamp_data );
+}
+
+hist( boot_reps )
+abline( v=rhohat_original, lwd=2, col='red' );
+```
+
+Okay, now use the bootstrap replicates to estimate the variance of $\hat{\rho}$ and construct a 95% bootstrap confidence interval for $\rho$.
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+__Solution:__
+
+```{r}
+
+sd_boot <- sd( boot_reps );
+CI <- c( rhohat_original-1.96*sd_boot, rhohat_original+1.96*sd_boot);
+CI
+```
+
+Does the CI contain the true value of $\rho$? Compute the width of your bootstrap-based CI.
+
+```{r}
+
+# TODO: code goes here
+
+```
+
+Compare the width of this confidence interval with the simulation-based CI you constructed earlier.
+Which is wider? Is this surprising? Why or why not?
+
+__One particular thing to think about:__ the simulation-based CI made a very specific assumption about the model (which happened to be correct in this case, but  we are seldom so lucky in the real world).
+In contrast, the bootstrap-based CI doesn't care about the data-generating model at all!
+
+Of course, in general, these two CIs are random, and so if we want to compare them in a fair way, we should repeat the above procedure many times.
+
+__Optional exercise (at home):__ write code to repeatedly generate random data from the normal model, construct both the simulation- and bootstrap-based CIs, and compare their coverage rates (i.e., how often they caught the true value of $\rho$) and average widths.
+
+__Optional exercise (at home):__ try changing the parameter `B` (the number of bootstrap replicates to use). How does the bootstrap-based CI change? Does its coverage rate change? Does its width change?
+
+__Optional exercise (at home):__ the simulation-based approach worked well here because its model assumption (that the data is normal) was in fact correct. Look on Wikipedia for other ways to generate correlated data.
+Pick one and repeat the above experiment, still comparing a simulation-based approach (one that assumes, now incorrectly, that the data is normal) with a bootstrap-based CI.
+What do you observe?
+
+
