@@ -1,0 +1,448 @@
+
+---
+title: "STAT340 HW03 Solutions"
+date: "October 2021"
+author: "Keith Levin and Bi Cheng Wu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1 (15 points): Estimating the variance
+
+Suppose that we have iid random variables $X_1,X_2,\dots$ drawn iid from a distribution with mean $\mu$ and variance $\sigma^2$.
+In lecture, we appealed to the CLT to say that as $n$ gets large, the distribution of
+$$
+\frac{ \bar{X} - \mu }{ \sqrt{ \sigma^2/n } }
+$$
+is well approximated by that of a standard normal, and we could use that fact to obtain a (approximate) 95% confidence interval for the parameter $\mu$, since (letting $Z$ be a standard normal RV)
+$$
+0.95
+= \Pr[ -1.96 \le Z \le 1.96 ]
+\approx \Pr\left[ \bar{X} - 1.96 \sqrt{\sigma^2/n} \le \mu \le \bar{X} + 1.96 \sqrt{\sigma^2/n} \right].
+$$
+One small problem, which we largely ignored in lecture (and in your introductory classes, most likely), is that we usually don't know the variance $\sigma^2$.
+Well, just as we can estimate the mean $\mu = \mathbb{E} X_1$, we can estimate the variance $\sigma^2 = \mathbb{E} (X_1 - \mu)^2$.
+
+Well, we estimate $\mu = \mathbb{E} X_1$ as
+$$
+\bar{X} = \frac{1}{n} \sum_{i=1}^n X_i,
+$$
+So by analogy, we should estimate $\sigma^2$ as
+$$
+\frac{1}{n} \sum_{i=1}^n (X_i - \mu )^2.
+$$
+Okay, but this includes the parameter $\mu$, which we don't know.
+But we have an estimate for the mean $\mu$-- the sample mean $\bar{X}$, so let's just plug in $\bar{X}$ for $\mu$ in the definition of the variance. 
+
+This is the "plug-in principle", which we have mentioned previously.
+If a parameter shows up in another quantity you want to estimate, you just plug in your estimate for that parameter.
+
+Following that logic, a reasonable choice of estimator for the variance is
+$$
+\hat{\sigma}^2
+= \frac{1}{n} \sum_{i=1}^n (X_i - \bar{X} )^2.
+$$
+
+### Part a: implementing an estimator for the variance
+
+Implement a function `sigma2hat` that takes a vector and returns the estimate $\hat{\sigma^2}$ defined above.
+
+```{r}
+sigma2hat <- function( data ) {
+  muhat <- mean(data);
+  
+  return( mean( (data-muhat)^2 ) );
+}
+
+```
+
+### Part b: assessing our estimator
+
+Okay, we've got an estimator for $\sigma^2$ implemented in R.
+How good is our estimator?
+Well, that turns out to be a harder question than it appears at first, and we'll have lots more to say about it in the coming lectures when we talk about prediction.
+
+For now, let's ask a simpler question.
+In lecture, we have discussed the concept of bias.
+Recall that if $S$ is an estimator of parameter $\theta$, then the bias of $S$ is given by
+$$
+\operatorname{bias}( S ) = \mathbb{E} S(X_1,X_2,\dots,X_n ) - \theta.
+$$
+In statistics, we like *unbiased* estimators-- estimators whose bias is zero.
+In the case of our estimator $\hat{\sigma}^2$, this means $\mathbb{E} \hat{\sigma}^2 = \sigma^2$.
+
+Unbiased estimators are those whose expectation is equal to the parameter that they are supposed to estimate.
+Said another way, an unbiased estimator is one that is correct, on average.
+
+We could do some math to assess whether or not $\hat{\sigma}^2$ is unbiased, but let's use Monte Carlo, instead.
+We're going to repeatedly generate data, and for each sample we generate, we will apply our estimator $\hat{\sigma}^2$ to that data and measure the difference between our estimate and the true value of $\sigma^2$.
+If we repeat that experiment many times, we can estimate the bias, using the same logic as we discussed in our lectures on Monte Carlo.
+
+Let's first write a function to run one instance of this experiment,
+then we'll write code to repeat the experiment multiple times.
+__Note:__ we are estimating $\sigma^2$, not $\sigma$.
+
+```{r}
+run_trial <- function( nsamp ) {
+  # nsamp is the sample size, n in the math displays above.
+  
+  # Let's generate our data from a standard normal-- then we know the variance already! (\sigma^2 = 1)
+  data <- rnorm( nsamp ); # recall, mean=0,sd=1 is the default.
+  
+  # TODO: write code to apply our estimator to the data
+  s2 <- sigma2hat( data );
+  
+  return( s2- 1) # Var = sd^2 = 1
+}
+```
+
+### Part c: assessing our estimator, part 2
+
+Okay, we have a function that generates one random sample and measures the difference between our estimate and the truth.
+
+To estimate the bias of $\hat{\sigma}^2$, we need to run this same experiment multiple times (i.e., run many Monte Carlo replicates of the experiment).
+
+Write a function to estimate the bias of $\hat{\sigma}^2$ by repeatedly calling `run_trial` and returning the average difference between $\hat{\sigma}^2$ and $\sigma^2$.
+Your function should take two arguments: a sample size `nsamp` (i.e, $n$ above) and a number of Monte Carlo replicates `NMC` (i.e, the number of times we should repeat our experiment.
+Your function should return a single number corresponding to your estimate of the bias.
+
+```{r}
+estimate_bias <- function( nsamp, NMC ) {
+  # nsamp is the sample size for use in run_trial above.
+  # NMC is the number of Monte Carlo replicates to use.
+  
+  # Hint: 
+  # create a vector in which to store the MC replicates.
+  MCreps <- rep( NA, NMC );
+  
+  # Then try a for loop with NMC iterations.
+  # in each iteration, call run_trial, and store the resulting
+  # difference in your vector.
+  for( i in 1:NMC ) {
+    MCreps[i] <- run_trial( nsamp );
+  }
+  
+  # Then return the average of that vector.
+  return( mean( MCreps ));
+
+}
+```
+
+Use your code to estimate the bias of our estimator $\hat{\sigma}^2$ using a sample size $n=20$ and based on 2,000 Monte Carlo replicates.
+
+__Hint:__ you should find that the bias is approximately $-1/n$, where $n$ is the sample size. Of course, owing to the randomness in your experiments, this will not be exact.
+
+```{r}
+
+estimate_bias( 20, 2000)
+```
+
+### Part d: correcting bias
+
+You should have found above that $\hat{\sigma}^2$ is (slightly) negatively biased.
+That is, $\hat{\sigma}^2$ underestimates the true value of the variance.
+(for an extended discussion of the perils of under-estimating variance, see Nassim Taleb's book *The Black Swan: The Impact of the Highly Improbable*.)
+
+It turns out that we can show that
+$$
+\mathbb{E} \hat{\sigma}^2 = \frac{n-1}{n} \sigma^2.
+$$
+
+__Bonus:__ prove this! (This is not worth any additional points, just your own pride in accomplishment). __Hint:__ expand the square $(X_i - \bar{X})$ inside the sum in the definition of $\hat{\sigma}^2$, apply the definition of $\bar{X} = n^{-1} \sum_i X_i$, and use linearity of the expectation: $\mathbb{E} (aX_1 + b X_2) = a \mathbb{X_1} + b \mathbb{X_2}.$
+
+This suggests using the estimator
+$$
+\frac{n}{n-1} \hat{\sigma}^2,
+$$
+since in that case,
+$$
+\mathbb{E} \frac{n}{n-1} \hat{\sigma}^2
+= \frac{n}{n-1} \mathbb{E} \hat{\sigma}^2
+= \frac{n}{n-1} \frac{n-1}{n} \sigma^2 = \sigma^2.
+$$
+That is, our adjusted estimator is unbiased!
+
+Repeat the above Monte Carlo experiment to estimate the bias of this new estimator. You should find that it is quite close to zero (of course, it will still not be exactly zero, because of random variation).
+
+```{r}
+# An easy approach is to define
+sigma2hat_adjusted <- function( data ) {
+  n <- length(data);
+  return( (n/(n-1))*sigma2hat(data)  );
+}
+
+run_trial_adjusted <- function( nsamp ) {
+  # Let's generate our data from a standard normal-- then we know the variance already! (\sigma^2 = 1)
+  data <- rnorm( nsamp ); # recall, mean=0,sd=1 is the default.
+  
+  s2adj <- sigma2hat_adjusted( data );
+  
+  return( s2adj- 1) # Var = sd^2 = 1
+}
+
+estimate_bias_adjusted <- function( nsamp, NMC ) {
+  # nsamp is the sample size for use in run_trial above.
+  # NMC is the number of Monte Carlo replicates to use.
+  
+  MCreps <- rep( NA, NMC );
+  
+  for( i in 1:NMC ) {
+    MCreps[i] <- run_trial_adjusted( nsamp );
+  }
+  
+  return( mean( MCreps ));
+
+}
+
+estimate_bias_adjusted( 20, 2000)
+
+```
+
+
+#### Part e (no points, just a short aside): t-statistics
+
+So, suppose that we plug in our estimates $\bar{X}$ for $\mu$ and $\hat{\sigma}^2$ (or its adjusted version) for $\sigma^2$.
+Then we are saying that
+$$
+  \frac{ \bar{X} - \mu }{ \sqrt{ \hat{\sigma}^2/n }}
+$$
+is approximately normal.
+This is true, in that as $n$ grows, this quantity comes to have the same CDF as a standard normal.
+But this ignores one important point-- for smaller values of $n$, the random variation of $\hat{\sigma}^2$ actually matters, and the t-statistic is a better approximation.
+This is precisely why we use the t-statistic instead of a simple standard normal in testing situations where we don't know $\sigma^2$.
+You may have seen this in your introductory courses without fully understanding why-- now you know!
+
+This a nice example where when $n$ is large, it doesn't much matter what we do-- everything ends up being approximately normal for $n$ large.
+On the other hand, for finite $n$ (e.g, real-world situations where $n$ is on the order of 20 or 100), the different choices of approximation matter a great deal.
+
+
+## Problem 2 (20 points): Comparing CLT- and simulation-based CIs
+
+In lecture, we saw two different approaches to building confidence intervals.
+
+* One, hopefully familiar to you from previous introductory courses, was based on the CLT, namely the fact that the sample mean is (approximately) normal about the population mean after appropriate rescaling (i.e., dividing by the standard deviation).
+* The other, probably new to you, was simulation-based.
+We estimate our parameter(s) of interest, then generate new data based on those (estimated) parameters.
+We can then use that data to estimate the parameter(s) *again*, and the behavior of those "fake data" estimates can tell us about the behavior of our estimator with respect to the true parameter(s).
+
+One thing we didn't discuss in lecture is how these two methods compare (except to say that... it depends).
+
+This problem is fairly open-ended. Your job is to set up an experiment comparing these two different confidence interval methods.
+
+### Part a: The data generating model
+
+First things first, we need to generate data.
+Define a function `generate_data`, that takes two arguments, `lambda` and `nsamp`, where `lambda` is the parameter of a Poisson and `nsamp` is a positive integer specifying a number of samples.
+Your function should return a vector of length `nsamp`, whose entries are drawn iid from Poisson with parameter given by `lambda`.
+`lambda` should default to 1.
+
+```{r}
+generate_data <- function( nsamp, lambda=1 ) {
+  
+  return( rpois(n=nsamp, lambda=lambda) );
+}
+
+```
+
+### Part b: fitting the data
+
+Our simulation-based method requires that we have an estimate of the mean, and our CLT-based method requires that we have estimates of the mean and variance.
+Write functions `estimate_pois_mean` and `estimate_pois_var` to estimate both the mean and variance of the Poisson given the output of `generate_data`.
+
+__Hint:__ the Poisson has the convenient property that the expectation and variance are both equal to $\lambda$, so these can be the same function-- both can just return the sample mean, if you want, but you can also use the sample variance. Your choice!
+
+```{r}
+estimate_pois_mean <- function( data ) {
+  return( mean(data) );
+}
+
+estimate_pois_var <- function( data ) {
+  # One option is to be lazy and use the fact that mean=var=lambda in Poisson
+  
+  return( estimate_pois_mean( data ) ); # the best programmer is the lazy one.
+}
+
+```
+
+### Part c: CLT-based confidence intervals
+
+Implement a function `CLT_CI` that takes arguments `data` (the vector of data generated by `generate_data`) and `alpha` (a numeric between 0 and 1, i.e, a probability, which should default to $0.05$), and returns a cofidence interval (i.e., a vector of length 2 whose first entry is the left end of the interval and whose second entry is the right end of the interval).
+
+This confidence interval should be based on our CLT-based approximation. That is, you should use the fact that
+$$
+  \frac{ \bar{X} - \lambda }{ \sqrt{ (\operatorname{Var X_1})/n }}
+$$
+is approximately normal.
+
+Use your `estimate_pois_var` function to estimate the variance term in the denominator (ignore the fact that this is equal to $\lambda$), use `estimate_pois_mean` to get $\bar{X}$ and follow the basic outline from lecture to create a $(1-\alpha)*100$-percent *two-sided* confidence interval (if "two-sided" is not familiar to you, no worries-- just follow the recipe from lecture and you'll be fine!).
+
+```{r}
+CLT_CI <- function( data, alpha=0.05) {
+  # TODO: code here.
+  
+  # Step 1. use data to get Xbar and the variance estimate.
+  Xbar <- estimate_pois_mean( data );
+  varhat <- estimate_pois_var( data );
+  
+  # Step 2. Use the estimated variance and choice of alpha to construct
+  # a two-sided confidence interval for lambda
+  # (sorry, Z-scores are going to show up here, but only briefly!)
+  CI <- qnorm(c(alpha/2, 1-alpha/2), mean=Xbar, sd=sqrt(varhat));
+  
+  # Return the CI. 
+  return( CI );
+}
+
+```
+
+### Part d: simulation-based confidence intervals
+
+Implement a function `simulation_CI` that takes arguments `data` (the vector of data generated by `generate_data`) and `alpha` (a numeric between o and 1, i.e, a probability, which should default to $0.05$), and returns a confidence interval (i.e., a vector of length 2 whose first entry is the left end of the interval and whose second entry is the right end of the interval).
+
+Your function should construct the confidence interval according to the simulation-based approach discussed in class.
+You are free to adapt the code from lecture in your code.
+You may pick the number of Monte Carlo iterates (i.e., replicates) as you wish, but we would recommend setting it to be at least a few hundred.
+
+```{r}
+simulation_CI <- function( data, alpha=0.05) {
+
+  Xbar <- estimate_pois_mean( data );
+  
+  fakedata <- rpois(n=1000, lambda=Xbar );
+  # Return a vector c(L, U) with L the left end and U the right ("upper") end of the CI. 
+  CI <- quantile(fakedata, probs=c(alpha/2,1-alpha/2));
+  return( as.vector(CI) );
+}
+
+```
+
+### Part e: Comparing Confidence Intervals
+
+So, now you've implemented two different confidence intervals.
+Let's compare them.
+
+First of all, we need to be able to check if our CI "caught" the true parameter or not.
+
+Write a function `contained` that takes a CI (i.e., a two-vector with first entry smaller than the second) and a number (the true value of the parameter) that returns TRUE if the true value of the parameter is inside the interval and FALSE otherwise.
+
+```{r}
+contained <- function( myCI, trueparam ) {
+  # TODO: code goes here.
+  # Hint: the estimation lecture notes include code to do this.
+  
+  return( (trueparam > myCI[1]) & (trueparam < myCI[2]) );
+}
+
+```
+
+What does it mean for one confidence interval to be better than another?
+We define the *coverage* of a confidence interval to be the probability that the true parameter lies in the interval.
+
+Ideally, a $1-\alpha$ confidence interval has coverage $1-\alpha$. Simple!
+
+The problem arises from approximation-- our CLT- and simulation-based CIs are based on approximations, and so their coverage will not be exactly $1-\alpha$.
+
+Implement a function called `estimate_coverage`, whose arguments are given in the code block below, and which returns an estimate of the coverage (i.e., a number between 0 and 1).
+
+* `CI_fn` is a *function* (in our code, this will be either `` or `simulation_CI`). Yes, functions can be arguments to other functions in R! Note that this argument will just be function. *Not a string.*
+* `NMC` is a positive integer, the number of replicates to run.
+* `nsamp` is a positive integer, the number of samples.
+* `lambdatrue` is a positive real, the parameter of the Poisson that we will use to generate our data. It should default to 1.
+* `alpha` is a numeric between 0 and 1. `1-alpha` will be the (target) level of our CI.
+
+```{r}
+estimate_coverage <- function( CI_fn, NMC, nsamp, lambdatrue=1, alpha=0.05 ) {
+  coverages <- 0; # Count how often the CI "catches" lambdatrue
+  
+  for (i in 1:NMC ) {
+    # Generate data: nsamp draws from Poisson( lambdatrue )
+    
+    # Construct a confidence interval from it using the given CI function
+    
+    # if lambdatrue is in the CI, increment coverages. 
+    
+  }
+  
+  return( coverages/NMC )
+}
+
+```
+
+
+### Part f: exploring
+
+Wow, that was a lot of coding! Here comes the payoff!
+
+Use the code above to estimate the coverage of your two CI methods.
+Try changing the different arguments-- $\lambda$, $\alpha$, `nsamp`, etc.
+Coverages of the two methods *should* both be close to $1-\alpha$, whatever you chose $\alpha$ to be, but you will likely find that they tend to follow patterns, consistently either over- or under-shooting the target.
+
+Take some time to explore these patterns. What do you see?
+There are no right or wrong answers, here.
+We are just asking you to see how these two different CI methods behave in different situations.
+
+An important point that we alluded to above is that in the Poisson, the mean and variance are both just $\lambda$.
+This is actually part of why you may have noticed some weird behavior in your experiments above.
+Unfortunately, a thorough explanation of that weird behavior will have to wait for your later theory courses.
+
+## Problem 3 (15 points): The infamous mule kick data
+
+The file `mule_kicks.csv`, available for download (here)[https://kdlevin-uwstat.github.io/STAT340-Fall2021/hw/03/mule_kicks.csv], contains a simplified version of a very famous data set.
+The data consists of the number of soldiers killed by being kicked by mules or horses each year in a number of different companies in the Prussian army near the end of the 19th century.
+
+This may seem at first to be a very silly thing to collect data about, but it is a very interesting thing to look at if you are interested in rare events.
+Deaths by horse kick were rare events that occurred independently of one another, and thus it is precisely the kind of process that we might expect to obey a Poisson distribution.
+
+Download the data and read it into R by running
+```{r}
+download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/hw/03/mule_kicks.csv', destfile='mule_kicks.csv');
+mule_kicks <- read.csv('mule_kicks.csv', header=TRUE);
+
+head(mule_kicks);
+```
+
+`mule_kicks` contains a single column, called `deaths`.
+Each entry is the number of soldiers killed in one corps of the Prussian army in one year.
+There are 14 corps in the data set, studied over 20 years, for a total of 280 death counts.
+
+### Part a: estimating the Poisson rate
+
+Assuming that the mule kicks data follows a Poisson distribution, produce an estimate for the rate parameter $\lambda$.
+There are no strictly right or wrong answers, here, though there are certainly better or worse ones.
+
+```{r}
+#TODO: estimate the rate parameter.
+
+lambdahat <- NA; # TODO: write code; store your estimate in lambdahat.
+```
+
+### Part b
+
+Using everything you know, construct a confidence interval for the rate parameter $\lambda$.
+Explain in reasonable detail what you are doing and why you are constructing the confidence interval in this way (a few sentences is fine!).
+
+***
+
+Code, plots, and/or explanation go here.
+
+***
+
+
+### Part c
+
+Here's a slightly more open-ended question.
+We *assumed* that the data followed a Poisson distribution.
+This may or may not be a reasonable assumption.
+Use any and all tools that you know about to assess how reasonable or unreasonable this assumption is.
+
+Once again, there are no strictly right or wrong answers here.
+Explain and defend your decisions and thought processes in a reasonable way and you will receive full credit.
+
+***
+
+Code, plots and/or explanation go here.
+
+***
