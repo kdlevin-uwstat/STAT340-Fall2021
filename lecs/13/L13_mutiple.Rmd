@@ -133,12 +133,16 @@ mult.comp.sim.bonf = function(g,n,i=5000,alpha=0.05){
     })
 }
 
-2:30 %>% 
-  {data.frame(g=.,p=mult.comp.sim.bonf(.,20),value="data.frame")} %>% 
-  ggplot(aes(x=g,y=p)) + geom_point() + geom_smooth(se=F) + 
+set.seed(1)
+
+bonf = 2:30 %>% 
+  {data.frame(g=.,p=mult.comp.sim.bonf(.,20),method="Bonferroni")}
+
+ggplot(bonf,aes(x=g,y=p)) + geom_point() + geom_smooth(se=F) + 
   geom_hline(aes(yintercept=0.05),linetype="dashed",color="red") + 
-  scale_y_continuous(limits=c(0,1),expand=c(0,0)) + 
-  labs(title=expression(paste("Probability of false positive in ",
+  scale_y_continuous(breaks=c(seq(0,1,.2),.05),limits=c(0,1),expand=c(0,0)) + 
+  labs(x="Number of groups",y="FWER",
+       title=expression(paste("Probability of false positive in ",
                               bgroup("(",atop(g,2),")")," tests with Bonferroni correction")))
 ```
 
@@ -162,7 +166,180 @@ There are some other methods that are sometimes used, but basically speaking the
 
 Another way of saying this is you can't control both the type I error rate (false positive) and the type II error rate (false negative) at the same time. If you want to control type I, your test literally needs to produce more negative results, which necessarily raises the type II error rate, which lowers power. Conversely, if you want higher power, your test literally needs to produce more positive results, which necessarily raises the type I error rate.
 
-TODO for Wednesday: touch on alternative methods, add more examples, maybe touch on FDR,...
+
+# Holm–Bonferroni method
+
+A slightly more complex method that is less conservative (and more powerful) than Bonferroni is the [Holm-Bonferroni](https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method) approach. This approach also has the benefit that it can be applied to basically any method that produces a $p$-value, since it only relies on changing the significance level at which each test is performed.
+
+Procedure:
+
+1. Sort test $p$-values from lowest to highest.
+2. Match the smallest $p$-value with the significance level $\alpha/m$, then match the next smallest one to $\alpha/(m-1)$, then match the next to $\alpha/(m-2)$, etc... until you match the largest to $\alpha$.
+3. Look for the first time a $p$-value is greater than a significance level.
+4. Reject the null for every test ***before*** this point.
+
+For example, suppose we had the $p$-values 0.187, 0.508, 0.002, 0.012, 0.674. There are only 5 tests, so we can write
+
+|            |       |        |        |       |       |
+|------------|-------|--------|--------|-------|-------|
+| $p$-values | 0.002 | 0.012  | 0.187  | 0.508 | 0.674 |
+| $\alpha/i$ | 0.01  | 0.0125 | 0.0167 | 0.025 | 0.05  |
+
+Note the 1^st^ and 2^nd^ $p$-values are lower than $\alpha/i$ but the 3^rd^ is not. Therefore, the 1^st^ and 2^nd^ tests are significant, but the rest are not.
+
+The Holm method requires a bit more work than the standard Bonferroni, but achieves higher power than Bonferroni while also effectively controlling type I error rate at $\alpha$.
+
+Illustration on simulation study example:
+
+```{r}
+mult.comp.sim.holm = function(g,n,i=5000,alpha=0.05){
+  sapply(g,function(..){
+    replicate(i,ttests.pairs(matrix(rnorm(..*n),ncol=..,nrow=n))$pvalue %>% 
+                {.[lower.tri(.)]} %>% {any(p.adjust(.,"holm")<alpha)}) %>% mean
+    })
+}
+
+set.seed(1)
+
+holm = 2:30 %>% 
+  {data.frame(g=.,p=mult.comp.sim.holm(.,20),method="Holm-Bonferroni")}
+
+ggplot(holm,aes(x=g,y=p)) + geom_point() + geom_smooth(se=F) + 
+  geom_hline(aes(yintercept=0.05),linetype="dashed",color="red") + 
+  scale_y_continuous(breaks=c(seq(0,1,.2),.05),limits=c(0,1),expand=c(0,0)) + 
+  labs(x="Number of groups",y="FWER",
+       title=expression(paste("Probability of false positive in ",
+                              bgroup("(",atop(g,2),")")," tests with Holm-Bonferroni correction")))
+```
+
+Since the Holm-Bonferroni method offers a minor improvement over the traditional Bonferroni method with no increase of type I error rate and no loss of generalizability, it is now commonly used and generally preferred over the standard uncorrected Bonferroni.
+
+
+# Tukey range test
+
+Also known as Tukey's Honest Significant Difference (or HSD). If you are specifically conducting ***all possible pairwise $t$-tests***, this is an additional method that can be used to very quickly and easily determine which groups have means that are significantly different.
+
+Note it is often wrongly believed that Tukey's HSD must be preceded by a significant ANOVA $F$-test (which we will learn about next week). This is false, and in fact doing so may in certain circumstances be slightly harmful ^[Hsu, J. C. (1996). Multiple comparisons: Theory and methods. Chapman & Hall. p.177]. You can use Tukey HSD whenever you wish to compare all possible group means by conducting all pairwise $t$-tests while controlling the FWER at $\alpha$.
+
+First, compute the *pooled variance* $s_p^2$, a quantity that sort of represents the "overall" variance for all the data if we ignored the groups. In the formula below, $i=1,2,...,k$ represents the $i$-th group, and $n_i$ and $s_i^2$ represent the sample size and sample variance of the $i$-th group.
+
+$$
+\displaystyle s_{p}^{2}={\frac {\sum _{i=1}^{k}(n_{i}-1)s_{i}^{2}}{\sum _{i=1}^{k}(n_{i}-1)}}={\frac {(n_{1}-1)s_{1}^{2}+(n_{2}-1)s_{2}^{2}+\cdots +(n_{k}-1)s_{k}^{2}}{n_{1}+n_{2}+\cdots +n_{k}-k}}
+$$
+
+From here, there are 2 slightly different approaches, each with their own merits.
+
+### Threshold of difference
+
+This method is slightly easier to use if your data is "balanced", i.e. all groups have the same number of observations. Using your pooled variance $s_p^2$, find the following
+
+$$
+HSD=q_{\alpha,k,N-k}\sqrt{\frac{s_p^2}n}
+$$
+
+where $k$ is the number of groups, $n$ is the number of observations in each group, $N$ is the total number of observations, and $q_{\alpha,k,N-k}$ is the quantile from the [studentized range distribution](https://en.wikipedia.org/wiki/Studentized_range_distribution) (not going too in detail about that, but think of it as a distribution of the (normalized) largest absolute value difference between the groups). Since it can be thought of as absolute differences, it's positive-valued (no negative observations are possible) so "more extreme" observations always use the upper tail. Thus, we use $0.95$ as the first argument. The 2^nd^ and 3^rd^ arguments are just parameters of the distribution.
+
+We can conveniently use `qtukey()` to compute this for our case. Suppose we have $g=5$ groups with $n=20$ people each. Then, there are $N=100$ observations in total. Our critical value can be found by
+
+```{r}
+qtukey(0.95,5,100-5)
+```
+
+We can then compare this HSD to any pair of groups in our sample. In particular, for some groups $g_i,g_j$ in our sample, if
+
+$$
+|\bar{y}_i-\bar{y}_j|\geq HSD
+$$
+
+then that result is significant.
+
+### Tukey-Kramer
+
+If your data is unbalanced, i.e. groups don't all have the same number of observations, you have to resort to using the Tukey-Kramer method, which involves making confidence intervals for each pair of groups. In particular, constructor for each $i,j$
+
+$$
+\bar{y}_i-\bar{y}_j\,\pm\,q_{\alpha,k,N-k}\sqrt{\frac{s_p^2}2\left(\frac1{n_i}+\frac1{n_j}\right)}
+$$
+
+Of course, to tell if a pair is significantly different requires just looking at if the interval contains 0.
+
+Let's also show this on the simulation example:
+
+```{r}
+mult.comp.sim.tukey = function(g,n,i=5000,alpha=0.05){
+  sapply(g,function(..){
+    q = qtukey(1-alpha,..,..*n-..)
+    replicate(i,matrix(rnorm(..*n),ncol=..,nrow=n) %>% 
+                {diff(range(colmeans(.))) > 
+                    q*sqrt(sum(colVars(.)*(n-1))/(..*n-..)/n)}) %>% mean
+    })
+}
+
+set.seed(1)
+
+tukey = 2:30 %>% 
+  {data.frame(g=.,p=mult.comp.sim.tukey(.,20),method="Tukey")}
+
+ggplot(tukey,aes(x=g,y=p)) + geom_point() + geom_smooth(se=F) + 
+  geom_hline(aes(yintercept=0.05),linetype="dashed",color="red") + 
+  scale_y_continuous(breaks=c(seq(0,1,.2),.05),limits=c(0,1),expand=c(0,0)) + 
+  labs(x="Number of groups",y="FWER",
+       title=expression(paste("Probability of false positive in ",
+                              bgroup("(",atop(g,2),")")," pairwise t-tests using Tukey HSD")))
+```
+
+### Comparison with previous methods
+
+Again, remember the Tukey method is ***only applicable for pairwise $t$-tests*** where you wish to compare to see if the means are significantly different. It is NOT a general method that can be applied to any $p$-values, unlike the Bonferroni or the Holm-Bonferroni method.
+
+However, when pairwise $t$-tests are what you need, Tukey HSD gives one of the best combinations of controlling type I error rate while preserving high power. This is evidenced by the fact that the curve above very closely hugs the $\alpha=0.05$ line, whereas the other two methods both slightly control the error rate a little too low. This might not seem like a problem, but remember that a type I error rate lower than your desired $\alpha$ will always decrease your power, which is bad.
+
+Here is a plot showing all three methods in the case of ***pairwise $t$-tests*** showing more closely their behaviors.
+
+```{r}
+rbind(bonf,holm,tukey) %>% 
+  ggplot(aes(x=g,y=p,color=method,shape=method)) + geom_point(aes(size=method)) + geom_smooth(se=F) + 
+  geom_hline(aes(yintercept=0.05),linetype="dashed",color="red") + 
+  scale_y_continuous(limits=c(0,.1),expand=c(0,0)) + scale_shape_manual(values=c(4,20,15)) + 
+  scale_size_manual(values=c(4,3,1.5)) + scale_color_brewer(palette="Dark2") + 
+  labs(x="Number of groups",y="FWER",
+       title=expression(paste("Probability of false positive in ",
+                              bgroup("(",atop(g,2),")")," pairwise t-tests")))
+```
+
+<br/>
+
+---
+
+<br/>
+
+# False discovery rate (FDR) <small>(optional; if time permits)<small/>
+
+So far, all the methods we've learned control the ***family-wise error rate (FWER)***. Again, remember if we are performing $m$ tests, this is the probability that ***at least 1 false positive*** was found among the significant tests (i.e. 1 of the null hypotheses we rejected was actually true).
+
+However, sometimes any kind of FWER correction ends up being too conservative. This is especially true in fields like genomics, where for example, you might need to test tens/hundreds of thousands of locations in a genetic sequence for correlation with some disease. Using any kind of FWER resulted in very few (if any) significant results due to the sheer number of tests being run. This was the problem scientists faced in the late 1980s/early 1990s.
+
+In a groundbreaking 1995 paper (now one of the [most cited statistics papers](https://statmodeling.stat.columbia.edu/2014/03/31/cited-statistics-papers-ever/)), Benjamini and Hochberg introduced the eponymous Benjamini-Hochberg (or BH) method, which controls the ***false discovery rate (FDR)*** instead of FWER. FDR ***allows a proportion of significant results to be false***. So for example, suppose you conducted 100 tests, and 20 of them were significant. If it turns out 1 of those 20 significant tests was a false positive, then the FDR of this experiment is 1/20, or 0.05.
+
+***Important***: the FDR is mostly used in contexts where you are running such an ***extremely*** large number of tests that FWER is impractical for finding significant results. It is important that you understand FWER and FDR are NOT the same thing and they address very different issues.
+
+The process appears similar on the surface to the Holm-Bonferroni method, but with a couple of important differences.
+
+Procedure:
+
+1. Sort test $p$-values from lowest to highest.
+2. Match the smallest $p$-value with the significance level $\alpha\!\cdot\!\frac1m$, then match the next smallest one to $\alpha\!\cdot\!\frac2m$, then match the next to $\alpha\!\cdot\!\frac3m$, etc... until you match the largest to $\alpha$.
+3. Look for the ***last*** (i.e. farthest down the list) time a $p$-value is ***less than or equal to*** a significance level.
+4. Reject the null for every test ***up to and including*** this point.
+
+Note compare to the Holm method, the significance levels are $\frac\alpha m$, $\frac{2\alpha}m$, ..., $\frac{(m-1)\alpha}m$, $\alpha$ instead of $\frac\alpha m$, $\frac\alpha{m-1}$, ..., $\frac\alpha2$, $\alpha$. Also, in the BH method you look for the largest index where a test is significant, compared to in Holm where you stop the first time you get an insignificant test. This actually means there can be situations where one of the tests may have $p_{(i)}>i\!\cdot\!\alpha/m$ but may still have its null rejected due to a later test being significant. For example, given the $p$-values 0.270, 0.031, 0.009, 0.035, you would compare them to
+
+|                      |        |       |        |      |
+|----------------------|--------|-------|--------|------|
+| $p$-values           | 0.009  | 0.031 | 0.035  | 0.27 |
+| $i\!\cdot\!\alpha/m$ | 0.0125 | 0.025 | 0.0375 | 0.05 |
+
+Since the 3^rd^ $p$-value 0.035 is smaller than its level 0.0375, the first 3 tests are all significant, even though the 2^nd^ test actually has $p$-values 0.031 higher than its level 0.025.
 
 
 
