@@ -323,7 +323,7 @@ In a groundbreaking 1995 paper (now one of the [most cited statistics papers](ht
 
 ***Important***: the FDR is mostly used in contexts where you are running such an ***extremely*** large number of tests that FWER is impractical for finding significant results. It is important that you understand FWER and FDR are NOT the same thing and they address very different issues.
 
-The process appears similar on the surface to the Holm-Bonferroni method, but with a couple of important differences.
+The BH process appears similar on the surface to the Holm-Bonferroni method, but with a couple of important differences.
 
 Procedure:
 
@@ -340,6 +340,10 @@ Note compare to the Holm method, the significance levels are $\frac\alpha m$, $\
 | $i\!\cdot\!\alpha/m$ | 0.0125 | 0.025 | 0.0375 | 0.05 |
 
 Since the 3^rd^ $p$-value 0.035 is smaller than its level 0.0375, the first 3 tests are all significant, even though the 2^nd^ test actually has $p$-values 0.031 higher than its level 0.025.
+
+Today, there are other FDR controlling methods as well, but Benjamini-Hochberg remains one of the most popular approaches, due to its relative simplicity, good balance between error rate and power, and historical significance.
+
+
 
 
 
