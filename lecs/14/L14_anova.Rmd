@@ -1,0 +1,229 @@
+
+---
+title: "STAT340 Lecture 14: ANOVA"
+author: "Keith Levin & Bi Cheng Wu"
+output: html_document
+knit: (function(inputFile,encoding){rmarkdown::render(
+  inputFile,encoding=encoding,output_file=file.path(dirname(inputFile),'index.html'))})
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      cache = TRUE, autodep = TRUE, cache.comments = FALSE)
+```
+
+<small>Adapted from [here](https://www.mathstat.dal.ca/~stat2080/Fall14/Lecturenotes/).</small>
+
+
+# One-way ANOVA
+
+
+### Intro
+
+One-Way Analysis of Variance (ANOVA) is a method for comparing the means of $a$ populations. This kind of problem arises in two different settings.
+
+ - When $a$ independent random samples are drawn from $a$ populations.
+ - When the effects of $a$ different treatments on a homogeneous group of experimental units is studied, the group of experimental units is subdivided into $a$ subgroups and one treatment is applied to each subgroup. The $a$ subgroups are then viewed as independent random samples from $a$ populations.
+
+Assumptions required for One-Way ANOVA:
+
+a. Random samples are independently selected from $a$ (treatments) populations.
+b. The $a$ populations are approximately normally distributed.
+c. All $a$ population variances are equal.
+
+
+### Model
+
+The assumptions are conveniently summarized in the following statistical model:
+
+$$
+X_{ij} = \mu_i + e_{ij}
+$$
+
+where $e_{ij}$ are i.i.d. $N(0,\sigma^2)$, $\;i=1,2,\ldots,a$, $\;j=1,2,\ldots,n_i$.
+
+Example: Tests were conducted to compare three top brands of golf balls for mean distance traveled when struck by a driver. A robotic golfer was employed with a driver to hit a random sample of 5 golf balls of each brand in a random sequence. Distance traveled, in yards, for each hit is shown in the table below.
+
+<center>
+<div style="width:25%">
+| Brand A | Brand B | Brand C |
+|:-------:|:-------:|:-------:|
+| 251.2   | 263.2   | 269.7   |
+| 245.1   | 262.9   | 263.2   |
+| 248.0   | 265.0   | 277.5   |
+| 251.1   | 254.5   | 267.4   |
+| 260.5   | 264.3   | 270.5   |
+</div>
+</center>
+
+Suppose we want to compare the mean distance traveled by the three brands of golf balls based on the three samples. One-Way ANOVA provides a method to accomplish this.
+
+
+### Hypotheses
+
+The hypotheses of interest in One-Way ANOVA are:
+
+$$
+\begin{aligned}
+H_0&:\mu_1=\mu_2=\ldots=\mu_a\\
+H_A&:\mu_i\neq\mu_j\text{ for some $i$, $j$}
+\end{aligned}
+$$
+
+ - In the above example, $a=3$. So the mean distance traveled by the three brands of golfballs are equal according to $H_0$.
+ - According to $H_A$, at least one mean is not equal to the others.
+
+
+### Overview
+
+##### ***Sum squares***
+
+The total variability in the response, $X_{ij}$ is partitioned into between treatment and within treatment (error) components. When these component values are squared and summed over all the observations, terms called sums of squares are produced. There is an additive relation which states that the total sum of squares equals the sum of the treatment and error sum of squares.
+
+$$
+SS_{Total}=SST+SSE
+$$
+
+The notations $SST$, $SSTr$, $SSTrt$, $SS_{Tr}$, $SStreatment$, and $SS(Between)$ are synonymous for "treatment sum of squares". The abbreviations $SSE$, $SSerror$, and $SS(Within)$ are synonymous for "error sum of squares". Associated with each sum of squares is its degrees of freedom. The total degrees of freedom is $n-1$. The treatment degrees of freedom is $a-1$ and the error degrees of freedom is $n-a$. The degrees of freedom satisfy an an additive relationship, as did the sums of squares.
+
+$$
+n-1=(a-1)+(n-a)
+$$
+
+##### ***Mean squares***
+
+Scaled versions of the treatment and error sums of squares (the sums of squares divided by their associated degrees of freedom) are known as mean squares:
+
+$$
+\begin{aligned}
+MST&=SST/(a-1)\\
+MSE&=SSE/(n-a)
+\end{aligned}
+$$
+
+$MST$ and $MSE$ are both estimates of the error variance, $\sigma^2$. $MSE$ is always unbiased (its mean equals $\sigma^2$), while $MST$ is unbiased only when the null hypothesis is true. When the alternative $H_A$ is true, $MST$ will tend to be larger than $MSE$. The ratio of the mean squares is $F=MST/MSE$. This should be close to $1$ when $H_0$ is true, while large values of $F$ provide evidence against $H_0$. The null hypothesis $H_0$ is rejected for large values of the observed test statistic $F_{obs}$.
+
+##### ***ANOVA Table***
+
+ANOVA calculations are conveniently displayed in the tabular form shown below, which is known as an ANOVA table.
+
+<center>
+<div style="width:60%">
+| Source     | $SS$         | $df$      | $MS$  | $F_{obs}$ | $p$-value       |
+|------------|--------------|-----------|-------|-----------|-----------------|
+| Treatments | $SST$        | $a\!-\!1$ | $MST$ | $MST/MSE$ | $P[F\geq Fobs]$ |
+| Error      | $SSE$        | $n\!-\!a$ | $MSE$ |           |                 |
+| Total      | $SS_{Total}$ | $n\!-\!1$ |       |           |                 |
+</div>
+</center>
+
+
+### Details
+
+ - $a$ is the number of factor levels (treatments) or populations
+ - $x_{ij}$ is the $j$-th observation in the $i$-th sample, $j=1,2,\ldots,n_i$
+ - $n_i$ is the sample size for the $i$-th sample
+ - $n=\sum_{i=1}^an_i$ is the total number of observations
+ - $\bar{x}_{i.}=\frac1{n_i}\sum_{j=1}^{n_i}x_{ij}$ is the $i$-th sample mean
+ - $s_i^2=\frac1{n_i-1}\sum_{j=1}^{n_i}(x_{ij}-\bar{x}_{i.})^2$ is the $i$-th sample variance
+ - $\bar{x}_{..}=\frac1n\sum_{i=1}^a\sum_{j=1}^{n_i}x_{ij}=\frac1n\sum_{i=1}^an_i\bar{x}_{i.}$ is the grand mean of all observations
+
+Here are the formulas for sums of squares. We will see that there are simpler formulas when we know the sample means and sample variances for each of the a groups.
+
+$$
+\begin{aligned}
+SS_{Total}&=\sum_{i=1}^a\sum_{j=1}^{n_i}(x_{ij}-\bar{x}_{..})^2\\
+SST&=\sum_{i=1}^a\sum_{j=1}^{n_i}(\bar{x}_{i.}-\bar{x}_{..})^2=\sum_{i=1}^an_i(\bar{x}_{i.}-\bar{x}_{..})^2\\
+SSE&=\sum_{i=1}^a\sum_{j=1}^{n_i}(x_{ij}-\bar{x}_{i.})^2=\sum_{i=1}^a(n_i-1)s_i^2
+\end{aligned}
+$$
+
+The test statistic is
+
+$$
+F_{obs}=\frac{SST/(a-1)}{SSE/(n-a)}
+$$
+
+and the p-value is $P(F\geq F_{obs})$.
+
+Note:
+
+ - $F_{obs}$ is the observed value of the test statistic
+ - Under the null hypothesis $F$ has an $F$ distribution with $a-1$ numerator and $n-a$ denominator degrees of freedom
+ - the $p$-value is $P(F_{a-1,\,n-a}\geq F_{obs})$
+ - reject $H_0$ at level $\alpha$ when the $p\text{-value}<\alpha$
+ - equivalently, when $F_{obs}\geq F_{\alpha,\,a-1,\,n-a}$, which is the upper $\alpha$-th percentile of the $F$ distribution with $a-1$ numerator and $n-a$ denominator degrees of freedom
+
+
+### Example
+
+Consider again the tests conducted to compare three brands of golf balls for mean distance traveled when struck by a driver. Again, distances traveled, in yards, for each hit and are shown below.
+
+<center>
+<div style="width:25%">
+| Brand A | Brand B | Brand C |
+|:-------:|:-------:|:-------:|
+| 251.2   | 263.2   | 269.7   |
+| 245.1   | 262.9   | 263.2   |
+| 248.0   | 265.0   | 277.5   |
+| 251.1   | 254.5   | 267.4   |
+| 260.5   | 264.3   | 270.5   |
+</div>
+</center>
+
+Here we'll compare the mean distance traveled by the different brands of golf balls using ANOVA.
+
+<center>
+<div style="width:25%">
+| $i$ | $\bar{x}_{i.}$ | $s_i^2$ | $n_i$ |
+|:---:|:--------------:|:-------:|:-----:|
+| 1   | 251.18         | 33.487  | 5     |
+| 2   | 261.98         | 18.197  | 5     |
+| 3   | 269.66         | 27.253  | 5     |
+</div>
+</center>
+
+1. Total sample size $n=\sum_{i=1}^an_i=5+5+5=15$
+2. $a=3$ groups
+3. The treatment degrees of freedom is $a-1=2$. The error degrees of freedom is $n-a=15-3=12$
+4. The grand mean is
+   $$\bar{x}_{..}=\frac1n\sum_{i=1}^an_i\bar{x}_{i.}=(5\times251.18+5\times261.98+5\times269.66)/15=260.94$$
+5. The treatment sum of squares is
+   $$SST=\sum_{i=1}^an_i(\bar{x}_{i.}-\bar{x}_{..})^2=5\Big[(251.18-260.94)^2+(261.98-260.94)^2+(269.66-260.94)^2\Big]=861.89$$
+6. The error sum of squares is
+   $$SSE=\sum_{i=1}^a(n_i-1)s_i^2=4\Big[33.487+18.197+27.253\Big]=315.75$$
+7. The quantities can be summarized in an ANOVA table
+   <center>
+   <div style="width:50%">
+   | Source     | $SS$      | $df$ | $MS$     | $F_{obs}$ | $p$-value   |
+   |------------|----------:|-----:|---------:|:---------:|:-----------:|
+   | Treatments |  $861.89$ |  $2$ | $430.94$ | $16.378$  | $0.0003715$ |
+   | Error      |  $315.75$ | $12$ |  $26.31$ |           |             |
+   | Total      | $1177.64$ | $14$ |          |           |             |
+   </div>
+   </center>
+8. The observed test statistic is $F_{obs}=16.37$ with 2 numerator and 12 denominator degrees of freedom
+9. The p-value is $P(F_{a-1,\,n-a}\geq F_{obs})=$ `1-pf(16.37,2,12)` $\approx`r signif(1-pf(16.37,2,12),4)`$
+10. Since the $p\text{-value}<.05$, reject $H_0$ at $\alpha=.01$ and conclude that the mean travel distances for all three brands of golf balls are not the same
+
+
+### Check with `R`
+
+```{r}
+library(tidyverse)
+
+# create data frame
+golf = data.frame(A = c(251.2,245.1,248.0,251.1,260.5),
+                  B = c(263.2,262.9,265.0,254.5,264.3),
+                  C = c(269.7,263.2,277.5,267.4,270.5))
+print(golf)
+
+# convert to long format
+golf.long = golf %>% pivot_longer(1:3,"brand",values_to="distance") %>% arrange(brand)
+print(golf.long,n=Inf)
+
+# make ANOVA table
+aov.golf = aov(distance ~ brand, data=golf.long)
+summary(aov.golf)
+```
+
