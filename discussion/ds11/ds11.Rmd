@@ -1,0 +1,147 @@
+
+---
+title:  "STAT340: Discussion 11: Multiple Testing"
+author: "Keith Levin and Bi Cheng Wu"
+documentclass: article
+classoption: letterpaper
+output:
+  html_document:
+    highlight: tango
+    fig_caption: false
+---
+
+<style>
+table{width:50%!important;margin-left:auto!important;margin-right:auto!important;}
+ol[style*="decimal"]>li{margin-top:40px!important;}
+</style>
+
+```{r setup, include=FALSE}
+# check packages installed
+knitr::opts_chunk$set(echo=T,tidy=F,strip.white=F,fig.align="center",comment=" #",message=F,warning=F)
+options(width=120)
+```
+
+<br/>
+
+[Link to source file](ds11.Rmd)
+
+
+## Exercises
+
+We will explore the problem of multiple testing in 2 exercises. First, we will run a Monte Carlo simulation study to quantitatively demonstrate the problem of multiple testing. Then, we will apply our knowledge to a real data set.
+
+
+### 1) Simulation
+
+For this exercise, we will **randomly generate data** that's completely independent, and show that with enough comparisons, we can easily **produce falsely significant results**. We will also show how Bonferroni's correction can mitigate these problems.
+
+#### Generating data
+
+Let `nvar` represent the **number of predictor variables** to be generated. To begin, let `nvar=20` (which corresponds to the number of variables you would expect to need to generate on average to produce 1 falsely significant predictor at the standard α=0.05 level (note this is [geometric](https://karlrohe.github.io/340-Spring21/text/chapter_01_random_variables/random_variables.html))).
+
+Also let `nobs` be the **number of observations** we take (i.e. number of rows in our data frame). Let's begin with `nobs=1000`.
+
+```{r}
+nvar = 20
+nobs = 1000
+```
+
+Next, we randomly generate a data frame with `nobs` rows and `nvar+1` columns (1 observed variable + `nvar` predictor variables). The distribution doesn't matter, let's just start by using the standard normal distribution.
+
+The easiest way to do this is to generate a vector with `nobs*(nvar+1)` random numbers, then reshape to a matrix with the correct dimensions, then finally convert to a data frame object (note matrix and data frame are two different types of objects in R, so this last step is necessary or else the R functions we are used to using (which are written for data frames) will not work).
+
+```{r}
+# UNCOMMENT LINES BELOW AND RUN
+
+# df = rnorm(nobs*(nvar+1)) %>%       # generate random numbesr
+#   matrix(ncol = nvar+1) %>%         # reshape to matrix with nvar+1 columns
+#   as.data.frame %>%                 # convert to data frame
+#   setNames(c("Y",paste0("X",1:20))) # change column names
+# 
+# str(df)
+# head(df,4)
+```
+
+#### Running regression
+
+Remember, **multiple testing correction methods are just methods for adjusting p-values** to take into account how many tests we are running, so it can apply to any statistical method that produces a p-value; it is NOT limited to regression. However, for this example, we will use regression to demonstrate the problem.
+
+Run a basic multiple linear regression (no interactions or powers) of `Y` on all variables `X1`, `X2`, ..., `X20` in the dataset (recall you the expression `Y ~ .` will do this automagically (don't forget to set `data=df`)), and show the `summary()` output.
+
+```{r}
+# run regression here
+
+```
+
+The numbers in your dataset are all randomly and independently generated, but due to the number of tests you are running, on average you would find 1 statistically significant (p-value < 0.05) variable in this summary output (**if you didn't get a significant result, try running the data generation again**).
+
+#### Monte-Carlo analysis
+
+Recall that a p-value represents the probability of **false positive** if there is **no real effect**. Thus, letting α=0.05 means we expect on average, 5\% of our experiments to produce a false positive.
+
+Write a Monte-Carlo function that, for each iteration, generates a new data frame using the method above, performs a multiple linear regression, and checks to see if the results report any falsely significant variables. (**Hint:** you can use `coef(summary( ... ))[,4]` to extract the computed p-values from your `lm` model object).
+
+```{r}
+# write Monte-Carlo function here.
+# at this point of the course, you should be
+# able to write this with minimal guidance.
+
+
+```
+
+Run the function `N=1000` times. What proportion of these 'experiments' produced some kind of falsely significant variable?
+
+ > _**RESPONSE TEXT HERE**_
+
+#### Bonferroni correction
+
+Now, apply a Bonferroni correction. Note **there are two equivalent method** of doing this; you can **either**
+
+ - use α=0.05/20=0.0025 instead of the uncorrected α=0.05,
+ - OR multiply the p-value for each test by 20 and compare with the uncorrected α=0.05.
+
+Modify your previous function (ideally by adding an additional TRUE/FALSE argument) so that each iteration, a Bonferroni correction is made before checking if any variables are significant. Run this new function `N=1000` times.
+
+What proportion of these Bonferroni-corrected experiments produced a falsely significant variable? Is this consistent with what you expect? (**Hint:** remember you expect on average α=0.05 experiments to produce false positives.)
+
+ > _**RESPONSE TEXT HERE**_
+
+#### BONUS section
+
+If you wish, rerun the above results (i.e. proportion of uncorrected and Bonferroni-corrected experiments with a false positive variable in the results) for different values of `nvar` and plot the two curves, along with a flat line at 0.05. What do you observe?
+
+<br/>
+
+
+### 2) Real data
+
+For the real data analysis, we will use the `airquality` dataset (already included in R), which contains air quality measurements in New York, from May to September (5 months in total) in 1973 (see `?airquality` for more info).
+
+Use the function `pairwise.t.test` with `x=Ozone` and `g=Month` to **run several pairwise t-tests** comparing each month to every other month (a total of 5\*4/2=10 comparisons). **Run this twice** first with the argument `p.adjust.method="none"` for no adjustment and then with `p.adjust.method="bonferroni"` and compare the results.
+
+```{r}
+# UNCOMMENT LINE BELOW TO RUN
+
+# airquality %$% pairwise.t.test(Ozone, Month, p.adj=......)
+
+
+# note that Ozone and Month are columns in airquality, so
+# you have to expose the columns for pairwise.t.test to use.
+# an easy way of doing this is to use %$% exposition pipe from magrittr,
+# (see https://magrittr.tidyverse.org/reference/exposition.html).
+# this works in a similar way to %>% except instead of piping an object,
+# it exposes the columns of a data frame to be used directly in the next line.
+
+# also note most arguments can be shortened, so
+# "p.adjust.method" can be shortened to just "p.adj".
+# this is possible since in R arguments are often partially matched, which means
+# you only need to specify enough of it to disambiguate from other options
+```
+
+Which months are significantly different in Ozone content according to Bonferroni-corrected p-values? Which months were significant without correction but found to be NOT significant after Bonferroni correction?
+
+ > _**RESPONSE TEXT HERE**_
+
+<br/>
+
+
