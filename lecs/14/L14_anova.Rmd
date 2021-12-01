@@ -7,9 +7,13 @@ knit: (function(inputFile,encoding){rmarkdown::render(
   inputFile,encoding=encoding,output_file=file.path(dirname(inputFile),'index.html'))})
 ---
 
+<style>
+div.main-container{padding-bottom:500px}
+</style>
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
-                      cache = TRUE, autodep = TRUE, cache.comments = FALSE)
+knitr::opts_chunk$set(echo=T,message=F,warning=F,cache=T,
+                      autodep=T,cache.comments=F,fig.align="center")
 ```
 
 <small>Adapted from [here](https://www.mathstat.dal.ca/~stat2080/Fall14/Lecturenotes/).</small>
@@ -204,7 +208,7 @@ Here we'll compare the mean distance traveled by the different brands of golf ba
    </center>
 8. The observed test statistic is $F_{obs}=16.37$ with 2 numerator and 12 denominator degrees of freedom
 9. The p-value is $P(F_{a-1,\,n-a}\geq F_{obs})=$ `1-pf(16.37,2,12)` $\approx`r signif(1-pf(16.37,2,12),4)`$
-10. Since the $p\text{-value}<.05$, reject $H_0$ at $\alpha=.01$ and conclude that the mean travel distances for all three brands of golf balls are not the same
+10. Since the $p\text{-value}<.05$, reject $H_0$ at $\alpha=0.05$ and conclude that the mean travel distances for all three brands of golf balls are not the same
 
 
 ### Check with `R`
@@ -226,4 +230,162 @@ print(golf.long,n=Inf)
 aov.golf = aov(distance ~ brand, data=golf.long)
 summary(aov.golf)
 ```
+
+Check if assumptions are violated:
+
+```{r,fig.width=9}
+par(mfrow=c(1,2))
+plot(aov.golf,which=1:2,ask=F)
+```
+
+
+### Post-hoc analysis
+
+##### ***Tukey HSD***
+
+Best for *all pairwise comparisons*. Easy to apply by using `TukeyHSD()` function on result of `aov()` model.
+
+```{r,fig.width=5}
+TukeyHSD(aov.golf, conf.level=.95)
+
+plot(TukeyHSD(aov.golf, conf.level=.95))
+```
+
+##### ***Bonferroni***
+
+Best for making a *smaller set of planned comparisons*. For example, suppose Brand A is a control, and Brand B and Brand C are new prototype ball designs, and we are only interested in comparing A with B and A with C (this isn't the best example since there's only 3 groups so there aren't many possible combinations; in general you only want to test a small fraction of the possible tests with Bonferroni correction).
+
+Probably the easiest way is to run `pairwise.t.test()` with `p.adjust.method="none"` and just manually compare the $p$-values to $\alpha/m$ (where $m$ is the *number of tests you planned to run*).
+
+```{r}
+pairwise.t.test(golf.long$distance, golf.long$brand, p.adjust.method="none")
+```
+
+<br/>
+
+# Kruskal-Wallis test <small>(nonparametric alternative)</small>
+
+The assumptions of the usual one way ANOVA are:
+
+$$
+X_{ij} = \mu_i + e_{ij}
+$$
+
+where $e_{ij}$ are i.i.d. $N(0,\sigma^2)$, $\;i=1,2,\ldots,a$, $\;j=1,2,\ldots,n_i$.
+
+If there is *strong evidence of non-normality in the residuals*, then one way ANOVA may not give a valid $p$-value. In such cases, the Kruskal-Wallis test is useful. This is the analogue of the Wilcoxon test for more than two populations.
+
+The process is rather complicated, and you will **NOT** be expected to remember this, but in case you are curious, here is the equation:
+
+$$
+H=(n-1)\frac{\sum_{i=1}^a n_i(\bar{r}_{i\cdot}-\bar{r})^2}{\sum_{i=1}^a\sum_{j=1}^{n_i}(r_{ij}-\bar{r})^2}
+$$
+
+Where $r_{ij}$ is the rank of $x_{ij}$ in entire sample (across all groups), $\bar{r}_{i.}$ is the mean rank of all observations in group $i$, and $\bar{r}$ is the mean of all $r_{ij}$. The result of this under the null distribution has a $\chi^2$ distribution with $a-1$ degrees of freedom.
+
+In `R`, this is done with:
+
+```{r}
+kruskal.test(distance~brand, data=golf.long)
+```
+
+Similar to other nonparametric methods, the lack of normality assumption in the Kruskal-Wallis test means it's more widely applicable than ANOVA, but at the cost of a bit of power. This is also a common theme in statistics. When you can make assumptions about the distributions of data, you have more information about it, and can therefore detect smaller effect sizes, giving you more power. This is why parametric methods like ANOVA are so popular. However, when those assumptions are found to be violated, you settle for a nonparametric method. Even though it gives slightly less power, it's the best you have.
+
+<br/>
+
+# Two-way ANOVA
+
+### Intro
+
+Example: Tests were conducted to assess the effects of two factors, engine type, and propellant type, on propellant burn rate in fired missiles. Three engine types and four propellant types were tested.
+
+Twenty-four missiles were selected from a large production batch. The missiles were randomly split into three groups of size eight. The first group of eight had engine type 1 installed, the second group had engine type 2, and the third group received engine type 3.
+
+Each group of eight was randomly divided into four groups of two. The first such group was assigned propellant type 1, the second group was assigned propellant type 2, and so on. Data on burn rate were collected, as follows:
+
+$$
+\begin{array}{r|cccc}
+\text{Engine}&\hfill\text{Prop.}&\text{type}\hfill&&\\
+\text{type}&1&2&3&4\\
+\hline
+1&34.0&30.1&29.8&29.0\\
+&32.7&32.8&26.7&28.9\\
+\hline
+2&32.0&30.2&28.7&27.6\\
+&33.2&29.8&28.1&27.8\\
+\hline
+3&28.4&27.3&29.7&28.8\\
+&29.3&28.9&27.3&29.1\\
+\end{array}
+$$
+
+We want to determine whether either factor, engine type (factor A) or propellant type (factor B), has a significant effect on burn rate.
+
+### Model
+
+Let $Y_{ijk}$ denote the $k$-th observation at the $i$-th level of factor A and the $j$-th level of factor B. The two factor model (with interaction) is.
+
+$$
+Y_{ijk}=\mu+\alpha_i+\beta_j+\gamma_{ij}+\epsilon_{ijk}
+$$
+
+where
+
+ - $\;i=1,2,\ldots,I$, $\;j=1,2,\ldots,J$, $\;k=1,2,\ldots,K$
+ - $e_{ij}$ are i.i.d. $N(0,\sigma^2)$
+ - $\mu$ is the overall mean
+ - $\sum_{i=1}^I\alpha_i=0$
+ - $\sum_{j=1}^J\beta_j=0$
+ - $\sum_{i=1}^I\gamma_{ij}=0$ for each $\;j=1,2,\ldots,J$
+ - $\sum_{j=1}^J\gamma_{ij}=0$ for each $\;i=1,2,\ldots,I$
+
+Here we have included an interaction term, which is fairly common in this method. The interaction term allows one variable to affect the influence of the other variable. Without the interaction, whether A is 1, 2, or 3 would not be allowed to affect in any way the ability of variable B to predict the outcome. In other words, their abilities to predict the outcome are totally 
+
+The mean of $Y_{ijk}$ is
+
+$$
+E[Y_{ijk}]=\mu+\alpha_i+\beta_j+\gamma_{ij}
+$$
+
+Note the sum constraints ensure that there is a unique correspondence between the parameters (the $\alpha$'s, $\beta$'s, $\gamma$'s and $\mu$) and the means of the random variables (the $\mu_{ijk}$'s).
+
+### Procedure
+
+In the two-way ANOVA model, we compute a sum square for each factor, as well as the interaction. The formulae are slightly more complicated than one-way, but the intuition is basically the same. We want to compare the variation within to the variation between.
+
+The sum square formulae for main effect A, main effect B, interaction effect AB, error, and total:
+
+$$
+\begin{aligned}
+SSA&=JK\sum_i(\bar{y}_{i..}-\bar{y}_{...})^2\\
+SSB&=IK\sum_i(\bar{y}_{.j.}-\bar{y}_{...})^2\\
+SSAB&=K\sum_{i,j}(\bar{y}_{ij.}-\bar{y}_{i..}-\bar{y}_{.j.}+\bar{y}_{...})^2\\
+SSE&=\sum_{i,j,k}(y_{ijk}-\bar{y}_{ij.})^2\\
+SS_{Total}&=\sum_{i,j,k}(y_{ijk}-\bar{y}_{...})^2\\
+\end{aligned}
+$$
+
+where the dot has the usual meaning of taking the mean over that index. These formulae are significantly more complex, so ***we are not expecting you to be able to do them manually*** but you should understand their definition and be able to recognize them.
+
+Let's produce the ANOVA table with the help of `R`
+
+```{r}
+missiles.long = read.csv(text="
+34.0,30.1,29.8,29.0
+32.7,32.8,26.7,28.9
+32.0,30.2,28.7,27.6
+33.2,29.8,28.1,27.8
+28.4,27.3,29.7,28.8
+29.3,28.9,27.3,29.1", header=F) %>% 
+   pivot_longer(1:4,names_to=NULL,values_to="rate") %>% 
+   mutate(engine     = as.character(rep(1:3,each=8)),
+          propellant = as.character(rep(1:4,length.out=24)))
+
+head(missiles.long,12)
+
+aov.missiles = aov(rate~engine*propellant, data=missiles.long)
+summary(aov.missiles)
+```
+
+
 
