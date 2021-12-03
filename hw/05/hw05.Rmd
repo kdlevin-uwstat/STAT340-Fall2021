@@ -1,0 +1,134 @@
+---
+title: "HW5: Bootstrap problem"
+author: "Keith Levin and Bi Cheng Wu"
+date: "11/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+[Link to source](hw5_bootstrap_problem.Rmd)
+
+## Problem 1: bootstrapping the mule kicks data
+
+In this problem, you'll get a bit of practice using the bootstrap, which we discussed before the Thanksgiving break.
+
+Let's revisit the mule kicks data, which you saw in HW3.
+Recall that the data is available for download (here)[https://kdlevin-uwstat.github.io/STAT340-Fall2021/hw/03/mule_kicks.csv],
+and that this is a simplification of a famous data set,
+consisting of the number of soldiers killed by being kicked by mules or horses each year in a number of different companies in the Prussian army near the end of the 19th century.
+
+The following block of code downloads the data and stores it in the variable `mule_kicks`.
+```{r}
+download.file('https://kdlevin-uwstat.github.io/STAT340-Fall2021/hw/03/mule_kicks.csv', destfile='mule_kicks.csv');
+mule_kicks <- read.csv('mule_kicks.csv', header=TRUE);
+
+head(mule_kicks);
+```
+
+The data frame `mule_kicks` has a single column, called `deaths`.
+Each entry is the number of soldiers killed in one corps of the Prussian army in one year.
+There are 14 corps in the data set, studied over 20 years, for a total of 280 death counts.
+The different corps have been dropped from the data set for the purposes of this problem, so the data set is just a collection of 280 different numbers, each counting how many people died of mule kicks in one corp in one year (i.e., the counts are something like "deaths per corp per year").
+
+__Part a:__ As in HW3, let's assume that mule kicks data is generated according to a Poisson distribution with parameter $\lambda$.
+That is, assume that the data frame `mule_kicks` contains 280 independent Poisson random variables with shared rate parameter $\lambda$.
+Use the bootstrap to construct a 95% confidence interval for $\lambda$, using $B=200$ bootstrap replicates.
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+__Part b:__ In the next few parts of this problem, we're going to explore the effect of the number of bootstrap replicates $B$ on our confidence interval.
+Toward that end, write a function `mule_kick_bootstrap` that takes a single argument `B`, specifying the number of bootstrap replicate, and returns a 95% confidence interval for the parameter $\lambda$ in the form of a vector, something like `c( lower, upper)`.
+That is, this function should essentially repeat the work you did in part a, except it should change the number of bootstrap replicates accordingly.
+You may assume that the argument `B` is a positive integer.
+
+```{r}
+mule_kick_bootstrap <- function( B ) {
+  
+  # TODO: code goes here.
+  
+  # TODO: you should end up with 2-vector, something like
+  # CI <- c( lower, upper)
+  # return CI
+}
+```
+
+__Part c:__ Run your function for $B=10,50$ and $200$ and compare the resulting confidence intervals. Do you notice differences?
+Of course, the actual results will be random, but what do you *expect* might be the consequences of choosing $B$ too small?
+Of course, it stands to reason that we want to choose $B$ as big as possible (because more bootstrap samples means a better estimate of the variance), but what might be the problem(s) with choosing $B$ really large (e.g., several thousand)?
+As usual, there are no strictly right or wrong answers, here.
+Just write enough to show that you've thought about this a bit!
+__Hint:__ each bootstrap sample takes time!
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+
+***
+
+TODO: discussion/explanation goes here.
+
+***
+
+__Part d:__ Now, presumably choosing different numbers of bootstrap samples $B$ should have some effect on the coverage rate of our CI, but we have no way to check that with the mule kicks data, because we don't know the *true* model that generated the data.
+Instead, let's do the next best thing and run a simulation.
+
+Write a function called `poisboot_run_trial` that takes three arguments (listed below) and returns a Boolean.
+
+-`n` : the number of samples to draw (assumed to be a positive integer)
+-`lambda` :  Poisson rate $\lambda$ (assumed to be a positive numeric)
+-`B` : the number of bootstrap samples (assumed to be a positive integer)
+
+Your function should
+
+1. Generate `n` independent draws from a Poisson with parameter `lambda`
+2. Use the bootstrap with `B` bootstrap replicates to construct a 95% confidence interval for `lambda`.
+3. Return a Boolean encoding whether or not the confidence interval contains the true parameter `lambda` (i.e., returns `TRUE` if `lambda` is bigger than the lower-limit of the CI and smaller than the upper-limit, and returns `FALSE` otherwise)
+
+```{r}
+
+poisboot_run_trial <- function( n, lambda, B ) {
+  
+  # TODO: code goes here.
+  
+  # Reminder: your code should return a Boolean!
+}
+
+```
+
+__Part e:__ Use the function you wrote in Part d to estimate the coverage rate of the bootstrap-based confidence interval for `B` equal to $10,50$ and $200$ bootstrap replicates with `n=30` and `lambda=5`.
+For each of these three values of `B`, you should run `poisboot_run_trial` 1000 times (i.e., 1000 Monte Carlo iterates) and record what fraction of the time the CI contained the true value of `lambda`.
+What do you observe?
+__Hint:__ you might find it helpful to write a function `estimate_coverage` that takes a positive integer argument `NMC` and runs `poisboot_run_trial` `NMC` times, keeping track of how often the CI contains the true parameter.
+By now, this kind of experiment should look very familiar from previous lectures, homeworks and exams.
+
+```{r}
+
+# TODO: code goes here.
+
+```
+
+***
+
+TODO: observation/explanation here.
+
+***
+
+## Problem 2 Multiple comparison
+
+In section 13.7 of ISLR, do problems 1 and 8.
+
+***
+
+TODO: work goes here
+
+***

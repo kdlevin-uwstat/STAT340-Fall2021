@@ -8,3 +8,5 @@ permalink: /homework/
  - [Homework 2](hw/02/hw02.html) (due Wednesday, Oct 13, 11:59pm)
  - [Homework 3](hw/03/hw03.html) (due Wednesday, Oct 27, 11:59pm)
  - [Homework 4](hw/04/hw04.html) (due Wednesday, Nov 10, 11:59pm)
+ - [Homework 5](hw/05/hw05.html) (due Wednesday, Nov 10, 11:59pm)
+ 
