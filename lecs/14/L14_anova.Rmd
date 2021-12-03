@@ -8,7 +8,7 @@ knit: (function(inputFile,encoding){rmarkdown::render(
 ---
 
 <style>
-div.main-container{padding-bottom:500px}
+div.main-container{padding-bottom:300px}
 </style>
 
 ```{r setup, include=FALSE}
