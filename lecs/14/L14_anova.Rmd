@@ -263,6 +263,11 @@ pairwise.t.test(golf.long$distance, golf.long$brand, p.adjust.method="none")
 
 <br/>
 
+##### **[Examples of different $F$ values](https://www.mathstat.dal.ca/~stat2080/mdowd/Lecturenotes/ANOVAexample.pdf)**
+
+<br/>
+
+
 # Kruskal-Wallis test <small>(nonparametric alternative)</small>
 
 The assumptions of the usual one way ANOVA are:
@@ -353,21 +358,21 @@ Note the sum constraints ensure that there is a unique correspondence between th
 
 In the two-way ANOVA model, we compute a sum square for each factor, as well as the interaction. The formulae are slightly more complicated than one-way, but the intuition is basically the same. We want to compare the variation within to the variation between.
 
-The sum square formulae for main effect A, main effect B, interaction effect AB, error, and total:
+Again, we are only considering the **balanced** case. Below are the sum square formulae for main effect A, main effect B, interaction effect AB, error, and total:
 
 $$
 \begin{aligned}
-SSA&=JK\sum_i(\bar{y}_{i..}-\bar{y}_{...})^2\\
-SSB&=IK\sum_i(\bar{y}_{.j.}-\bar{y}_{...})^2\\
-SSAB&=K\sum_{i,j}(\bar{y}_{ij.}-\bar{y}_{i..}-\bar{y}_{.j.}+\bar{y}_{...})^2\\
-SSE&=\sum_{i,j,k}(y_{ijk}-\bar{y}_{ij.})^2\\
-SS_{Total}&=\sum_{i,j,k}(y_{ijk}-\bar{y}_{...})^2\\
+SSA&=JK\sum_i(\bar{y}_{i..}-\bar{y}_{...})^2&&\text{df: }I-1\\
+SSB&=IK\sum_i(\bar{y}_{.j.}-\bar{y}_{...})^2&&\text{df: }J-1\\
+SSAB&=K\sum_{i,j}(\bar{y}_{ij.}-\bar{y}_{i..}-\bar{y}_{.j.}+\bar{y}_{...})^2&&\text{df: }(I-1)(J-1)\\
+SSE&=\sum_{i,j,k}(y_{ijk}-\bar{y}_{ij.})^2&&\text{df: }IJ(K-1)\\
+SS_{Total}&=\sum_{i,j,k}(y_{ijk}-\bar{y}_{...})^2&&\text{df: }IJK-1\\
 \end{aligned}
 $$
 
 where the dot has the usual meaning of taking the mean over that index. These formulae are significantly more complex, so ***we are not expecting you to be able to do them manually*** but you should understand their definition and be able to recognize them.
 
-Let's produce the ANOVA table with the help of `R`
+Each component SS can be normalized by dividing by its degrees of freedom, and then each effect SS can produce its own $F$-statistic by dividing by the SSE. To save time, we are not going to show all this manually; we're just going to make the ANOVA table with `R`.
 
 ```{r}
 missiles.long = read.csv(text="
@@ -386,6 +391,52 @@ head(missiles.long,12)
 aov.missiles = aov(rate~engine*propellant, data=missiles.long)
 summary(aov.missiles)
 ```
+
+Observations:
+
+ - The $p$-value for the test for no interaction between propellant type and engine type is $0.05117$, so we didn't find a significant interaction between the two effects. In other words, their effects appear to act independently of each other.
+ - **Note:**  It only makes sense to test for the main effects of factors A and B if there is no interaction between the factors (since if interaction is significant, then clearly some combination of A and B is important for predicting the outcome).
+ - Here, the $p$-values for A and B main effects are $0.017$ and $0.0010$, so both effects are significant. We conclude engine and propellant types both significantly affect missile burn rate.
+
+Check residuals just in case.
+
+```{r,fig.width=5,fig.height=3}
+par(mfrow=c(1,2),cex=.6)
+plot(aov.missiles,which=1:2,ask=F)
+```
+
+<center><img src="https://static.wikia.nocookie.net/otaku_encyclopedia/images/0/0d/This_Isn%27t_Even_My_Final_Form_Image.jpg" style="width:50%;margin-top:150px;margin-bottom:50px;"/></center>
+
+
+# N-way (factorial) ANOVA
+
+This can be easily extended to $N$-factors. Here we show one final example (only using `R`) of a 3-way factorial ANOVA analysis.
+
+The [data](https://raw.githubusercontent.com/shifteight/R-lang/master/TRB/data/splityield.txt) represents crop yields in a number of plots in a research farm. Yields are measured for different irrigation levels (2 levels: irrigated or not), sowing density (3 levels: low, medium, high), and fertilizer application (3 levels: low, medium, high).
+
+Below is the data:
+
+```{r}
+crops = read_table("https://raw.githubusercontent.com/shifteight/R-lang/master/TRB/data/splityield.txt")
+str(crops)
+head(crops,18)
+```
+
+Running 3-way ANOVA with all interaction effects:
+
+```{r}
+aov.crops = aov(yield~irrigation*density*fertilizer, data=crops)
+summary(aov.crops)
+```
+
+Check residuals just in case.
+
+```{r,fig.width=5,fig.height=3}
+par(mfrow=c(1,2),cex=.6)
+plot(aov.crops,which=1:2,ask=F)
+```
+
+
 
 
 
