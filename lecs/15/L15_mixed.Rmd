@@ -1,0 +1,22 @@
+
+---
+title: "STAT340 Lecture 15: Random/mixed effects model"
+author: "Keith Levin & Bi Cheng Wu"
+output: html_document
+knit: (function(inputFile,encoding){rmarkdown::render(
+  inputFile,encoding=encoding,output_file=file.path(dirname(inputFile),'index.html'))})
+---
+
+<style>
+div.main-container{padding-bottom:500px}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=T,message=F,warning=F,cache=T,
+                      autodep=T,cache.comments=F,fig.align="center")
+```
+
+ - [Random v. fixed](https://www.zoology.ubc.ca/~bio501/R/lecturepdf/05.Models%20with%20random%20effects.pdf)
+ - [ANOVA table](https://www.stat.purdue.edu/~minzhang/514-Spring08/lecture%20notes/lec13-RandomEffects.pdf)
+ - [lme4 cheat sheet](http://eshinjolly.com/pymer4/rfx_cheatsheet.html)
+ - [beginner guide to lmer](https://rstudio-pubs-static.s3.amazonaws.com/63556_e35cc7e2dfb54a5bb551f3fa4b3ec4ae.html)
