@@ -16,7 +16,105 @@ knitr::opts_chunk$set(echo=T,message=F,warning=F,cache=T,
                       autodep=T,cache.comments=F,fig.align="center")
 ```
 
+## Main notes
+
  - [Random v. fixed](https://www.zoology.ubc.ca/~bio501/R/lecturepdf/05.Models%20with%20random%20effects.pdf)
  - [ANOVA table](https://www.stat.purdue.edu/~minzhang/514-Spring08/lecture%20notes/lec13-RandomEffects.pdf)
  - [lme4 cheat sheet](http://eshinjolly.com/pymer4/rfx_cheatsheet.html)
  - [beginner guide to lmer](https://rstudio-pubs-static.s3.amazonaws.com/63556_e35cc7e2dfb54a5bb551f3fa4b3ec4ae.html)
+
+### Simplest example: 1 random effect
+
+```{r}
+library(tidyverse)
+
+# table copied from loom example in second link
+looms = read.table(text="1 98 97 99 96
+2 91 90 93 92
+3 96 95 97 95
+4 95 96 99 98") %>% 
+  column_to_rownames("V1") %>% 
+  t %>% 
+  as.data.frame %>% 
+  remove_rownames %>% 
+  pivot_longer(1:4,names_to="loom",values_to="strength") %>% 
+  arrange(loom)
+
+print(looms,n=Inf)
+```
+
+```{r}
+library(lme4)
+
+lmer.looms = lmer(strength ~ (1 | loom), data=looms)
+
+summary(lmer.looms)
+fixef(lmer.looms)
+ranef(lmer.looms)
+
+confint(profile(lmer.looms))
+```
+
+```{r,fig.width=6.5,fig.height=3.5}
+par(mfrow=c(1,2),cex=.6)
+plot(fitted(lmer.looms),resid(lmer.looms),main="Resid v. fitted")
+qqnorm(resid(lmer.looms))
+```
+
+```{r}
+# getting equivalent ANOVA table by running anova() of fixed-effect version
+anova(aov(strength ~ loom, data=looms))
+```
+
+
+### Example 2: mixed effect model
+
+<small>This example adapted from [here](https://bodowinter.com/tutorial/bw_LME_tutorial2.pdf).</small>
+
+[This dataset](https://pastebin.com/raw/SC6Likfa) was collected from an experiment done on how someone's pitch (i.e. frequency of sound) changed depending on politeness and scenario ^[https://www.researchgate.net/publication/256935591_The_phonetic_profile_of_Korean_formal_and_informal_speech_registers]. Subjects were asked to imagine a certain scenario and then asked to read a line in either a formal or an informal register. From the original study:
+
+>  In the design that we used, there’s an additional source of non-independence that needs to be accounted for: We had different items. One item, for example, was an “asking for a favor” scenario. Here, subjects had to imagine asking a professor for a favor (polite condition), or asking a peer for a favor (informal condition). Another item was an “excusing for coming too late” scenario, which was similarly divided between polite and informal. In total, there were 7 such different items.
+
+Below are two plots showing the mean pitch for different subjects and also for different items (scenarios) that were provided.
+
+<center><img src="subjects.png" style="width:70%"/></center>
+<center><img src="items.png" style="width:70%;margin-top:30px;margin-bottom:30px;"/></center>
+
+In the original paper, the researcher decided to fit **politeness and sex as fixed effects** (because they represent two specific levels of interest that could bet reated as having fixed, constant values over the entire population), and to fit the **subjects and items as random effects** (because these represent a sample of non-specific levels whose specific values are NOT interesting, and which are drawn from a group of many other possible subjects/items). They arrived at a model equation like this:
+
+> pitch ~ politeness + sex + (1 | subject) + (1 | item) + e
+
+This is called a mixed effects model due to the presence of **both random and fixed effects**. The flexibility of these mixed effect model structures allows you to more accurately represent the experimental design and thus the variance structure of the data.
+
+Boxplots showing the breakdown of mean pitch by politeness and sex.
+
+<center><img src="boxplot.png" style="width:50%"/></center>
+
+```{r}
+politeness = read_csv("https://pastebin.com/raw/SC6Likfa")
+
+lmer.polite = lmer(frequency~attitude+gender+(1|subject)+(1|scenario), data=politeness)
+summary(lmer.polite)
+
+ranef(lmer.polite)
+fixef(lmer.polite)
+```
+
+Unfortunately, computing $p$-values becomes slightly more complicated, and there's different approaches. One of the easier approaches is to use a likelihood ratio test. We **fit two versions of the model, one with the term we want to test, and one without**, and then use the `anova()` function to compare the two. For `lmer()` fits, make sure to set **REML=FALSE** in the fit (two fits with REML=TRUE cannot be compared against each other).
+
+For this example, we wish to find if politeness affects pitch, so we can compare the following models against each other:
+
+```{r}
+lmer.polite.reduced = lmer(frequency~gender+(1|subject)+(1|scenario), data=politeness, REML=FALSE)
+lmer.polite.full    = lmer(frequency~attitude+gender+(1|subject)+(1|scenario), data=politeness, REML=FALSE)
+
+anova(lmer.polite.reduced,lmer.polite.full)
+```
+
+This could be interpreted in the following way:
+
+> “… politeness affected pitch (χ2 (1)=11.62, p=0.00065), lowering it by about 19.7 Hz ± 5.6 (standard errors) …”
+
+
+
+
