@@ -8,7 +8,7 @@ knit: (function(inputFile,encoding){rmarkdown::render(
 ---
 
 <style>
-div.main-container{padding-bottom:500px}
+div.footnotes{margin-top:400px}
 </style>
 
 ```{r setup, include=FALSE}
@@ -98,6 +98,8 @@ summary(lmer.polite)
 
 ranef(lmer.polite)
 fixef(lmer.polite)
+
+confint(profile(lmer.polite))
 ```
 
 Unfortunately, computing $p$-values becomes slightly more complicated, and there's different approaches. One of the easier approaches is to use a likelihood ratio test. We **fit two versions of the model, one with the term we want to test, and one without**, and then use the `anova()` function to compare the two. For `lmer()` fits, make sure to set **REML=FALSE** in the fit (two fits with REML=TRUE cannot be compared against each other).
@@ -113,8 +115,19 @@ anova(lmer.polite.reduced,lmer.polite.full)
 
 This could be interpreted in the following way:
 
-> “… politeness affected pitch (χ2 (1)=11.62, p=0.00065), lowering it by about 19.7 Hz ± 5.6 (standard errors) …”
+> "... politeness significantly affected pitch ($\chi^2_1=11.62$, $p=0.00065$), lowering it by about 19.7 Hz $\pm$ 5.6 (standard errors) ..."
+
+```{r,fig.width=6.5,fig.height=3.5}
+par(mfrow=c(1,2),cex=.6)
+plot(fitted(lmer.polite),resid(lmer.polite),main="Resid v. fitted")
+qqnorm(resid(lmer.polite))
+```
 
 
+### Some other examples to briefly scan over
+
+ - [Example](https://stats.idre.ucla.edu/r/dae/mixed-effects-logistic-regression) using `glmer()` to fit a mixed effects logistic regression model to predict
+ - [Nature paper](https://www.nature.com/articles/nmeth.3137.epdf) discussion flexibility of mixed effects models
+ - [Example](https://lme4.r-forge.r-project.org/slides/2009-07-07-Rennes/3LongitudinalD.pdf) of using `lmer()` to analyze the famous sleep deprivation dataset, which has a longitudinal component
 
 
