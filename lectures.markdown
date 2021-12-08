@@ -25,4 +25,5 @@ Source code for lectures available [on github](https://github.com/kdlevin-uwstat
  - [Resampling and the Bootstrap](../lecs/12) &nbsp; (Nov 12-15)
  - [Multiple comparison](../lecs/13) &nbsp; (Nov 22-24)
  - [ANOVA](../lecs/14) &nbsp; (Nov 29-Dec 3)
+ - [Random effects](../lecs/15) &nbsp; (Dec 6-?)
 
