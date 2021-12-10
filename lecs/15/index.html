@@ -493,13 +493,14 @@ F=\frac{U / 1}{V /(n-1)}=\frac{n\left(\bar{Y}-\mu_{0}\right)^{2}}{S^{2}} \sim \m
 </div>
 </div>
 <div id="wilks-theorem" class="section level3">
-<h3>Wilk’s theorem</h3>
-<p><a href="https://en.wikipedia.org/wiki/Samuel_S._Wilks">Samuel S. Wilks</a> derived (in a 3 page paper) a much more generalized form of this, now known as Wilk’s theorem</p>
+<h3>Wilks’ theorem</h3>
+<p><a href="https://en.wikipedia.org/wiki/Samuel_S._Wilks">Samuel S. Wilks</a> derived (in a 3 page paper) a much more generalized form of this, now known as Wilks’ theorem</p>
 <blockquote>
 <p>Assume that the joint distribution of <span class="math inline">\(Y_{1}, \ldots, Y_{n}\)</span> depends on <span class="math inline">\(p\)</span> unknown parameters and that, under <span class="math inline">\(H_{0}\)</span>, the joint distribution depends on <span class="math inline">\(p_{0}\)</span> unknown parameters. Let <span class="math inline">\(\nu=p-p_{0}\)</span>. Then, under some regularity conditions, when the null hypothesis is true, the distribution of the statistic <span class="math inline">\(-2 \log \{\lambda(\boldsymbol{Y})\}\)</span> converges to a <span class="math inline">\(\chi_{\nu}^{2}\)</span> distribution as the sample size <span class="math inline">\(n \rightarrow \infty\)</span>, i.e., when <span class="math inline">\(H_{0}\)</span> is true and <span class="math inline">\(n\)</span> is large, <span class="math display">\[-2 \log \{\lambda(\boldsymbol{Y})\} \underset{\text { approx. }}{\sim} \chi_{\nu}^{2}\]</span> Thus, for large <span class="math inline">\(n\)</span>, the critical region for a test with approximate significance level <span class="math inline">\(\alpha\)</span> is <span class="math display">\[\mathcal{R}=\left\{\boldsymbol{y}:-2 \log \{\lambda(\boldsymbol{y})\} \geq \chi_{\nu, \alpha}^{2}\right\}\]</span></p>
 </blockquote>
 <p>In other words, the likelihood ratio test of 2 competing hypotheses is approximately distributed according to a chi-square distribution with <span class="math inline">\(\nu\)</span> degrees of freedom, where <span class="math inline">\(\nu\)</span> is the difference in number of parameters between the two models.</p>
 <p>This is why the likelihood ratio test we performed on the politeness term followed a chi-square distribution with 1 degree of freedom: the politeness term adds 1 parameter to be estimated to the model.</p>
+<p><br /></p>
 <div id="example-2-poisson-variable" class="section level5">
 <h5><strong><em>Example 2: Poisson variable</em></strong></h5>
 <p>Suppose that <span class="math inline">\(Y_{i} \sim \operatorname{Poisson}(\lambda)\)</span> and consider testing <span class="math inline">\(H_{0}: \lambda=\lambda_{0}\)</span> against <span class="math inline">\(H_{1}: \lambda \neq \lambda_{0}\)</span>. Now, the likelihood is</p>
@@ -528,6 +529,14 @@ L(\lambda \mid \boldsymbol{y})=\frac{\lambda^{\sum_{i=1}^{n} y_{i}} e^{-n \lambd
 <p><span class="math display">\[
 2 n\left\{\bar{y} \log \left(\frac{\bar{y}}{\lambda_{0}}\right)+\lambda_{0}-\bar{y}\right\} \geq \chi_{1, \alpha}^{2} .
 \]</span></p>
+<p><br /></p>
+</div>
+<div id="example-3-model-selection-using-lrt" class="section level5">
+<h5><strong><em>Example 3: Model selection using LRT</em></strong></h5>
+<ul>
+<li><a href="http://pages.stat.wisc.edu/~ane/st572/notes/lec05.pdf">Example 1</a></li>
+<li><a href="https://api.rpubs.com/tomanderson_34/lrt">Example 2</a></li>
+</ul>
 </div>
 </div>
 </div>

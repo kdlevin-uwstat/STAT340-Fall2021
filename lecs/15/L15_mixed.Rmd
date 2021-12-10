@@ -274,9 +274,9 @@ Of course, this is the usual two-sided $t$-test
 
 <br/>
 
-### Wilk's theorem
+### Wilks' theorem
 
-[Samuel S. Wilks](https://en.wikipedia.org/wiki/Samuel_S._Wilks) derived (in a 3 page paper) a much more generalized form of this, now known as Wilk's theorem
+[Samuel S. Wilks](https://en.wikipedia.org/wiki/Samuel_S._Wilks) derived (in a 3 page paper) a much more generalized form of this, now known as Wilks' theorem
 
 > Assume that the joint distribution of $Y_{1}, \ldots, Y_{n}$ depends on $p$ unknown parameters and that, under $H_{0}$, the joint distribution depends on $p_{0}$ unknown parameters. Let $\nu=p-p_{0}$. Then, under some regularity conditions, when the null hypothesis is true, the distribution of the statistic $-2 \log \{\lambda(\boldsymbol{Y})\}$ converges to a $\chi_{\nu}^{2}$ distribution as the sample size $n \rightarrow \infty$, i.e., when $H_{0}$ is true and $n$ is large,
 > $$-2 \log \{\lambda(\boldsymbol{Y})\} \underset{\text { approx. }}{\sim} \chi_{\nu}^{2}$$
@@ -286,6 +286,8 @@ Of course, this is the usual two-sided $t$-test
 In other words, the likelihood ratio test of 2 competing hypotheses is approximately distributed according to a chi-square distribution with $\nu$ degrees of freedom, where $\nu$ is the difference in number of parameters between the two models.
 
 This is why the likelihood ratio test we performed on the politeness term followed a chi-square distribution with 1 degree of freedom: the politeness term adds 1 parameter to be estimated to the model.
+
+<br/>
 
 ##### ***Example 2: Poisson variable***
 
@@ -326,4 +328,9 @@ $$
 $$
 
 
+<br/>
 
+##### ***Example 3: Model selection using LRT***
+
+ - [Example 1](http://pages.stat.wisc.edu/~ane/st572/notes/lec05.pdf)
+ - [Example 2](https://api.rpubs.com/tomanderson_34/lrt)
