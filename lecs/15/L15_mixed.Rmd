@@ -124,10 +124,170 @@ qqnorm(resid(lmer.polite))
 ```
 
 
-### Some other examples to briefly scan over
+##### ***Some other examples to briefly scan over***
 
  - [Example](https://stats.idre.ucla.edu/r/dae/mixed-effects-logistic-regression) using `glmer()` to fit a mixed effects logistic regression model to predict
  - [Nature paper](https://www.nature.com/articles/nmeth.3137.epdf) discussion flexibility of mixed effects models
  - [Example](https://lme4.r-forge.r-project.org/slides/2009-07-07-Rennes/3LongitudinalD.pdf) of using `lmer()` to analyze the famous sleep deprivation dataset, which has a longitudinal component
+
+<br/>
+
+***
+
+<br/>
+
+### Brief detour: Likelihood Ratio Test
+
+<small>largely adapted from [source](http://www.maths.qmul.ac.uk/~bb/MS_Lectures_23and24.pdf)</small><br/><br/>
+
+The likelihood ratio test is a **very** broad and generalizable method of testing hypotheses that is extremely versatile.
+
+Define null hypothesis $H_{0}: \boldsymbol{\theta} \in \Theta^{\star}$ (meaning the parameter $\theta$ (which is allowed to be a vector) is in the restricted (i.e. nested) set $\Theta^{\star}$) against the alternative hypothesis $H_{1}: \boldsymbol{\theta} \in \Theta \backslash \Theta^{\star}$ (meaning $\theta$ is allowed to be in the more general set $\Theta\backslash \Theta^{\star}$).
+
+Then, define the following likelihood ratio test statistic where $L(\boldsymbol{\theta} \mid \boldsymbol{y})$ represents the likelihood function for $\theta$.
+
+$$
+\lambda(\boldsymbol{y})=\frac{\max _{\boldsymbol{\theta} \in \Theta^{\star}} L(\boldsymbol{\theta} \mid \boldsymbol{y})}{\max _{\boldsymbol{\theta} \in \Theta} L(\boldsymbol{\theta} \mid \boldsymbol{y})}
+$$
+
+We can use this to define a test where we choose some value $a$ such that rejecting a true null hypothesis when $\lambda(\boldsymbol{Y})\leq a$ has probability $\alpha$. In other words, we choose some threshold critical value $a$ that controls the type I error rate at $\alpha$
+
+$$
+P\left(\lambda(\boldsymbol{Y}) \leq a \mid H_{0}\right)=\alpha
+$$
+
+If we let $\hat{\boldsymbol\theta}$ denote the maximum likelihood estimate of $\boldsymbol{\theta}$ and let $\widehat{\boldsymbol{\theta}}_{0}$ denote the value of $\boldsymbol\theta$ which maximizes the likelihood over all values of $\boldsymbol{\theta}$ in $\Theta^{\star}$, then we may write
+
+$$
+\lambda(\boldsymbol{y})=\frac{L(\hat{\boldsymbol{\theta}}_{0} \mid \boldsymbol{y})}{L(\hat{\boldsymbol{\theta}} \mid \boldsymbol{y})}
+$$
+
+The quantity $\widehat{\boldsymbol\theta}_{0}$ is called the restricted maximum likelihood estimate of $\boldsymbol\theta$ under $H_{0} .$
+
+<br/>
+
+##### ***Example 1: Normal distribution hypothesis test***
+
+Suppose that $Y_{i} \stackrel{i.i.d}{\sim}{\mathcal{N}}\left(\mu, \sigma^{2}\right)$ and consider testing $H_{0}: \mu=\mu_{0}$ against $H_{1}: \mu \neq \mu_{0}$. Then the likelihood is
+
+$$
+L\left(\mu, \sigma^{2} \boldsymbol{y}\right)=\left(2 \pi \sigma^{2}\right)^{-\frac{n}{2}} \exp \left\{-\frac{1}{2 \sigma^{2}} \sum_{i=1}^{n}\left(y_{i}-\mu\right)^{2}\right\}
+$$
+
+The maximum likelihood estimate of $\boldsymbol{\theta}=\left(\mu, \sigma^{2}\right)^{\mathrm{T}}$ is $\widehat{\boldsymbol{\theta}}=\left(\widehat{\mu}, \widehat{\sigma^{2}}\right)^{\mathrm{T}}$, where $\widehat{\mu}=\bar{y}$ and $\widehat{\sigma}^{2}=\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2} / n$.
+
+Similarly, the restricted maximum likelihood estimate of $\boldsymbol{\theta}=\left(\mu, \sigma^{2}\right)^{\mathrm{T}}$ under $H_{0}$ is $\widehat{\boldsymbol{\theta}}_{0}=\left(\widehat{\mu}_{0}, \widehat{\sigma^{2}}_{0}\right)^{\mathrm{T}}$, where $\widehat{\mu}_{0}=\mu_{0}$ and $\widehat{\sigma}_{0}^{2}=\sum_{i=1}^{n}\left(y_{i}-\mu_{0}\right)^{2} / n .$
+
+Thus, the generalized likelihood ratio is
+
+$$
+\begin{aligned}
+\lambda(\boldsymbol{y})=\frac{L\left(\mu_{0}, \hat{\sigma}_{0}^{2} \mid \boldsymbol{y}\right)}{L\left(\hat{\mu}, \hat{\sigma}^{2} \mid \boldsymbol{y}\right)} &=\frac{\left(2 \pi \hat{\sigma}_{0}^{2}\right)^{-\frac{n}{2}} \exp \left\{-\frac{1}{2 \hat{\sigma}_{0}^{2}} \sum_{i=1}^{n}\left(y_{i}-\mu_{0}\right)^{2}\right\}}{\left(2 \pi \hat{\sigma}^{2}\right)^{-\frac{n}{2}} \exp \left\{-\frac{1}{2 \hat{\sigma}^{2}} \sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}\right\}} \\
+&=\left(\frac{\hat{\sigma}^{2}}{\hat{\sigma}_{0}^{2}}\right)^{\frac{n}{2}} \exp \left\{\frac{n \sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}}{2 \sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}}-\frac{n \sum_{i=1}^{n}\left(y_{i}-\mu_{0}\right)^{2}}{2 \sum_{i=1}^{n}\left(y_{i}-\mu_{0}\right)^{2}}\right\} \\
+&=\left\{\frac{\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}}{\sum_{i=1}^{n}\left(y_{i}-\mu_{0}\right)^{2}}\right\}^{\frac{n}{2}}
+\end{aligned}
+$$
+
+Then, there exists some $a$ such that we reject $H_{0}$ if
+
+$$
+\left\{\frac{\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}}{\sum_{i=1}^{n}\left(y_{i}-\mu_{0}\right)^{2}}\right\}^{\frac{n}{2}} \leq a \Rightarrow \frac{\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}}{\sum_{i=1}^{n}\left(y_{i}-\mu_{0}\right)^{2}} \leq b
+$$
+
+where $a$ and $b$ are constants chosen to give significance level $\alpha$. Now, we may write
+
+$$
+\begin{aligned}
+\sum_{i=1}^{n}\left(y_{i}-\mu_{0}\right)^{2} &=\sum_{i=1}^{n}\left\{\left(y_{i}-\bar{y}\right)+\left(\bar{y}-\mu_{0}\right)\right\}^{2} \\
+&=\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}+2\left(\bar{y}-\mu_{0}\right) \sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)+n\left(\bar{y}-\mu_{0}\right)^{2} \\
+&=\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}+n\left(\bar{y}-\mu_{0}\right)^{2}
+\end{aligned}
+$$
+
+So we reject $H_{0}$ if
+
+$$
+\frac{\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}}{\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}+n\left(\bar{y}-\mu_{0}\right)^{2}} \leq b
+$$
+
+Thus, rearranging, we reject $H_{0}$ if
+
+$$
+1+\frac{n\left(\bar{y}-\mu_{0}\right)^{2}}{\sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}} \geq c \Rightarrow \frac{n\left(\bar{y}-\mu_{0}\right)^{2}}{\frac{1}{n-1} \sum_{i=1}^{n}\left(y_{i}-\bar{y}\right)^{2}} \geq d,
+$$
+
+where $c$ and $d$ are constants chosen to give significance level $\alpha$, that is we can write
+
+$$
+\alpha=P\left(\lambda(\boldsymbol{Y}) \leq a \mid H_{0}\right)=P\left(\frac{n\left(\bar{Y}-\mu_{0}\right)^{2}}{S^{2}} \geq d \mid H_{0}\right)
+$$
+
+where $S^{2}=\frac{1}{n-1} \sum_{i=1}^{n}\left(Y_{i}-\bar{Y}\right)^{2}$.
+
+To get $d$ we need to work out the distribution of $\frac{n\left(\bar{Y}-\mu_{0}\right)^{2}}{S^{2}}$ under the null hypothesis. For $Y_{i} \sim \mathcal{N}\left(\mu, \sigma^{2}\right)$ we have
+
+$$
+\bar{Y} \sim N\left(\mu, \frac{\sigma^{2}}{n}\right)
+$$
+
+and so, under $H_{0}$,
+
+$$
+\bar{Y} \sim \mathcal{N}\left(\mu_{0}, \frac{\sigma^{2}}{n}\right) \quad \text {and}\quad \frac{\sqrt{n}\left(\bar{Y}-\mu_{0}\right)}{\sqrt{\sigma^{2}}} \sim \mathcal{N}(0,1) .
+$$
+
+By Cochran's theorem, we have
+
+$$
+\frac{n\left(\bar{Y}-\mu_{0}\right)^{2}}{\sigma^{2}} \sim \chi_{1}^{2} \quad\text{and}\quad \frac{(n-1) S^{2}}{\sigma^{2}} \sim \chi_{n-1}^{2}
+$$
+
+Now we may use the fact that if $U$ and $V$ are independent rvs such that $U \sim \chi_{\nu_{1}}^{2}$ and $V \sim \chi_{\nu_{2}}^{2}$, then $\frac{U / \nu_{1}}{V / \nu_{2}} \sim \mathcal{F}_{\nu_{1}, \nu_{2}}$.
+Here, $U=\frac{n\left(\bar{Y}-\mu_{0}\right)^{2}}{\sigma^{2}}$ and $V=\frac{(n-1) S^{2}}{\sigma^{2}}$. Hence, if $H_{0}$ is true, we have
+
+$$
+F=\frac{U / 1}{V /(n-1)}=\frac{n\left(\bar{Y}-\mu_{0}\right)^{2}}{S^{2}} \sim \mathcal{F}_{1, n-1} .
+$$
+
+Therefore, we reject $H_{0}$ at a significance level $\alpha$ if
+
+$$
+\frac{n\left(\bar{y}-\mu_{0}\right)^{2}}{s^{2}} \geq F_{1, n-1, \alpha}
+$$
+
+where $F_{1, n-1, \alpha}$ is such that $P\left(F \geq F_{1, n-1, \alpha}\right)=\alpha$.
+Using the fact that an $F$ distribution with $1$ and $n-1$ degrees of freedom is equivalent to the square of a $t$-statistic with $n-1$ degrees of freedom, we reject $H_{0}$ if
+
+$$
+\sqrt{\frac{n\left(\bar{y}-\mu_{0}\right)^{2}}{s^{2}}} \geq t_{n-1, \frac{\alpha}{2}},
+$$
+
+that is, if
+
+$$
+\left|\frac{\bar{y}-\mu_{0}}{\sqrt{s^{2} / n}}\right| \geq t_{n-1, \frac{\alpha}{2}}
+$$
+
+Of course, this is the usual two-sided $t$-test
+
+> It can be shown that ***all the standard tests in situations with normal distributions are generalized likelihood ratio tests***.
+
+<br/>
+
+### Wilk's theorem
+
+[Samuel S. Wilks](https://en.wikipedia.org/wiki/Samuel_S._Wilks) derived (in a 3 page paper) a much more generalized form of this, now known as Wilk's theorem
+
+> Assume that the joint distribution of $Y_{1}, \ldots, Y_{n}$ depends on $p$ unknown parameters and that, under $H_{0}$, the joint distribution depends on $p_{0}$ unknown parameters. Let $\nu=p-p_{0}$. Then, under some regularity conditions, when the null hypothesis is true, the distribution of the statistic $-2 \log \{\lambda(\boldsymbol{Y})\}$ converges to a $\chi_{\nu}^{2}$ distribution as the sample size $n \rightarrow \infty$, i.e., when $H_{0}$ is true and $n$ is large,
+> $$-2 \log \{\lambda(\boldsymbol{Y})\} \underset{\text { approx. }}{\sim} \chi_{\nu}^{2}$$
+> Thus, for large $n$, the critical region for a test with approximate significance level $\alpha$ is
+> $$\mathcal{R}=\left\{\boldsymbol{y}:-2 \log \{\lambda(\boldsymbol{y})\} \geq \chi_{\nu, \alpha}^{2}\right\}$$
+
+In other words, the likelihood ratio test of 2 competing hypotheses is approximately distributed according to a chi-square distribution with $\nu$ degrees of freedom, where $\nu$ is the difference in number of parameters between the two models.
+
+This is why 
+
+
+
 
 
