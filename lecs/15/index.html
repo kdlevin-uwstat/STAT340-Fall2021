@@ -219,7 +219,7 @@ print(looms,n=Inf)</code></pre>
 ## 16 4           98</code></pre>
 <pre class="r"><code>library(lme4)
 
-lmer.looms = lmer(strength ~ (1|loom), data=looms)
+lmer.looms = lmer(strength ~ (1 | loom), data=looms)
 
 summary(lmer.looms)</code></pre>
 <pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
@@ -498,6 +498,37 @@ F=\frac{U / 1}{V /(n-1)}=\frac{n\left(\bar{Y}-\mu_{0}\right)^{2}}{S^{2}} \sim \m
 <blockquote>
 <p>Assume that the joint distribution of <span class="math inline">\(Y_{1}, \ldots, Y_{n}\)</span> depends on <span class="math inline">\(p\)</span> unknown parameters and that, under <span class="math inline">\(H_{0}\)</span>, the joint distribution depends on <span class="math inline">\(p_{0}\)</span> unknown parameters. Let <span class="math inline">\(\nu=p-p_{0}\)</span>. Then, under some regularity conditions, when the null hypothesis is true, the distribution of the statistic <span class="math inline">\(-2 \log \{\lambda(\boldsymbol{Y})\}\)</span> converges to a <span class="math inline">\(\chi_{\nu}^{2}\)</span> distribution as the sample size <span class="math inline">\(n \rightarrow \infty\)</span>, i.e., when <span class="math inline">\(H_{0}\)</span> is true and <span class="math inline">\(n\)</span> is large, <span class="math display">\[-2 \log \{\lambda(\boldsymbol{Y})\} \underset{\text { approx. }}{\sim} \chi_{\nu}^{2}\]</span> Thus, for large <span class="math inline">\(n\)</span>, the critical region for a test with approximate significance level <span class="math inline">\(\alpha\)</span> is <span class="math display">\[\mathcal{R}=\left\{\boldsymbol{y}:-2 \log \{\lambda(\boldsymbol{y})\} \geq \chi_{\nu, \alpha}^{2}\right\}\]</span></p>
 </blockquote>
+<p>In other words, the likelihood ratio test of 2 competing hypotheses is approximately distributed according to a chi-square distribution with <span class="math inline">\(\nu\)</span> degrees of freedom, where <span class="math inline">\(\nu\)</span> is the difference in number of parameters between the two models.</p>
+<p>This is why the likelihood ratio test we performed on the politeness term followed a chi-square distribution with 1 degree of freedom: the politeness term adds 1 parameter to be estimated to the model.</p>
+<div id="example-2-poisson-variable" class="section level5">
+<h5><strong><em>Example 2: Poisson variable</em></strong></h5>
+<p>Suppose that <span class="math inline">\(Y_{i} \sim \operatorname{Poisson}(\lambda)\)</span> and consider testing <span class="math inline">\(H_{0}: \lambda=\lambda_{0}\)</span> against <span class="math inline">\(H_{1}: \lambda \neq \lambda_{0}\)</span>. Now, the likelihood is</p>
+<p><span class="math display">\[
+L(\lambda \mid \boldsymbol{y})=\frac{\lambda^{\sum_{i=1}^{n} y_{i}} e^{-n \lambda}}{\prod_{i=1}^{n} y_{i} !}
+\]</span></p>
+<p>The maximum likelihood estimate of <span class="math inline">\(\lambda\)</span> is <span class="math inline">\(\hat{\lambda}=\bar{y}\)</span> and the restricted maximum likelihood estimate of <span class="math inline">\(\lambda\)</span> under <span class="math inline">\(H_{0}\)</span> is <span class="math inline">\(\hat{\lambda}_{0}=\lambda_{0}\)</span>. Thus, the generalized likelihood ratio is</p>
+<p><span class="math display">\[
+\begin{aligned}
+\lambda(\boldsymbol{y})=\frac{L\left(\lambda_{0} \mid \boldsymbol{y}\right)}{L(\hat{\lambda} \mid \boldsymbol{y})} &amp;=\frac{\lambda_{0}^{\sum_{i=1}^{n} y_{i}} e^{-n \lambda_{0}}}{\prod_{i=1}^{n} y_{i} !} \frac{\prod_{i=1}^{n} y_{i} !}{\bar{y}^{\sum_{i=1}^{n} y_{i}} e^{-n \bar{y}}} \\
+&amp;=\left(\frac{\lambda_{0}}{\bar{y}}\right)^{\sum_{i=1}^{n} y_{i}} e^{n\left(\bar{y}-\lambda_{0}\right)}
+\end{aligned}
+\]</span></p>
+<p>It follows that</p>
+<p><span class="math display">\[
+\begin{aligned}
+-2 \log \{\lambda(\boldsymbol{y})\} &amp;=-2\left\{n \bar{y} \log \left(\frac{\lambda_{0}}{\bar{y}}\right)+n\left(\bar{y}-\lambda_{0}\right)\right\} \\
+&amp;=2 n\left\{\bar{y} \log \left(\frac{\bar{y}}{\lambda_{0}}\right)+\lambda_{0}-\bar{y}\right\}
+\end{aligned}
+\]</span></p>
+<p>Here, <span class="math inline">\(p=1\)</span> and <span class="math inline">\(p_{0}=0\)</span>, and so <span class="math inline">\(\nu=1\)</span>. Therefore, by Wilks’ theorem, when <span class="math inline">\(H_{0}\)</span> is true and <span class="math inline">\(n\)</span> is large,</p>
+<p><span class="math display">\[
+2 n\left\{\bar{Y} \log \left(\frac{\bar{Y}}{\lambda_{0}}\right)+\lambda_{0}-\bar{Y}\right\} \sim \chi_{1}^{2} .
+\]</span></p>
+<p>Hence, for a test with approximate significance level <span class="math inline">\(\alpha\)</span>, we reject <span class="math inline">\(H_{0}\)</span> if and only if</p>
+<p><span class="math display">\[
+2 n\left\{\bar{y} \log \left(\frac{\bar{y}}{\lambda_{0}}\right)+\lambda_{0}-\bar{y}\right\} \geq \chi_{1, \alpha}^{2} .
+\]</span></p>
+</div>
 </div>
 </div>
 <div class="footnotes">

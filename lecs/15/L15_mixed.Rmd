@@ -285,9 +285,45 @@ Of course, this is the usual two-sided $t$-test
 
 In other words, the likelihood ratio test of 2 competing hypotheses is approximately distributed according to a chi-square distribution with $\nu$ degrees of freedom, where $\nu$ is the difference in number of parameters between the two models.
 
-This is why 
+This is why the likelihood ratio test we performed on the politeness term followed a chi-square distribution with 1 degree of freedom: the politeness term adds 1 parameter to be estimated to the model.
 
+##### ***Example 2: Poisson variable***
 
+Suppose that $Y_{i} \sim \operatorname{Poisson}(\lambda)$ and consider testing $H_{0}: \lambda=\lambda_{0}$ against $H_{1}: \lambda \neq \lambda_{0}$. Now, the likelihood is
+
+$$
+L(\lambda \mid \boldsymbol{y})=\frac{\lambda^{\sum_{i=1}^{n} y_{i}} e^{-n \lambda}}{\prod_{i=1}^{n} y_{i} !}
+$$
+
+The maximum likelihood estimate of $\lambda$ is $\hat{\lambda}=\bar{y}$ and the restricted maximum likelihood estimate of $\lambda$ under $H_{0}$ is $\hat{\lambda}_{0}=\lambda_{0}$. Thus, the generalized likelihood ratio is
+
+$$
+\begin{aligned}
+\lambda(\boldsymbol{y})=\frac{L\left(\lambda_{0} \mid \boldsymbol{y}\right)}{L(\hat{\lambda} \mid \boldsymbol{y})} &=\frac{\lambda_{0}^{\sum_{i=1}^{n} y_{i}} e^{-n \lambda_{0}}}{\prod_{i=1}^{n} y_{i} !} \frac{\prod_{i=1}^{n} y_{i} !}{\bar{y}^{\sum_{i=1}^{n} y_{i}} e^{-n \bar{y}}} \\
+&=\left(\frac{\lambda_{0}}{\bar{y}}\right)^{\sum_{i=1}^{n} y_{i}} e^{n\left(\bar{y}-\lambda_{0}\right)}
+\end{aligned}
+$$
+
+It follows that
+
+$$
+\begin{aligned}
+-2 \log \{\lambda(\boldsymbol{y})\} &=-2\left\{n \bar{y} \log \left(\frac{\lambda_{0}}{\bar{y}}\right)+n\left(\bar{y}-\lambda_{0}\right)\right\} \\
+&=2 n\left\{\bar{y} \log \left(\frac{\bar{y}}{\lambda_{0}}\right)+\lambda_{0}-\bar{y}\right\}
+\end{aligned}
+$$
+
+Here, $p=1$ and $p_{0}=0$, and so $\nu=1$. Therefore, by Wilks' theorem, when $H_{0}$ is true and $n$ is large,
+
+$$
+2 n\left\{\bar{Y} \log \left(\frac{\bar{Y}}{\lambda_{0}}\right)+\lambda_{0}-\bar{Y}\right\} \sim \chi_{1}^{2} .
+$$
+
+Hence, for a test with approximate significance level $\alpha$, we reject $H_{0}$ if and only if
+
+$$
+2 n\left\{\bar{y} \log \left(\frac{\bar{y}}{\lambda_{0}}\right)+\lambda_{0}-\bar{y}\right\} \geq \chi_{1, \alpha}^{2} .
+$$
 
 
 
