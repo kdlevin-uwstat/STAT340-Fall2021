@@ -1,5 +1,5 @@
 ---
-title: 'STAT340 Discussion 16: Tree-based Methods'
+title: 'STAT340 Discussion 13: Tree-based Methods'
 author: "Keith Levin and Bi Cheng Wu"
 date: "Fall 2021"
 output: html_document
@@ -13,7 +13,7 @@ require(MASS)
 require(rpart)
 ```
 
-[Link to source file](https://kdlevin-uwstat.github.io/STAT340-Fall2021/discussion/ds16/ds16.Rmd)
+[Link to source file](https://kdlevin-uwstat.github.io/STAT340-Fall2021/discussion/ds13/ds13.Rmd)
 
 In lecture, we saw our first example of tree-based methods: regression trees.
 This discussion section will give you practice building regression trees using the built-in tools in R.
