@@ -1,0 +1,139 @@
+---
+title: 'STAT340 Lecture 17: Bagging and Random Forests'
+author: "Keith Levin and Bi Cheng Wu"
+date: "Fall 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(ggplot2)
+
+require(ISLR)
+require(MASS)
+require(randomForest)
+```
+
+__Readings:__ ISLR Section 8.2
+
+We closed our last lecture by pointing out a couple of difficulties with regression trees:
+
+1. Decision trees can be high-variance, in the sense that they are highly sensitive to training data. You can try this experiment at home-- take a training set, split it in two at random, train a tree on each half, and compare their predictions on the test set. They will be very different. The same experiment with linear regression yields two models that agree much more in their predictions.
+2. The piecewise constant functions that decision trees learn are ill-behaved at their decision boundaries.
+
+Bagging and random forests are two ways to fix some of these problems, both based around the bootstrap.
+Random forests are particularly interesting because, despite their being a fairly old technique, they have been observed to be competitive with even very expensive neural networks for certain prediction problems.
+If a 30-year old statistical technique based on the bootstrap can compete with modern-day neural nets, that's something you want to hear about!
+
+## Learning objectives
+
+After this lecture, you will be able to
+
+- Explain bagging and why it improves upon simple regression trees
+- Explain random forests and why they improve still further on bagged trees
+- Train a random forest on a given data set
+
+## Reducing Variance with Bagging
+
+We would like to reduce the variance of our regression trees, somehow.
+Let's start with a simple observation: if $Z_1,Z_2,\dots,Z_n$ are independent RVs with variance $\sigma^2$, then their sample mean $\bar{Z}$ has variance $\sigma^2/n$.
+That is, averaging independent variables decreases variance.
+
+Okay, not an especially deep statement, since it's probably something you knew the day you first walked into this class, but let's combine this fact with the basic ideas behind the bootstrap and CV.
+Suppose we had, instead of one training set, $B$ different training sets, and used them to build $B$ different trees.
+Letting $\hat{f}_b(x)$ denote the prediction of the $b$-th tree on input $x$, with $b=1,2,\dots,B$, we could combine these predictions into one lower-variance prediction,
+$$
+\hat{f}_{\text{avg}}(x) = \frac{1}{B} \sum_{b=1}^B \hat{f}_b(x).
+$$
+
+Of course, this is silly, because we only have on training set, not $B$ of them, but you probably know where this is headed, based on the mention of the bootstrap!
+We build $B$ *bootstrapped* training sets, training a tree on each of them.
+Letting $\hat{f}^*_b(x)$ denote the prediction of the $b$-th tree on input $x$
+(remember, we put an asterisk on bootstrapped things by convention), we build the *bagged prediction*,
+$$
+\hat{f}^*_{\text{bag}}(x) = \frac{1}{B} \sum_{b=1}^B \hat{f}^*_b(x).
+$$
+
+Importantly, we *do not* prune the regression trees that we learn for bagging.
+The whole point of pruning was to induce some bias (i.e., reduce variance), but we want each of these trees to have variance, which then gets evened out by our averaging.
+
+__Sidenote:__ if you think of averaging as just another word for *aggregation*, then it's clear why we call this bagging-- it's short for *Bootstrapped AGGregation*
+
+Somewhat remarkably, this procedure yields notable improvements over plain old regression trees.
+As is the usual with the bootstrap, it's basically magic.
+Okay, again, it's not actually magic-- you'll see why this works later on in your theory courses.
+
+### Aside: out-of-bag error estimation
+
+A cool side effect of bagging is that we get an estimate of our test error almost for free.
+This is a nice thing, if you think back to all the trouble we went through with CV to get estimates of our test error.
+
+Most of the time, not all $n$ observations are included in a bootstrap sample, because we usually pick at least a few "repeats" when we sample with replacement.
+In fact, you can show (Exercise 2 in ISLR Chapter 5) that about 1/3 of the samples are not included in a particular bootstrap sample.
+More accurately, as $n$ increases, the probability that a particular observation is not in the bootstrap sample converges to $1/e \approx 1/3$.
+
+Out-of-bag (OOB) error estimation estimates the test error by looking at each sample $i=1,2,\dots,n$ and measuring the prediction accuracy of all the bagged trees whose bootstrap samples *did not* include the $i$-th data point.
+Importantly, these are the trees that have never seen this data point before, so this data point may as well be in the test set for them!
+We can then use these residuals to estimate the MSE on test data, without ever even having a test set!
+
+## Random Forests
+
+It turns out that we can improve bagged trees even more!
+Since all the trees are built on the same data set (albeit from different bootstrapped samples of it), they are correlated to one another.
+The average of a bunch of correlated things isn't very helpful-- averaging a bunch of values that are all similar to one another is just going to give us another value that is close to all the ones we averaged!
+
+Random forests are a way to decorrelate the bagged trees from one another.
+
+Just like in bagging, we are going to build a collection of trees based on bootstrap samples from the training set, but we are going to modify the way that the trees are built.
+Each time we consider a split in one of our trees, we are going to restrict the predictors that it can split on.
+Instead of allowing the tree to split on any of the $p$ predictors, we pick $m$ predictors randomly (usually we take $m \approx \sqrt{p}$, but this is just a rule of thumb), and force the tree to split on one of these specific predictors.
+__Note:__ this "restricted" set of predictors is chosen anew with each split in each tree, so it isn't as though a tree never gets to use certain predictors.
+
+Said another way, instead of letting our $B$ bagged trees all grow as they please, at each split, our training algorithm is not even allowed to consider splits in most of the predictors.
+This sounds bizarre at first-- we're denying our learning algorithm access to all of the data!
+
+There's a good intuitive reason for this, though.
+Suppose that there is one feature in our data set that is an extremely strong predictor.
+Then in all likelihood, all of our bagged trees are going to use that predictor, and their estimated responses will all be very similar for many inputs (i.e., they will be highly correlated).
+Restricting the available predictors at each split discourages our trees from all choosing the same few highly informative predictors.
+Note that a random forest with predictor subset size $m=p$ just recovers plain old bagging.
+
+## Building random forests
+
+We do not have time in this lecture to go into great detail on how to actually build a random forest in R, but lucky for us it's pretty simple!
+
+The most widely-used tool for random forests in R is the `randomForest` package.
+We'll apply it here to the `Boston` housing data set, just like you saw in discussion section.
+```{r}
+# Load the Boston housing data and pick out a collection of training instances
+data(Boston)
+n <- nrow(Boston)
+train_inds <- sample(1:n, 4*n/5); # 80% of the data is train set.
+
+# As usual, we supply a formula and a data set.
+# Then we specify the number of predictors in each split (i.e., m above) with mtry
+# The Boston data has 14 columns, one of which is the housing price we want to predict, so we'll go with 4 variables.
+# subset lets us specify that we only want to train on the rows that we assigned
+# to the training set.
+
+# There are a whole bunch of other options we can specify;
+# see ?randomForest for the full run-down.
+rf <- randomForest(medv ~ ., data =Boston, mtry=4, subset=train_inds)
+
+rf
+```
+Pretty good! Note that we can reduce (or increase) the number of trees in our forest with the `ntree` argument to `randomForest`-- it defaults to 500 here.
+
+Let's see how this does when we apply it to the test set.
+```{r}
+
+yhat_rf <- predict ( rf, newdata = Boston [ - train_inds , ])
+ytrue_test <- Boston[ -train_inds,]$medv;
+# And now we can compute MSE on the test set.
+mean( (yhat_rf - ytrue_test)^2 )
+```
+__Exercise:__ adapt the code from discussion section to fit a single decision tree to the same train set and compare its MSE on the same test set. You should see that the MSE is two or three times as large!
+
+
+

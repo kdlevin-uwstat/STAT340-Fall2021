@@ -1,5 +1,5 @@
 ---
-title: "HW5: Bootstrap problem"
+title: "HW5: Bootstrapping and multiple testing"
 author: "Keith Levin and Bi Cheng Wu"
 date: "11/29/2021"
 output: html_document
@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 [Link to source](hw5_bootstrap_problem.Rmd)
 
-## Problem 1: bootstrapping the mule kicks data
+## Problem 1 (20 points): bootstrapping the mule kicks data
 
 In this problem, you'll get a bit of practice using the bootstrap, which we discussed before the Thanksgiving break.
 
@@ -123,7 +123,7 @@ TODO: observation/explanation here.
 
 ***
 
-## Problem 2 Multiple comparison
+## Problem 2 (30 points): Multiple comparisons
 
 In section 13.7 of ISLR, do problems 1 and 8.
 

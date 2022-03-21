@@ -1,0 +1,187 @@
+---
+title: 'STAT340 Discussion 13: Tree-based Methods'
+author: "Keith Levin and Bi Cheng Wu"
+date: "Fall 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(MASS)
+
+require(rpart)
+```
+
+[Link to source file](https://kdlevin-uwstat.github.io/STAT340-Fall2021/discussion/ds13/ds13.Rmd)
+
+In lecture, we saw our first example of tree-based methods: regression trees.
+This discussion section will give you practice building regression trees using the built-in tools in R.
+The notes largely follow the lab in Section 8.3.2 in ISLR.
+
+The two most commonly used packages in R for building regression trees are `tree` and `rpart` (short for "recursive partitioning"-- remember that regression trees really just partition the data space).
+`rpart` seems to be eclipsing `tree` in terms of popularity, so we'll use that.
+See [here](https://www.rdocumentation.org/packages/tree/versions/1.0-41/topics/tree) to read about the `tree` package if you're interested.
+The lab in ISLR uses the `tree` package, if you want a nice example of how to use it.
+
+The documentation for `rpart` is [here](https://www.rdocumentation.org/packages/rpart/versions/4.1-15/topics/rpart).
+It should be available in your R installation, but if not, you can install it in the usual way.
+
+```{r}
+library(rpart)
+# See documentation with ?rpart.
+```
+
+The Boston Housing data set is a famous data set that contains median housing prices for approximately 500 towns in the Boston area (collected in the 70s-- these houses are a *lot* more expensive, now).
+It is included in the `MASS` library.
+Let's load it, and take a few minutes to read the documentation to make sure we understand what all the variables mean.
+```{r}
+data(Boston)
+?Boston
+```
+
+
+We're going totry and predict the price, which is stored in `Boston$medv`, short for median value, the median price of all homes in the town, in thousands of dollars.
+
+```{r}
+hist( Boston$medv)
+```
+
+__Question:__ looking at this histogram, should we consider a variable transformation? Why or why not? Discuss.
+
+You'll see some analyses of this data set out there that take logarithms of these prices.
+We'll leave them as is, if for no other reason than for keeping our analysis roughly similar to the worked example in your textbook, but this kind of thing is always worth considering when you have price or salary data.
+
+### Setting up the data
+
+We'll split the data into a train and test set, to demonstrate effects of overfitting.
+We'll set aside one fifth of the data as test data, and the rest will be train.
+```{r}
+test_inds <- sample(1:nrow(Boston), nrow(Boston)/5);
+Boston.test <- Boston[test_inds,];
+Boston.train <- Boston[-test_inds,];
+head(Boston.test)
+```
+
+```{r}
+head(Boston.train)
+```
+
+### Fitting the tree
+
+Fitting a regression tree with `rpart` is largely analogous to fitting logistic regression with `glm`.
+We specify a formula, a data set, and a method (really a loss function).
+
+```{r}
+rt <- rpart( medv ~ ., data=Boston.train, method='anova')
+# method='anova' tells rpart to use the squared errors loss we saw in lecture.
+
+# If we just naively print out the tree, we see a text representation of its node splits.
+rt
+```
+Okay, you can probably figure out what's going on there if you stare at it enough, but I would much rather just look at the tree itself...
+
+```{r}
+plot(rt)
+```
+
+Okay, but where are the labels?
+If you think back to our discussion of dendrograms and hierarchical clustering, you'll recall that R is generally bad at handling trees.
+You need to tell R's plotting functions about the text labels separately.
+
+```{r}
+# uniform-=TRUE helps to prevent the node labels from bumping up against the
+# each other.
+plot(rt, uniform=TRUE, main='Regression tree for Boston housing prices')
+text(rt, all=TRUE, use.n = TRUE, cex=.8 )
+
+```
+
+Okay, still hard to read , but hopefully you get the idea by looking at this plot and the node splits printed out by R.
+```{r}
+rt
+```
+
+### Did we overfit?
+
+Okay, we fit a tree to the training data.
+Let's see how we did.
+First of all, let's check our MSE on the training data.
+We'll compute our model's predicted output on each of the training instances.
+The `predict` function works with the `rpart` objects just like with other models you've seen this semester.
+
+```{r}
+yhat_train <-predict( rt, Boston.train);
+train_resids <- yhat_train - Boston.train$medv; # compute the residuals
+# Now square them and take the mean to get MSE.
+# Note that if we just computed the RSS (i.e., no mean, just a sum), it would be
+# harder to directly compare to the test set, which is of a different size.
+mean(train_resids^2)
+```
+Now do the test set.
+
+__Modify the code above to compute the MSE of our regression tree on the test set.__
+
+```{r}
+
+#TODO: code goes here.
+
+```
+
+Unless something really weird happened, you should see that the RSS is a lot worse. That's a lot worse. Looks like we might have overfit...
+
+### Pruning the tree
+
+Lucky for us, regression trees have a natural regularization method-- we can make the tree less bushy by pruning it.
+In essence, this serves to "smooth out" the piecewise constant function that our tree encodes.
+We do that with the `prune` function.
+Note that there are other functions called `prune` (you'll see this if you type `?prune`), so you're best off specifying that you mean `rpart::prune`.
+
+To prune a tree, we just pass our tree into this function, and specify the complexity parameter `cp`.
+Smaller values of this number correspond to more splits, i.e., more complicated models.
+
+So let's first make sure we understand that parameter.
+Every `rpart` object has an attribute called `cptable`, which contains information that shows how the number of splits (again, that's the number of nodes) varies with this `cp` parameter.
+Each `cp` value corresponds to the largest `cp` value that corresponds to this complexity-- any larger and you can't afford enough splits with your complexity "budget".
+Note that the table also includes information about each model's error, as well as information for doing CV (see Section 4 of the [`rpart` long-form documentation](https://cran.r-project.org/web/packages/rpart/vignettes/longintro.pdf); we return to this point briefly below ).
+```{r}
+rt$cptable
+```
+As `cp` gets smaller, the number of splits (`nsplit`) decreases.
+If we ask for a tree with a particular `cp` value, `rpart` will go to our tree's  `cptable` and pick out a tree with the largest number of splits that is no more complicated that our `cp` score (i.e., no smaller).
+So, for example, if we ask for `cp=0.4`, we just get back the tree with a single split (i.e., a root node with two children):
+
+```{r}
+plot( rpart::prune(rt, cp=0.4) )
+```
+
+If we set `cp=0.03`, we get back 4 splits:
+
+```{r}
+plot( rpart::prune(rt, cp=0.03) )
+```
+
+Looking at that tree, you can see that there are indeed four splits (i.e., four nodes-- the root, the one on the right, and the two to the left of the root).
+
+Now, we can use this to do CV just like we've seen previously (if we had $K$ folds instead of just a train-test split), or we could use the "1-SD" rule, about which see the end of section 6.1 in your textbook or refer to Section 4 of the [`rpart` documentation](https://cran.r-project.org/web/packages/rpart/vignettes/longintro.pdf).
+
+Just for the sake of illustration, though, let's just try something reasonable and use the 4-split tree.
+
+__Modify the code above to measure the MSE of this pruned tree on the training and test data. Assess the presence or absence of over-fitting. Is the overfitting at least less bad than the tree we started with?__
+
+```{r}
+# TODO: code goes here.
+```
+
+__Do the same with the 5-split tree and compare to four splits.__
+
+```{r}
+
+#TODO: code goes here.
+
+```
+
+
+
+
+

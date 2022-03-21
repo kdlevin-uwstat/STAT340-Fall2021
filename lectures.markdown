@@ -26,4 +26,6 @@ Source code for lectures available [on github](https://github.com/kdlevin-uwstat
  - [Multiple comparison](../lecs/13) &nbsp; (Nov 22-24)
  - [ANOVA](../lecs/14) &nbsp; (Nov 29-Dec 3)
  - [Random effects](../lecs/15) &nbsp; (Dec 6-?)
+ - [Regression Trees](../lecs/16) &nbsp; (Dec 13)
+ - [Random Forests](../lecs/17) &nbsp; (Dec 15)
 
